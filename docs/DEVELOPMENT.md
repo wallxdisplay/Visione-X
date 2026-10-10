@@ -62,6 +62,11 @@ fixes were needed and may be needed again for future projects:
   public invoker to callable functions only when they are **created**; if a callable ever
   returns a 403 HTML page, delete and redeploy it (`npx firebase functions:delete <name>
   --region asia-south1 --project prod`, then deploy).
+- **Functions runtime identity** — functions run as `281302718007-compute@developer.gserviceaccount.com`,
+  which (because automatic grants are off) had no data access. Granted: *Cloud Datastore User*,
+  *Storage Object Admin*, *Firebase Authentication Admin* (plus the Cloud Build / Run Invoker /
+  Eventarc Event Receiver roles above). Symptom when missing: `7 PERMISSION_DENIED` in function logs.
+  Phase 3/4 signed URLs will additionally need *Service Account Token Creator* on itself.
 - **Storage rules → Firestore** — `storage.rules` reads membership from Firestore, which needs
   `service-281302718007@gcp-sa-firebasestorage.iam.gserviceaccount.com` to hold
   *Firebase Rules Firestore Service Agent* (`roles/firebaserules.firestoreServiceAgent`).
