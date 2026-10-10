@@ -1,0 +1,38 @@
+{
+  "name": "visione-x",
+  "private": true,
+  "type": "module",
+  "description": "Visione-X by WallX — multi-tenant digital signage SaaS",
+  "workspaces": [
+    "packages/*",
+    "apps/web",
+    "functions"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "npm run dev -w @visione-x/web",
+    "build": "npm run build -w @visione-x/web && npm run build -w @visione-x/functions",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "test": "vitest run",
+    "test:rules": "firebase emulators:exec --only firestore,storage --project demo-visione-x \"vitest run --config tests/rules/vitest.config.ts\"",
+    "emulators": "firebase emulators:start --project demo-visione-x --import .emulator-data --export-on-exit"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.27.0",
+    "@firebase/rules-unit-testing": "^4.0.1",
+    "@types/node": "^22.15.0",
+    "eslint": "^9.27.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "firebase": "^11.8.1",
+    "firebase-tools": "^14.4.0",
+    "globals": "^16.2.0",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.33.0",
+    "vitest": "^3.1.4"
+  }
+}

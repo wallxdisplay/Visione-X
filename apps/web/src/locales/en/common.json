@@ -1,0 +1,79 @@
+{
+  "product": {
+    "name": "Visione-X",
+    "byline": "by WallX",
+    "tagline": "One Platform. Every Screen."
+  },
+  "nav": {
+    "groups": {
+      "overview": "Overview",
+      "manage": "Manage",
+      "connect": "Connect",
+      "insights": "Insights",
+      "account": "Account",
+      "platform": "Platform",
+      "customers": "Customers",
+      "operations": "Operations",
+      "governance": "Governance"
+    },
+    "dashboard": "Dashboard",
+    "screens": "Screens",
+    "sites": "Sites & Groups",
+    "library": "Content Library",
+    "studio": "Layout Studio",
+    "playlists": "Playlists",
+    "schedules": "Schedules",
+    "sensors": "Sensors & Data",
+    "integrations": "Integrations",
+    "alerts": "Alerts",
+    "reports": "Playback Reports",
+    "analytics": "Analytics",
+    "team": "Team & Permissions",
+    "billing": "Subscription & Billing",
+    "settings": "Organization Settings",
+    "help": "Help & Support",
+    "admin": {
+      "overview": "Platform Overview",
+      "approvals": "Organization Approvals",
+      "orgs": "Organizations",
+      "users": "Users & Roles",
+      "devices": "Screens & Players",
+      "features": "Features & Limits",
+      "billing": "Plans & Billing",
+      "integrations": "Integrations & API",
+      "support": "Support Access",
+      "audit": "Audit Logs",
+      "settings": "Platform Settings"
+    }
+  },
+  "shell": {
+    "toggleNav": "Toggle navigation",
+    "notifications": "Notifications",
+    "help": "Help",
+    "account": "Account menu",
+    "orgPlaceholder": "No organization selected",
+    "adminBadge": "Super Admin",
+    "backToApp": "Back to app"
+  },
+  "placeholder": {
+    "title": "Coming in phase {{phase}}",
+    "description": "This area is part of the Visione-X roadmap and will be built in phase {{phase}}."
+  },
+  "studio": {
+    "title": "Layout Studio",
+    "description": "Design multi-zone layouts for landscape and portrait screens."
+  },
+  "player": {
+    "title": "Player registration",
+    "description": "Visione-X screens run the dedicated Android player app on the Android box connected to your LED controller.",
+    "step1": "Install the Visione-X Player app on the Android box.",
+    "step2": "Open the app. It shows a pairing code and QR code on the screen.",
+    "step3": "Sign in to Visione-X, open Screens and choose Add screen, then enter the code.",
+    "step4": "An organization admin authorizes the screen before content is delivered."
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "The page you are looking for does not exist or has moved.",
+    "action": "Go to dashboard"
+  }
+}

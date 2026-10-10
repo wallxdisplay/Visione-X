@@ -1,0 +1,158 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-family);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  line-height: 1.2;
+}
+
+a {
+  color: var(--color-primary);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.vx-tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Button ---------- */
+.vx-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 38px;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-control);
+  border: 1px solid transparent;
+  font: inherit;
+  font-weight: 550;
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+.vx-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.vx-btn--primary {
+  background: var(--color-primary);
+  color: #fff;
+}
+.vx-btn--primary:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+.vx-btn--primary:active:not(:disabled) {
+  background: var(--color-primary-pressed);
+}
+.vx-btn--secondary {
+  background: var(--color-surface);
+  border-color: var(--color-border-strong);
+  color: var(--color-ink);
+}
+.vx-btn--secondary:hover:not(:disabled) {
+  background: var(--color-surface-subtle);
+}
+.vx-btn--tertiary {
+  background: transparent;
+  color: var(--color-ink);
+}
+.vx-btn--tertiary:hover:not(:disabled) {
+  background: var(--color-neutral-soft);
+}
+.vx-btn--danger {
+  background: var(--color-danger);
+  color: #fff;
+}
+
+/* ---------- Status chip ---------- */
+.vx-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-chip);
+  font-size: 12px;
+  font-weight: 550;
+  white-space: nowrap;
+}
+.vx-chip::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.vx-chip--success { background: var(--color-success-soft); color: var(--color-success); }
+.vx-chip--warning { background: var(--color-warning-soft); color: var(--color-warning); }
+.vx-chip--danger { background: var(--color-danger-soft); color: var(--color-danger); }
+.vx-chip--info { background: var(--color-info-soft); color: var(--color-info); }
+.vx-chip--neutral { background: var(--color-neutral-soft); color: var(--color-ink-secondary); }
+
+/* ---------- Card ---------- */
+.vx-card {
+  background: var(--color-surface);
+  border: var(--border-default);
+  border-radius: var(--radius-card);
+  padding: var(--space-5);
+}
+.vx-card__title {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0 0 var(--space-3);
+}
+
+/* ---------- Page header ---------- */
+.vx-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+.vx-page-header h1 {
+  font-size: 28px;
+  font-weight: 680;
+}
+.vx-page-header p {
+  margin: var(--space-1) 0 0;
+  color: var(--color-ink-secondary);
+}
+
+/* ---------- Empty state ---------- */
+.vx-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-3);
+  padding: var(--space-12) var(--space-6);
+  color: var(--color-ink-secondary);
+}
+.vx-empty h2 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+.vx-empty p {
+  margin: 0;
+  max-width: 420px;
+}

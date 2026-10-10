@@ -1,0 +1,86 @@
+rules_version = '2';
+
+// Visione-X Firestore rules.
+// Principle: deny by default. Money, limits, status, entitlements, usage and audit data are
+// written only by Cloud Functions (Admin SDK bypasses rules). Clients get narrowly scoped access
+// that is opened collection by collection as each phase is built.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- helpers ----------
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isDevice() {
+      // .get(): ordinary users have no `type` claim, and a missing field is an error in rules.
+      return signedIn() && request.auth.token.get('type', null) == 'device';
+    }
+
+    function platformRole() {
+      return signedIn() && !isDevice() ? request.auth.token.get('platformRole', null) : null;
+    }
+
+    function isPlatformStaff() {
+      return platformRole() in ['superadmin', 'support', 'billing', 'ops', 'auditor'];
+    }
+
+    function memberDoc(orgId) {
+      return /databases/$(database)/documents/orgs/$(orgId)/members/$(request.auth.uid);
+    }
+
+    function isActiveMember(orgId) {
+      return signedIn() && !isDevice()
+        && exists(memberDoc(orgId))
+        && get(memberDoc(orgId)).data.status == 'active';
+    }
+
+    // ---------- platform-level ----------
+    match /platformUsers/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    match /plans/{planId} {
+      // Public pricing page and the billing UI need active plans.
+      allow read: if resource.data.active == true || isPlatformStaff();
+      allow write: if false;
+    }
+
+    match /auditLogs/{logId} {
+      allow read: if platformRole() in ['superadmin', 'auditor'];
+      allow create, update, delete: if false; // append-only via Functions
+    }
+
+    // ---------- organizations ----------
+    match /orgs/{orgId} {
+      allow read: if isActiveMember(orgId) || isPlatformStaff();
+      allow write: if false;
+
+      match /members/{uid} {
+        allow read: if (signedIn() && request.auth.uid == uid) || isActiveMember(orgId) || isPlatformStaff();
+        allow write: if false;
+      }
+
+      match /entitlements/{docId} {
+        allow read: if isActiveMember(orgId) || isPlatformStaff();
+        allow write: if false;
+      }
+
+      match /usage/{docId} {
+        allow read: if isActiveMember(orgId) || isPlatformStaff();
+        allow write: if false;
+      }
+
+      // Everything else under an org stays closed until its phase defines it.
+      match /{document=**} {
+        allow read, write: if false;
+      }
+    }
+
+    // ---------- fallback ----------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
