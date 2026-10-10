@@ -1,17 +1,20 @@
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
+import { getStorage } from 'firebase-admin/storage';
 import type { Actor, Deps } from '../../functions/src/lib/context';
 import { seedPlatformData } from '../../functions/src/seed/seed';
 
 export const PROJECT_ID = 'demo-visione-x';
+export const BUCKET = 'demo-visione-x.appspot.com';
 
-const app = getApps()[0] ?? initializeApp({ projectId: PROJECT_ID });
+const app = getApps()[0] ?? initializeApp({ projectId: PROJECT_ID, storageBucket: BUCKET });
 export const db = getFirestore(app);
 export const auth = getAuth(app);
+export const bucket = getStorage(app).bucket(BUCKET);
 
 let clock = Date.UTC(2026, 9, 1, 9, 0, 0);
-export const deps: Deps = { db, auth, now: () => clock };
+export const deps: Deps = { db, auth, bucket, now: () => clock };
 export const advance = (ms: number) => {
   clock += ms;
 };

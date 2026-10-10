@@ -1,9 +1,41 @@
 rules_version = '2';
 
-// Deny by default. Media upload/read rules arrive with the content phase; devices fetch
-// manifests and assets through signed URLs issued by Cloud Functions.
+// Deny by default. Media binaries live at orgs/{orgId}/media/{mediaId}/{file}.
+// Browsers may upload ONLY the "original" of a media item that a Cloud Function reserved
+// (status "uploading", same user, declared type, at most the declared size). Variants and
+// thumbnails are written by the processing function. Devices get signed URLs (phase 3/4).
 service firebase.storage {
   match /b/{bucket}/o {
+    function memberPath(orgId) {
+      return /databases/(default)/documents/orgs/$(orgId)/members/$(request.auth.uid);
+    }
+
+    function isActiveMember(orgId) {
+      return request.auth != null
+        && request.auth.token.get('type', null) != 'device'
+        && firestore.exists(memberPath(orgId))
+        && firestore.get(memberPath(orgId)).data.status == 'active';
+    }
+
+    match /orgs/{orgId}/media/{mediaId}/{file} {
+      allow read: if isActiveMember(orgId);
+
+      allow create: if file == 'original'
+        && isActiveMember(orgId)
+        && request.resource.size > 0
+        && reservationAllows(orgId, mediaId);
+
+      allow update, delete: if false;
+    }
+
+    function reservationAllows(orgId, mediaId) {
+      let media = firestore.get(/databases/(default)/documents/orgs/$(orgId)/media/$(mediaId)).data;
+      return media.status == 'uploading'
+        && media.createdBy == request.auth.uid
+        && request.resource.size <= media.bytes
+        && request.resource.contentType == media.mimeType;
+    }
+
     match /{allPaths=**} {
       allow read, write: if false;
     }

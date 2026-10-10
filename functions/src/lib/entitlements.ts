@@ -44,6 +44,12 @@ export async function computeEntitlements(
   return { ...resolved, planId, computedAt: now };
 }
 
+export function requireFeature(entitlements: EntitlementsDoc, feature: FeatureKey, label: string): void {
+  if (!entitlements.features.includes(feature)) {
+    throw new HttpsError('permission-denied', `${label} is not included in your plan.`);
+  }
+}
+
 export async function readEntitlements(
   tx: Transaction,
   db: Firestore,

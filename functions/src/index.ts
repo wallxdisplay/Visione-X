@@ -3,3 +3,4 @@ import './options';
 
 export { api } from './api/index';
 export * from './callables';
+export { processMedia } from './media/trigger';

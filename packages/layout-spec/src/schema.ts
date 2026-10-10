@@ -1,0 +1,238 @@
+/**
+ * Layout & manifest contract shared by the Studio preview (React) and the Android player
+ * (Kotlin). Any change here is a protocol change: bump SPEC_VERSION and keep the player able
+ * to read the previous version until all devices have updated.
+ */
+import { z } from 'zod';
+
+export const SPEC_VERSION = 1;
+
+/** Zone geometry is in fractions of the canvas (0..1) so layouts survive resolution changes. */
+const Fraction = z.number().min(0).max(1);
+const Size = z.number().min(0.02).max(1);
+const Color = z.string().regex(/^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$/, 'Use a hex colour like #112233');
+
+export const Orientation = z.enum(['landscape', 'portrait']);
+export type Orientation = z.infer<typeof Orientation>;
+
+export const Canvas = z.object({
+  width: z.number().int().min(320).max(7680),
+  height: z.number().int().min(320).max(7680),
+  orientation: Orientation,
+  background: Color.default('#000000'),
+});
+export type Canvas = z.infer<typeof Canvas>;
+
+export const TextStyle = z
+  .object({
+    fontFamily: z.string().max(80).optional(),
+    /** Font size as a fraction of the zone height, so text scales with any resolution. */
+    fontScale: z.number().min(0.02).max(1).optional(),
+    bold: z.boolean().optional(),
+    color: Color.optional(),
+    background: Color.optional(),
+    align: z.enum(['start', 'center', 'end']).optional(),
+  })
+  .default({});
+export type TextStyle = z.infer<typeof TextStyle>;
+
+/** Binds a widget field to a live value, e.g. a sensor channel (phase 5). */
+export const DataBinding = z.object({
+  source: z.enum(['sensor', 'dataSource']),
+  sourceId: z.string(),
+  field: z.string(),
+  format: z.string().optional(),
+  staleAfterSec: z.number().int().positive().optional(),
+});
+
+const Threshold = z.object({
+  label: z.string(),
+  operator: z.enum(['>', '>=', '<', '<=']),
+  value: z.number(),
+  color: Color,
+});
+
+const HttpsUrl = z
+  .string()
+  .url()
+  .refine((u) => u.startsWith('https://'), 'Only https:// addresses are allowed');
+
+export const Widget = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('text'), text: z.string().max(2000), style: TextStyle }),
+  z.object({
+    type: z.literal('clock'),
+    /** 'time' | 'date' | 'datetime'; rendered with the screen's locale. */
+    format: z.enum(['time', 'date', 'datetime']),
+    timezone: z.string(),
+    seconds: z.boolean().default(false),
+    style: TextStyle,
+  }),
+  z.object({
+    type: z.literal('qr'),
+    value: z.string().min(1).max(1000),
+    foreground: Color.default('#000000'),
+    background: Color.default('#FFFFFF'),
+  }),
+  z.object({
+    type: z.literal('table'),
+    columns: z.array(z.string().max(80)).min(1).max(10),
+    rows: z.array(z.array(z.union([z.string().max(200), DataBinding]))).max(50),
+    style: TextStyle,
+  }),
+  z.object({ type: z.literal('web'), url: HttpsUrl, refreshSec: z.number().int().min(30).optional() }),
+  z.object({ type: z.literal('weather'), dataSourceId: z.string(), style: TextStyle }),
+  z.object({ type: z.literal('rss'), dataSourceId: z.string(), itemDurationSec: z.number().int(), style: TextStyle }),
+  z.object({
+    type: z.literal('sensorValue'),
+    binding: DataBinding,
+    unit: z.string(),
+    thresholds: z.array(Threshold).default([]),
+    style: TextStyle,
+  }),
+  z.object({
+    type: z.literal('gauge'),
+    binding: DataBinding,
+    unit: z.string(),
+    min: z.number(),
+    max: z.number(),
+    thresholds: z.array(Threshold).default([]),
+  }),
+  z.object({
+    type: z.literal('chart'),
+    bindings: z.array(DataBinding).min(1),
+    kind: z.enum(['line', 'bar']),
+    windowMinutes: z.number().int().positive(),
+  }),
+  z.object({
+    type: z.literal('status'),
+    binding: DataBinding,
+    states: z.array(z.object({ match: z.string(), label: z.string(), color: Color })),
+  }),
+]);
+export type Widget = z.infer<typeof Widget>;
+export type WidgetType = Widget['type'];
+
+/** Widgets usable today. Others are part of the contract but ship in later phases. */
+export const AVAILABLE_WIDGETS = ['text', 'clock', 'qr', 'table', 'web'] as const satisfies readonly WidgetType[];
+
+export const ZoneContent = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('empty') }),
+  z.object({ kind: z.literal('playlist'), playlistId: z.string() }),
+  z.object({ kind: z.literal('media'), mediaId: z.string(), fit: z.enum(['contain', 'cover', 'fill']) }),
+  z.object({ kind: z.literal('widget'), widget: Widget }),
+]);
+export type ZoneContent = z.infer<typeof ZoneContent>;
+
+export const Zone = z.object({
+  id: z.string().min(1).max(40),
+  name: z.string().max(60),
+  x: Fraction,
+  y: Fraction,
+  w: Size,
+  h: Size,
+  z: z.number().int().min(0).max(100),
+  content: ZoneContent,
+});
+export type Zone = z.infer<typeof Zone>;
+
+const zonesWithinCanvas = (
+  layout: { zones: Array<{ id: string; x: number; y: number; w: number; h: number }> },
+  ctx: z.RefinementCtx,
+) => {
+  const ids = new Set<string>();
+  layout.zones.forEach((zone, i) => {
+    if (zone.x + zone.w > 1.0001 || zone.y + zone.h > 1.0001) {
+      ctx.addIssue({ code: 'custom', path: ['zones', i], message: 'Zone exceeds canvas' });
+    }
+    if (ids.has(zone.id)) ctx.addIssue({ code: 'custom', path: ['zones', i, 'id'], message: 'Duplicate zone id' });
+    ids.add(zone.id);
+  });
+};
+
+/** What an editor saves: everything except identity/version, which the server owns. */
+export const LayoutBody = z
+  .object({
+    name: z.string().trim().min(1).max(80),
+    canvas: Canvas,
+    zones: z.array(Zone).max(16),
+  })
+  .superRefine(zonesWithinCanvas);
+export type LayoutBody = z.infer<typeof LayoutBody>;
+
+export const Layout = z
+  .object({
+    specVersion: z.literal(SPEC_VERSION),
+    id: z.string(),
+    name: z.string(),
+    canvas: Canvas,
+    zones: z.array(Zone),
+  })
+  .superRefine(zonesWithinCanvas);
+export type Layout = z.infer<typeof Layout>;
+
+export const PlaylistItemContent = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('media'), mediaId: z.string() }),
+  z.object({ kind: z.literal('layout'), layoutId: z.string() }),
+  z.object({ kind: z.literal('widget'), widget: Widget }),
+]);
+export type PlaylistItemContent = z.infer<typeof PlaylistItemContent>;
+
+export const PlaylistItem = z.object({
+  id: z.string().min(1).max(40),
+  content: PlaylistItemContent,
+  /** For video this is filled from the file's length; it can be shortened to trim. */
+  durationSec: z.number().int().min(1).max(86_400),
+  transition: z.enum(['none', 'fade', 'slide']).default('none'),
+});
+export type PlaylistItem = z.infer<typeof PlaylistItem>;
+
+/** Asset the device must have locally before switching to a manifest version. */
+export const ManifestAsset = z.object({
+  mediaId: z.string(),
+  url: z.string().url(),
+  sha256: z.string().regex(/^[a-f0-9]{64}$/),
+  bytes: z.number().int().positive(),
+  mimeType: z.string(),
+});
+
+const LocalDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD');
+const LocalTime = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Use HH:mm');
+
+/**
+ * When a playlist plays. Dates and times are local to `timezone`, so "09:00–18:00" means the
+ * same wall-clock hours on every screen regardless of where the server is.
+ * A window whose end is not after its start spans midnight (22:00–06:00); `daysOfWeek` then
+ * refers to the day the window starts.
+ */
+export const ScheduleRule = z.object({
+  id: z.string(),
+  /** Higher wins. Emergency content is not a schedule; it is a separate override. */
+  priority: z.number().int().min(0).max(100),
+  timezone: z.string(),
+  startDate: LocalDate.nullable(),
+  endDate: LocalDate.nullable(),
+  /** 0 = Sunday … 6 = Saturday. Empty means every day. */
+  daysOfWeek: z.array(z.number().int().min(0).max(6)).max(7),
+  windowStart: LocalTime.nullable(),
+  windowEnd: LocalTime.nullable(),
+  playlistId: z.string(),
+});
+export type ScheduleRule = z.infer<typeof ScheduleRule>;
+
+export const Manifest = z.object({
+  specVersion: z.literal(SPEC_VERSION),
+  orgId: z.string(),
+  screenId: z.string(),
+  version: z.number().int().positive(),
+  generatedAt: z.number().int(),
+  layouts: z.array(Layout),
+  playlists: z.array(z.object({ id: z.string(), items: z.array(PlaylistItem) })),
+  schedules: z.array(ScheduleRule),
+  defaultPlaylistId: z.string().nullable(),
+  fallbackMediaId: z.string().nullable(),
+  emergency: z
+    .object({ id: z.string(), playlistId: z.string(), expiresAt: z.number().int().nullable() })
+    .nullable(),
+  assets: z.array(ManifestAsset),
+});
+export type Manifest = z.infer<typeof Manifest>;

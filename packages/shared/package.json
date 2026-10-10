@@ -12,6 +12,7 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
+    "@visione-x/layout-spec": "*",
     "zod": "^3.25.0"
   }
 }

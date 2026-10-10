@@ -3,6 +3,19 @@ import { logger } from 'firebase-functions/v2';
 import type { z } from 'zod';
 import {
   AcceptInviteInput,
+  CreateMediaUploadInput,
+  DeleteFolderInput,
+  DeleteLayoutInput,
+  DeleteMediaInput,
+  DeletePlaylistInput,
+  DeleteScheduleInput,
+  DeleteScreenGroupInput,
+  SaveLayoutInput,
+  SavePlaylistInput,
+  SaveScheduleInput,
+  UpdateMediaInput,
+  UpsertFolderInput,
+  UpsertScreenGroupInput,
   DeleteSiteInput,
   InviteMemberInput,
   PLATFORM_ROLES,
@@ -19,6 +32,9 @@ import {
   type PlatformRole,
 } from '@visione-x/shared';
 import { setPlatformRole as setPlatformRoleSvc } from './admin/platformUsers';
+import * as layouts from './content/layouts';
+import * as media from './content/media';
+import * as schedules from './content/schedules';
 import { getDeps } from './lib/admin';
 import type { Actor, Deps } from './lib/context';
 import * as members from './members/members';
@@ -74,3 +90,18 @@ export const revokeInvite = callable(RevokeInviteInput, members.revokeInvite);
 export const updateMemberRole = callable(UpdateMemberRoleInput, members.updateMemberRole);
 export const removeMember = callable(RemoveMemberInput, members.removeMember);
 export const setPlatformRole = callable(SetPlatformRoleInput, setPlatformRoleSvc);
+
+// Content (phase 2)
+export const createMediaUpload = callable(CreateMediaUploadInput, media.createMediaUpload);
+export const updateMedia = callable(UpdateMediaInput, media.updateMedia);
+export const deleteMedia = callable(DeleteMediaInput, media.deleteMedia);
+export const upsertFolder = callable(UpsertFolderInput, media.upsertFolder);
+export const deleteFolder = callable(DeleteFolderInput, media.deleteFolder);
+export const saveLayout = callable(SaveLayoutInput, layouts.saveLayout);
+export const deleteLayout = callable(DeleteLayoutInput, layouts.deleteLayout);
+export const savePlaylist = callable(SavePlaylistInput, layouts.savePlaylist);
+export const deletePlaylist = callable(DeletePlaylistInput, layouts.deletePlaylist);
+export const upsertScreenGroup = callable(UpsertScreenGroupInput, schedules.upsertScreenGroup);
+export const deleteScreenGroup = callable(DeleteScreenGroupInput, schedules.deleteScreenGroup);
+export const saveSchedule = callable(SaveScheduleInput, schedules.saveSchedule);
+export const deleteSchedule = callable(DeleteScheduleInput, schedules.deleteSchedule);

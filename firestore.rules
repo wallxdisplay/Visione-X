@@ -104,6 +104,13 @@ service cloud.firestore {
         allow write: if false;
       }
 
+      // Content (phase 2): readable by any active member, written only by Functions.
+      match /{collection}/{docId} {
+        allow read: if collection in ['media', 'folders', 'layouts', 'playlists', 'screenGroups', 'schedules']
+          && (isActiveMember(orgId) || isPlatformStaff());
+        allow write: if false;
+      }
+
       match /billing/{docId} {
         allow read: if hasPerm(orgId, 'billing.view') || isPlatformStaff();
         allow write: if false;

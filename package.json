@@ -18,7 +18,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "vitest run",
-    "test:emulator": "firebase emulators:exec --only firestore,auth --project demo-visione-x \"vitest run --config tests/vitest.emulator.config.ts\"",
+    "test:emulator": "firebase emulators:exec --only firestore,auth,storage --project demo-visione-x \"vitest run --config tests/vitest.emulator.config.ts\"",
     "emulators": "npm run build -w @visione-x/functions && firebase emulators:start --project demo-visione-x",
     "dev:functions": "npm run build -w @visione-x/functions -- --watch",
     "seed": "tsx functions/scripts/seed-emulator.ts"

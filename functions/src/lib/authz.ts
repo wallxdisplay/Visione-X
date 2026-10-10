@@ -47,6 +47,20 @@ export async function getMember(
   return snap.exists ? (snap.data() as MemberDoc) : null;
 }
 
+/** Permission + active org in one call (reads only; safe before transaction writes). */
+export async function requireActiveOrgPermission(
+  tx: Transaction,
+  db: Firestore,
+  actor: Actor,
+  orgId: string,
+  permission: OrgPermission,
+): Promise<{ member: MemberDoc; org: OrgDoc }> {
+  const member = await requireOrgPermission(tx, db, actor, orgId, permission);
+  const org = await getOrg(tx, db, orgId);
+  requireOrgActive(org);
+  return { member, org };
+}
+
 /** Loads the caller's membership and checks one permission. Returns the member. */
 export async function requireOrgPermission(
   tx: Transaction,
