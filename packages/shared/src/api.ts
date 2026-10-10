@@ -130,4 +130,9 @@ export const CALLABLES = {
   deleteScreenGroup: 'deleteScreenGroup',
   saveSchedule: 'saveSchedule',
   deleteSchedule: 'deleteSchedule',
+  claimDevice: 'claimDevice',
+  authorizeScreen: 'authorizeScreen',
+  updateScreen: 'updateScreen',
+  removeScreen: 'removeScreen',
+  publishScreens: 'publishScreens',
 } as const;

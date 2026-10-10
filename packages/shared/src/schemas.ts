@@ -91,33 +91,7 @@ export const FeatureCatalogEntry = z.object({
   category: z.string(),
 });
 
-export const Orientation = z.enum(['landscape', 'portrait']);
-
-export const ScreenStatus = z.enum([
-  'not_configured',
-  'pending_authorization',
-  'online',
-  'offline',
-  'syncing',
-  'needs_attention',
-]);
-
-export const Screen = z.object({
-  id: z.string(),
-  name: z.string().min(1).max(80),
-  siteId: z.string(),
-  groupIds: z.array(z.string()),
-  orientation: Orientation,
-  resolution: z.object({ width: z.number().int().positive(), height: z.number().int().positive() }),
-  deviceId: z.string().nullable(),
-  status: ScreenStatus,
-  lastSeen: millis.nullable(),
-  manifestVersion: z.number().int().nonnegative(),
-  playerVersion: z.string().nullable(),
-});
-export type Screen = z.infer<typeof Screen>;
-
-export const DeviceStatus = z.enum(['unpaired', 'pending_authorization', 'authorized', 'revoked']);
+// Screens and devices: see devices.ts.
 
 export const AuditLogEntry = z.object({
   id: z.string(),

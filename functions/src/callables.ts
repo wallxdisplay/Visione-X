@@ -3,6 +3,10 @@ import { logger } from 'firebase-functions/v2';
 import type { z } from 'zod';
 import {
   AcceptInviteInput,
+  ClaimDeviceInput,
+  PublishScreensInput,
+  ScreenRefInput,
+  UpdateScreenInput,
   CreateMediaUploadInput,
   DeleteFolderInput,
   DeleteLayoutInput,
@@ -41,6 +45,7 @@ import * as members from './members/members';
 import { reviewOrgSignup as reviewSvc, setOrgStatus as setOrgStatusSvc } from './orgs/review';
 import * as settings from './orgs/settings';
 import * as signup from './orgs/signup';
+import * as screens from './screens/screens';
 import { BASE_OPTIONS } from './options';
 
 export function actorFrom(request: CallableRequest): Actor {
@@ -105,3 +110,10 @@ export const upsertScreenGroup = callable(UpsertScreenGroupInput, schedules.upse
 export const deleteScreenGroup = callable(DeleteScreenGroupInput, schedules.deleteScreenGroup);
 export const saveSchedule = callable(SaveScheduleInput, schedules.saveSchedule);
 export const deleteSchedule = callable(DeleteScheduleInput, schedules.deleteSchedule);
+
+// Screens & publishing (phase 3)
+export const claimDevice = callable(ClaimDeviceInput, screens.claimDevice);
+export const authorizeScreen = callable(ScreenRefInput, screens.authorizeScreen);
+export const updateScreen = callable(UpdateScreenInput, screens.updateScreen);
+export const removeScreen = callable(ScreenRefInput, screens.removeScreen);
+export const publishScreens = callable(PublishScreensInput, screens.publishScreens);

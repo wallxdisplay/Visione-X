@@ -67,8 +67,18 @@ describe('organizations', () => {
     await assertFails(setDoc(doc(db, 'orgs/org1/members/alice'), { role: 'owner' }, { merge: true }));
   });
 
-  it('sub-collections not yet opened stay closed', async () => {
-    await assertFails(getDoc(doc(env.authenticatedContext('alice').firestore(), 'orgs/org1/screens/s1')));
+  it('server-only sub-collections stay closed; screens are readable by members', async () => {
+    const db = env.authenticatedContext('alice').firestore();
+    await assertSucceeds(getDoc(doc(db, 'orgs/org1/screens/s1')));
+    await assertFails(getDoc(doc(db, 'orgs/org1/screenManifests/s1')));
+    await assertFails(setDoc(doc(db, 'orgs/org1/screens/s1'), { status: 'authorized' }, { merge: true }));
+  });
+
+  it('device records, pairing codes and rate limits are never client-readable', async () => {
+    const root = env.authenticatedContext('root', { platformRole: 'superadmin' }).firestore();
+    await assertFails(getDoc(doc(root, 'devices/d1')));
+    await assertFails(getDoc(doc(root, 'pairingCodes/ABC234')));
+    await assertFails(getDoc(doc(root, 'rateLimits/x')));
   });
 
   it('devices cannot read org documents as users', async () => {

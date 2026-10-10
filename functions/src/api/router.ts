@@ -1,9 +1,15 @@
 import { PRODUCT_NAME, REGION } from '@visione-x/shared';
+import type { Deps } from '../lib/context';
+import {
+  deviceHeartbeat,
+  deviceManifest,
+  deviceState,
+  registerDevice,
+  type ApiRequest,
+  type ApiResult,
+} from '../devices/deviceApi';
 
-export interface RouteResult {
-  status: number;
-  body: unknown;
-}
+export type RouteResult = ApiResult;
 
 /** Strips the Hosting prefix so routes work both via /api/** and when called directly. */
 export function normalizePath(path: string): string {
@@ -11,12 +17,22 @@ export function normalizePath(path: string): string {
   return withoutPrefix === '' ? '/' : withoutPrefix;
 }
 
-export function route(method: string, rawPath: string): RouteResult {
-  const path = normalizePath(rawPath);
+type Handler = (deps: Deps, req: ApiRequest) => Promise<ApiResult>;
 
-  if (method === 'GET' && path === '/v1/health') {
-    return { status: 200, body: { ok: true, service: PRODUCT_NAME, region: REGION } };
-  }
+const ROUTES: Record<string, Handler> = {
+  'GET /v1/health': async () => ({ status: 200, body: { ok: true, service: PRODUCT_NAME, region: REGION } }),
+  'POST /v1/devices/register': registerDevice,
+  'GET /v1/devices/me': deviceState,
+  'GET /v1/devices/manifest': deviceManifest,
+  'POST /v1/devices/heartbeat': deviceHeartbeat,
+};
 
-  return { status: 404, body: { error: 'not_found' } };
+export function findRoute(method: string, rawPath: string): Handler | null {
+  return ROUTES[`${method} ${normalizePath(rawPath)}`] ?? null;
+}
+
+export async function handle(deps: Deps, req: ApiRequest): Promise<ApiResult> {
+  const handler = findRoute(req.method, req.path);
+  if (!handler) return { status: 404, body: { error: 'not_found' } };
+  return handler(deps, req);
 }

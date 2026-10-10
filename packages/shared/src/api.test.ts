@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { InviteMemberInput, OrgSignupDetails, ReviewOrgSignupInput, UpsertSiteInput } from './api';
+import { PairingCode } from './devices';
 
 const signup = {
   orgName: 'Acme',
@@ -36,6 +37,12 @@ describe('api schemas', () => {
     expect(InviteMemberInput.parse({ orgId: 'o', email: ' Bob@Example.COM ', role: 'viewer' }).email).toBe(
       'bob@example.com',
     );
+  });
+
+  it('normalizes pairing codes typed with spaces, dashes or lowercase', () => {
+    expect(PairingCode.parse(' k7p-2qx ')).toBe('K7P2QX');
+    expect(PairingCode.safeParse('K7P2Q0').success).toBe(false); // 0 is not in the alphabet
+    expect(PairingCode.safeParse('K7P2Q').success).toBe(false);
   });
 
   it('rejects ids with path characters', () => {
