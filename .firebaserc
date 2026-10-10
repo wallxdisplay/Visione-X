@@ -1,5 +1,6 @@
 {
   "projects": {
-    "default": "demo-visione-x"
+    "default": "demo-visione-x",
+    "prod": "visione-x"
   }
 }

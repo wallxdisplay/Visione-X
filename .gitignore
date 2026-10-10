@@ -6,6 +6,7 @@ coverage/
 .env
 .env.*
 !.env.example
+!apps/web/.env.production
 .firebase/
 .emulator-data/
 firebase-debug.log*
