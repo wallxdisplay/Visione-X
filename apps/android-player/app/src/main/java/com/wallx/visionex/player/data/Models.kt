@@ -119,6 +119,7 @@ data class DeviceState(
     val pairingUrl: String? = null,
     val orgName: String? = null,
     val screen: ScreenInfo? = null,
+    val commandsPending: Int = 0,
     val config: DeviceConfig = DeviceConfig(),
     val serverTime: Long = 0,
 )
@@ -137,6 +138,20 @@ data class DeviceConfig(val pollSec: Int = 60, val heartbeatSec: Int = 300)
 
 @Serializable
 data class Playing(val playlistId: String?, val itemId: String?, val source: String)
+
+@Serializable
+data class RemoteCommand(val id: String, val type: String, val createdAt: Long = 0)
+
+@Serializable
+data class CommandList(val commands: List<RemoteCommand> = emptyList())
+
+@Serializable
+data class CommandResult(
+    val id: String,
+    val status: String,
+    val result: JsonObject?,
+    val screenshotJpegBase64: String?,
+)
 
 @Serializable
 data class Heartbeat(

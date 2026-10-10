@@ -1,10 +1,12 @@
-import { Bell, HelpCircle, LogOut, Menu, ShieldCheck } from 'lucide-react';
+import { HelpCircle, LogOut, Menu, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, NavLink, Outlet } from 'react-router';
 import { useAuth } from '../auth/AuthProvider';
 import { useOrg } from '../org/OrgProvider';
+import { EmergencyBanner } from './EmergencyBanner';
 import type { NavGroup } from './nav';
+import { NotificationBell } from './NotificationBell';
 
 function OrgSwitcher() {
   const { t } = useTranslation();
@@ -89,9 +91,7 @@ export function AppShell({ nav, variant }: { nav: NavGroup[]; variant: 'customer
                 {t('shell.backToApp')}
               </Link>
             ) : null}
-            <button type="button" className="shell__icon-btn" aria-label={t('shell.notifications')}>
-              <Bell size={18} />
-            </button>
+            {variant === 'customer' ? <NotificationBell /> : null}
             <button type="button" className="shell__icon-btn" aria-label={t('shell.help')}>
               <HelpCircle size={18} />
             </button>
@@ -109,6 +109,7 @@ export function AppShell({ nav, variant }: { nav: NavGroup[]; variant: 'customer
             </button>
           </div>
         </header>
+        {variant === 'customer' ? <EmergencyBanner /> : null}
         <main className="shell__content">
           <Outlet />
         </main>

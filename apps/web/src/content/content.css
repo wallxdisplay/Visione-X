@@ -126,6 +126,206 @@
   cursor: pointer;
 }
 
+/* ---------- operations ---------- */
+.bell {
+  position: relative;
+}
+.bell__badge {
+  position: absolute;
+  top: 3px;
+  right: 2px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: var(--color-danger);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 17px;
+}
+.bell__panel {
+  position: absolute;
+  right: 0;
+  top: 44px;
+  z-index: 30;
+  width: min(380px, calc(100vw - 32px));
+  max-height: 480px;
+  overflow-y: auto;
+  background: var(--color-surface);
+  border: var(--border-default);
+  border-radius: var(--radius-card);
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.18);
+}
+.bell__head {
+  padding: var(--space-3) var(--space-4);
+  font-weight: 600;
+  border-bottom: var(--border-default);
+}
+.bell__empty {
+  padding: var(--space-4);
+  margin: 0;
+}
+.bell__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.bell__item {
+  display: grid;
+  gap: 2px;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: var(--border-default);
+}
+.bell__item a {
+  color: var(--color-ink);
+  text-decoration: none;
+}
+.bell__item--unread {
+  background: var(--color-primary-soft);
+}
+.bell__item--screen_offline a,
+.bell__item--emergency_started a {
+  color: var(--color-danger);
+  font-weight: 600;
+}
+.emergency-banner {
+  background: var(--color-danger);
+  color: #fff;
+  padding: var(--space-2) var(--space-8);
+  display: grid;
+  gap: var(--space-2);
+}
+.emergency-banner__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.emergency-banner__row span {
+  flex: 1;
+}
+.emergency-banner__error {
+  background: rgba(0, 0, 0, 0.25);
+  padding: var(--space-2);
+  border-radius: var(--radius-chip);
+}
+.danger-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-danger);
+}
+.emergency-preview {
+  color: #fff;
+  font-weight: 700;
+  font-size: 22px;
+  text-align: center;
+  padding: var(--space-8) var(--space-4);
+  border-radius: var(--radius-control);
+  aspect-ratio: 16 / 6;
+  display: grid;
+  place-items: center;
+}
+.emergency-impact {
+  margin: 0;
+  font-weight: 600;
+}
+.commands {
+  display: grid;
+  gap: var(--space-3);
+  border-top: var(--border-default);
+  padding-top: var(--space-4);
+}
+.commands__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+.commands__item {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-default);
+  border-radius: var(--radius-control);
+}
+.commands__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.commands__shot {
+  max-width: 100%;
+  max-height: 240px;
+  border-radius: 6px;
+  border: var(--border-default);
+}
+.commands__result dd {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.approvals {
+  list-style: none;
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+.approvals__item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+  gap: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: var(--border-default);
+}
+.approvals__note {
+  margin: var(--space-1) 0 0;
+  color: var(--color-ink-secondary);
+}
+.approvals__actions {
+  display: grid;
+  gap: var(--space-2);
+}
+.attention {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+.attention li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.attention li a {
+  flex: 1;
+}
+.attention__icon--danger {
+  color: var(--color-danger);
+}
+.attention__icon--warning {
+  color: var(--color-warning);
+}
+.attention__icon--info {
+  color: var(--color-info);
+}
+.vx-stat--alert {
+  border-color: var(--color-danger);
+  background: var(--color-danger-soft);
+}
+@media (max-width: 767px) {
+  .approvals__item {
+    grid-template-columns: 1fr;
+  }
+  .emergency-banner {
+    padding: var(--space-2) var(--space-4);
+  }
+}
+
 .pairing-input {
   font-size: 22px;
   letter-spacing: 0.3em;

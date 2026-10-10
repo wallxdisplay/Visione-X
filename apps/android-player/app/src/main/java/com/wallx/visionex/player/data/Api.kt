@@ -25,6 +25,15 @@ class Api(private val base: String, val http: OkHttpClient = defaultClient()) {
     /** Raw manifest JSON (stored as-is so the exact published version can be reloaded offline). */
     suspend fun manifestJson(auth: String): String = request(Request.Builder().url("$base/devices/manifest").get(), auth)
 
+    suspend fun commands(auth: String): CommandList = get("/devices/commands", auth)
+
+    suspend fun commandResult(auth: String, body: CommandResult) {
+        request(
+            Request.Builder().url("$base/devices/commands/result").post(json.encodeToString(body).toRequestBody(jsonType)),
+            auth,
+        )
+    }
+
     suspend fun heartbeat(auth: String, body: Heartbeat) {
         request(
             Request.Builder().url("$base/devices/heartbeat").post(json.encodeToString(body).toRequestBody(jsonType)),

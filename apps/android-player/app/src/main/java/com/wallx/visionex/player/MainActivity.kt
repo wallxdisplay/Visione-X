@@ -1,6 +1,16 @@
 package com.wallx.visionex.player
 
 import android.app.admin.DevicePolicyManager
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.os.Handler
+import android.os.Looper
+import android.view.PixelCopy
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
+import kotlin.coroutines.resume
 import android.content.ComponentName
 import android.content.Context
 import android.os.Build
@@ -30,8 +40,41 @@ class MainActivity : ComponentActivity() {
         })
 
         engine = PlayerEngine.get(applicationContext)
+        engine.screenshotter = { captureJpeg() }
         engine.start(lifecycleScope)
         setContent { PlayerRoot(engine) }
+    }
+
+    override fun onDestroy() {
+        engine.screenshotter = null
+        super.onDestroy()
+    }
+
+    /**
+     * Captures what is on screen as a JPEG (max 1280 px wide). PixelCopy (Android 8+) includes
+     * hardware video surfaces; older boxes fall back to drawing the view tree (video shows black).
+     */
+    private suspend fun captureJpeg(): ByteArray? = withContext(Dispatchers.Main) {
+        val view = window.decorView
+        if (view.width == 0 || view.height == 0) return@withContext null
+        val full = Bitmap.createBitmap(view.width, view.height, Bitmap.Config.ARGB_8888)
+        val ok = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            suspendCancellableCoroutine { cont ->
+                PixelCopy.request(window, full, { result -> cont.resume(result == PixelCopy.SUCCESS) }, Handler(Looper.getMainLooper()))
+            }
+        } else {
+            view.draw(Canvas(full))
+            true
+        }
+        if (!ok) return@withContext null
+        withContext(Dispatchers.Default) {
+            val scale = minOf(1f, 1280f / full.width)
+            val out = if (scale < 1f) Bitmap.createScaledBitmap(full, (full.width * scale).toInt(), (full.height * scale).toInt(), true) else full
+            ByteArrayOutputStream().use { stream ->
+                out.compress(Bitmap.CompressFormat.JPEG, 70, stream)
+                stream.toByteArray()
+            }
+        }
     }
 
     override fun onResume() {

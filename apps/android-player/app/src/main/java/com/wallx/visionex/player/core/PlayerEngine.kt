@@ -24,6 +24,11 @@ import com.wallx.visionex.player.data.Playing
 import com.wallx.visionex.player.data.SUPPORTED_SPEC_VERSION
 import com.wallx.visionex.player.data.Size
 import com.wallx.visionex.player.data.json
+import com.wallx.visionex.player.data.CommandResult
+import com.wallx.visionex.player.PlayerApp
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -76,6 +81,26 @@ class PlayerEngine internal constructor(
 
     /** Set by the renderer so heartbeats can report what is on screen. */
     @Volatile var nowPlaying: Playing? = null
+
+    /** Set by MainActivity: captures the screen as JPEG bytes (null when not possible). */
+    @Volatile var screenshotter: (suspend () -> ByteArray?)? = null
+
+    /** Process restart / device reboot (replaceable in tests). Reboot returns false if not allowed. */
+    internal var restarter: () -> Unit = {
+        PlayerApp.scheduleRestart(context, 1_500)
+        kotlin.system.exitProcess(0)
+    }
+    internal var rebooter: () -> Boolean = {
+        val dpm = context.getSystemService(Context.DEVICE_POLICY_SERVICE) as android.app.admin.DevicePolicyManager
+        if (dpm.isDeviceOwnerApp(context.packageName)) {
+            dpm.reboot(android.content.ComponentName(context, com.wallx.visionex.player.KioskAdminReceiver::class.java))
+            true
+        } else {
+            false
+        }
+    }
+
+    private var serverSkewMs: Long? = null
 
     private var pollSec = 60
     private var heartbeatSec = 300
@@ -135,6 +160,7 @@ class PlayerEngine internal constructor(
     private suspend fun handleState(state: DeviceState) {
         pollSec = state.config.pollSec.coerceIn(15, 900)
         heartbeatSec = state.config.heartbeatSec.coerceIn(60, 3600)
+        if (state.serverTime > 0) serverSkewMs = System.currentTimeMillis() - state.serverTime
         val org = state.orgName ?: ""
         val screen = state.screen
         when (state.status) {
@@ -150,6 +176,7 @@ class PlayerEngine internal constructor(
                 val current = manifests.load()
                 if (current == null) _ui.value = UiState.NoContent(org, screen?.name ?: "")
                 else if ((_ui.value as? UiState.Playing)?.manifest?.version != current.version) show(current)
+                if (state.commandsPending > 0) runCommands(org, screen?.name ?: "")
             }
             "revoked" -> resetIdentity("screen removed")
         }
@@ -173,6 +200,62 @@ class PlayerEngine internal constructor(
         cache.prune(manifest.assets)
         Log.i(TAG, "Activated manifest v${manifest.version} (${manifest.assets.size} assets)")
     }
+
+    private class Outcome(
+        val status: String,
+        val result: JsonObject?,
+        val screenshot: String? = null,
+        val after: (() -> Unit)? = null,
+    )
+
+    /** Fetches queued remote commands, runs them, reports each result. */
+    private suspend fun runCommands(org: String, screenName: String) {
+        val auth = device.auth ?: return
+        for (command in api.commands(auth).commands) {
+            val outcome = try {
+                execute(command.type, org, screenName)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Outcome("failed", buildJsonObject { put("error", "${e.javaClass.simpleName}: ${e.message}") })
+            }
+            api.commandResult(auth, CommandResult(command.id, outcome.status, outcome.result, outcome.screenshot))
+            Log.i(TAG, "Command ${command.type} → ${outcome.status}")
+            outcome.after?.invoke()
+        }
+    }
+
+    private suspend fun execute(type: String, org: String, screenName: String): Outcome { return when (type) {
+        "refresh" -> {
+            sync()
+            manifests.load()?.let { show(it) }
+            Outcome("done", buildJsonObject { put("manifestVersion", manifests.load()?.version ?: 0) })
+        }
+        "clear_cache" -> {
+            cache.clear()
+            manifests.clear()
+            _ui.value = UiState.NoContent(org, screenName)
+            sync()
+            manifests.load()?.let { show(it) }
+            Outcome("done", buildJsonObject { put("manifestVersion", manifests.load()?.version ?: 0) })
+        }
+        "restart_app" -> Outcome("done", null, after = restarter)
+        "reboot" -> {
+            val dpm = context.getSystemService(Context.DEVICE_POLICY_SERVICE) as android.app.admin.DevicePolicyManager
+            if (dpm.isDeviceOwnerApp(context.packageName)) {
+                Outcome("done", buildJsonObject { put("action", "reboot") }, after = { rebooter() })
+            } else {
+                // Not a kiosk-provisioned box: a full reboot is not permitted, restart the player instead.
+                Outcome("done", buildJsonObject { put("action", "restart_app"); put("reason", "not device owner") }, after = restarter)
+            }
+        }
+        "screenshot" -> {
+            val bytes = screenshotter?.invoke() ?: return Outcome("failed", buildJsonObject { put("error", "screenshot unavailable") })
+            Outcome("done", buildJsonObject { put("bytes", bytes.size) }, screenshot = android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP))
+        }
+        "diagnostics" -> Outcome("done", Diagnostics.collect(context, manifests.load()?.version, File(context.filesDir, "assets"), serverSkewMs))
+        else -> Outcome("failed", buildJsonObject { put("error", "unsupported command $type — update the player app") })
+    } }
 
     private fun show(manifest: Manifest) {
         val files = manifest.assets

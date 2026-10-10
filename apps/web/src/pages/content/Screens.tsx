@@ -8,7 +8,10 @@ import {
   paths,
   type ScreenDoc,
 } from '@visione-x/shared';
-import { Monitor, Plus, Send } from 'lucide-react';
+import { Monitor, Plus, Send, Siren } from 'lucide-react';
+import { ApprovalsPanel } from './ApprovalsPanel';
+import { EmergencyDialog } from './EmergencyDialog';
+import { ScreenCommands } from './ScreenCommands';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router';
@@ -49,6 +52,7 @@ export function Screens() {
   const sites = useSites(orgId);
   const [adding, setAdding] = useState<string | null>(null);
   const [editing, setEditing] = useState<ScreenDoc | null>(null);
+  const [emergencyOpen, setEmergencyOpen] = useState(false);
   const [message, setMessage] = useState<{ tone: 'success' | 'danger'; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -65,8 +69,11 @@ export function Screens() {
     setBusy(true);
     setMessage(null);
     try {
-      const { published } = await call<{ published: number }>('publishScreens', { orgId, screenIds });
-      setMessage({ tone: 'success', text: t('screens.published', { count: published }) });
+      const { published, approvalId } = await call<{ published: number; approvalId?: string }>('publishScreens', { orgId, screenIds });
+      setMessage({
+        tone: 'success',
+        text: approvalId ? t('screens.sentForApproval') : t('screens.published', { count: published }),
+      });
     } catch (err) {
       setMessage({ tone: 'danger', text: errorMessage(err) });
     } finally {
@@ -93,6 +100,11 @@ export function Screens() {
         description={t('screens.description')}
         actions={
           <div className="vx-toolbar" style={{ margin: 0 }}>
+            {can('emergency.trigger') && screens.data.some((s) => s.status === 'authorized') ? (
+              <Button variant="danger" onClick={() => setEmergencyOpen(true)}>
+                <Siren size={15} aria-hidden /> {t('emergency.button')}
+              </Button>
+            ) : null}
             {can('content.publish') && screens.data.some((s) => s.status === 'authorized') ? (
               <Button disabled={busy} onClick={() => void publish([])}>
                 <Send size={15} aria-hidden /> {t('screens.publishAll')}
@@ -107,6 +119,7 @@ export function Screens() {
         }
       />
       {message ? <Alert tone={message.tone}>{message.text}</Alert> : null}
+      <ApprovalsPanel />
 
       {screens.data.length === 0 && !screens.loading ? (
         <div className="vx-card">
@@ -188,6 +201,7 @@ export function Screens() {
       </p>
 
       {adding !== null ? <ScreenDialog code={adding} onClose={() => setAdding(null)} /> : null}
+      {emergencyOpen ? <EmergencyDialog screens={screens.data} onClose={() => setEmergencyOpen(false)} /> : null}
       {editing ? (
         <ScreenDialog key={editing.id} screen={screens.data.find((s) => s.id === editing.id) ?? editing} onClose={() => setEditing(null)} />
       ) : null}
@@ -390,6 +404,7 @@ function ScreenDialog({ code, screen, onClose }: { code?: string; screen?: Scree
           </ul>
         </Alert>
       ) : null}
+      {screen ? <ScreenCommands screen={screen} /> : null}
     </Dialog>
   );
 }

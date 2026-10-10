@@ -43,6 +43,8 @@ class PlayerEngineTest {
     private var manifest = ""
     private val files = mutableMapOf<String, ByteArray>()
     private var authHeaders = mutableListOf<String?>()
+    private val queued = mutableListOf<String>()
+    private val results = mutableListOf<String>()
 
     private val png = byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47, 1, 2, 3, 4, 5, 6, 7, 8)
     private val video = ByteArray(200_000) { (it % 251).toByte() }
@@ -65,10 +67,13 @@ class PlayerEngineTest {
                            "pairingCode":${if (status == "unpaired") "\"ABC234\"" else "null"},
                            "pairingUrl":"https://x/screens?pair=ABC234","orgName":"Acme",
                            "screen":${if (status == "unpaired") "null" else """{"id":"s1","name":"Lobby wall","orientation":"landscape","resolution":{"width":1920,"height":1080},"manifestVersion":$manifestVersion}"""},
+                           "commandsPending":${queued.size},
                            "config":{"pollSec":60,"heartbeatSec":300},"serverTime":0}""",
                     )
                     path == "/api/v1/devices/manifest" -> json(200, manifest)
                     path == "/api/v1/devices/heartbeat" -> json(200, """{"ok":true}""")
+                    path == "/api/v1/devices/commands" -> json(200, """{"commands":[${queued.joinToString(",") { """{"id":"c-$it","type":"$it"}""" }}]}""").also { queued.clear() }
+                    path == "/api/v1/devices/commands/result" -> json(200, """{"ok":true}""").also { results.add(request.body.readUtf8()) }
                     path.startsWith("/files/") -> files[path.removePrefix("/files/")]?.let {
                         MockResponse().setResponseCode(200).setBody(Buffer().write(it))
                     } ?: MockResponse().setResponseCode(404)
@@ -131,6 +136,31 @@ class PlayerEngineTest {
         engine.tick()
         assertEquals(1, (engine.ui.value as UiState.Playing).manifest.version)
         assertTrue(ErrorLog.recent(context).any { "Checksum mismatch" in it })
+    }
+
+    @Test
+    fun runsRemoteCommandsAndReportsResults() = runBlocking {
+        val engine = engine()
+        var restarted = 0
+        engine.restarter = { restarted++ }
+        engine.screenshotter = { byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte(), 1, 2) }
+        status = "authorized"
+        files["m1"] = png
+        files["m2"] = video
+        manifest = manifestJson(1, sha(video))
+        manifestVersion = 1
+        engine.tick()
+
+        queued += listOf("screenshot", "diagnostics", "restart_app", "reboot", "self_destruct")
+        engine.tick()
+
+        assertEquals(5, results.size)
+        val byId = results.associateBy { Regex("\"id\":\"c-([a-z_]+)\"").find(it)!!.groupValues[1] }
+        assertTrue(byId["screenshot"]!!.contains("\"status\":\"done\"") && byId["screenshot"]!!.contains("\"screenshotJpegBase64\":\"/9j/AQI=\""))
+        assertTrue(byId["diagnostics"]!!.contains("\"manifestVersion\":1") && byId["diagnostics"]!!.contains("\"decoders\""))
+        assertTrue(byId["reboot"]!!.contains("not device owner")) // falls back to a player restart
+        assertTrue(byId["self_destruct"]!!.contains("\"status\":\"failed\""))
+        assertEquals(2, restarted) // restart_app + reboot fallback, each after reporting
     }
 
     @Test

@@ -212,16 +212,28 @@
     "title": "Overview",
     "plan": "Plan",
     "trialEnds": "{{days}} days left · ends {{date}}",
-    "screenLimit": "Screen limit",
-    "userLimit": "User limit",
-    "sites": "Sites",
+    "totalScreens": "Screens",
+    "ofLimit": "of {{limit}} on your plan",
+    "online": "Online",
+    "offline": "Offline",
+    "attention": "Needs attention",
+    "allGood": "All screens are online and up to date.",
+    "noScreensYet": "No screens yet — pair your first screen to start.",
+    "issues": {
+      "offline": "{{screen}} is offline",
+      "pending": "{{screen}} is waiting for authorization",
+      "errors_one": "{{screen}} reported {{count}} error",
+      "errors_other": "{{screen}} reported {{count}} errors",
+      "unpublished": "{{screen}} has no content published yet",
+      "screenLimit": "Screen limit reached ({{limit}}) — upgrade to add more screens"
+    },
     "setupTitle": "Get started",
     "steps": {
       "approved": "Organization approved by WallX",
       "site": "Add your first site",
       "team": "Invite your team",
       "screen": "Pair your first screen",
-      "screenNote": "available when the Android player ships (phase 3)"
+      "publish": "Publish content to a screen"
     }
   },
   "team": {
@@ -268,7 +280,10 @@
     "readOnly": "Only owners and admins can change these settings.",
     "orgName": "Organization name",
     "timezone": "Default time zone",
-    "timezoneHint": "Used for new sites and schedules."
+    "timezoneHint": "Used for new sites and schedules.",
+    "requireApproval": "Require approval before publishing",
+    "requireApprovalHint": "Editors’ publishes become requests that an Approver, Admin or Owner must approve.",
+    "requireApprovalNotInPlan": "Publish approvals are part of the Professional plan."
   },
   "admin": {
     "overview": {

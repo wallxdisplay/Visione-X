@@ -7,11 +7,13 @@ import { useOrg } from '../../org/OrgProvider';
 
 export function OrgSettings() {
   const { t } = useTranslation();
-  const { orgId, org, can } = useOrg();
+  const { orgId, org, can, entitlements } = useOrg();
   const editable = can('org.settings.edit');
+  const approvalsInPlan = entitlements?.features.includes('content.approvals') ?? false;
   const timezones = useMemo(timezoneOptions, []);
   const [name, setName] = useState('');
   const [timezone, setTimezone] = useState('Asia/Kolkata');
+  const [requireApproval, setRequireApproval] = useState(false);
   const [status, setStatus] = useState<{ tone: 'success' | 'danger'; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -19,6 +21,7 @@ export function OrgSettings() {
     if (org) {
       setName(org.name);
       setTimezone(org.timezone);
+      setRequireApproval(org.settings?.requirePublishApproval ?? false);
     }
   }, [org]);
 
@@ -27,7 +30,12 @@ export function OrgSettings() {
     setBusy(true);
     setStatus(null);
     try {
-      await call('updateOrgSettings', { orgId, name, timezone });
+      await call('updateOrgSettings', {
+        orgId,
+        name,
+        timezone,
+        ...(approvalsInPlan ? { requirePublishApproval: requireApproval } : {}),
+      });
       setStatus({ tone: 'success', text: t('settings.saved') });
     } catch (err) {
       setStatus({ tone: 'danger', text: errorMessage(err) });
@@ -59,6 +67,20 @@ export function OrgSettings() {
               value={timezone}
               onChange={(e) => setTimezone(e.target.value)}
             />
+            <div className="vx-field">
+              <label className="checkbox-row">
+                <input
+                  type="checkbox"
+                  disabled={!editable || !approvalsInPlan}
+                  checked={requireApproval}
+                  onChange={(e) => setRequireApproval(e.target.checked)}
+                />
+                {t('settings.requireApproval')}
+              </label>
+              <p className="vx-field__hint">
+                {approvalsInPlan ? t('settings.requireApprovalHint') : t('settings.requireApprovalNotInPlan')}
+              </p>
+            </div>
             {editable ? (
               <div className="vx-form__actions">
                 <Button type="submit" variant="primary" disabled={busy || name.trim().length < 2}>
