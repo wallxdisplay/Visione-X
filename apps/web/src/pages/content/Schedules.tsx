@@ -48,7 +48,11 @@ export function Schedules() {
   );
   const rules = useMemo(() => enabled.map(toRule), [enabled]);
   const weekStart = useMemo(() => startOfWeek(Date.now()), []);
-  const conflicts = useMemo(() => findConflicts(rules, Date.now(), { days: 14, stepMinutes: 15 }), [rules]);
+  // Sample on quarter-hour boundaries so reported times read naturally (12:00, not 12:01).
+  const conflicts = useMemo(
+    () => findConflicts(rules, Math.ceil(Date.now() / 900_000) * 900_000, { days: 14, stepMinutes: 15 }),
+    [rules],
+  );
   const resolution = resolvePlaylist({ schedules: rules, defaultPlaylistId: null }, new Date(testAt).getTime());
   const scheduleName = (id: string) => schedules.data.find((s) => s.id === id)?.name ?? id;
 

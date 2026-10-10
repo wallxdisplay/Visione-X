@@ -10,10 +10,11 @@ service firebase.storage {
       return /databases/(default)/documents/orgs/$(orgId)/members/$(request.auth.uid);
     }
 
+    // One cross-service lookup per request (a missing member doc makes get() fail → deny).
+    // Each lookup is a billed Firestore read, so avoid exists() + get() pairs.
     function isActiveMember(orgId) {
       return request.auth != null
         && request.auth.token.get('type', null) != 'device'
-        && firestore.exists(memberPath(orgId))
         && firestore.get(memberPath(orgId)).data.status == 'active';
     }
 
