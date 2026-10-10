@@ -17,13 +17,14 @@ export function Dashboard() {
     query(collection(db, paths.members(orgId))),
   );
   const subscription = useDoc<SubscriptionDoc>(can('billing.view') ? paths.orgSubscription(orgId) : null);
+  const usage = useDoc<{ screens?: number }>(paths.orgUsage(orgId));
   const trialEnds = subscription.data?.status === 'trialing' ? subscription.data.trialEndsAt : null;
 
   const steps = [
     { done: true, label: t('dashboard.steps.approved') },
     { done: sites.data.length > 0, label: t('dashboard.steps.site'), to: '/sites' },
     { done: members.data.length > 1, label: t('dashboard.steps.team'), to: '/team' },
-    { done: false, label: t('dashboard.steps.screen'), note: t('dashboard.steps.screenNote') },
+    { done: (usage.data?.screens ?? 0) > 0, label: t('dashboard.steps.screen'), to: '/screens' },
   ];
 
   return (
@@ -66,7 +67,6 @@ export function Dashboard() {
               )}
               <span>
                 {s.to && !s.done ? <Link to={s.to}>{s.label}</Link> : s.label}
-                {s.note ? <span className="vx-muted"> — {s.note}</span> : null}
               </span>
               {s.done ? <StatusChip tone="success">{t('common.done')}</StatusChip> : null}
             </li>

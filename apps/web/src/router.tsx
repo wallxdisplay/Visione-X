@@ -17,6 +17,7 @@ import { Library } from './pages/content/Library';
 import { PlaylistEditor } from './pages/content/PlaylistEditor';
 import { Playlists } from './pages/content/Playlists';
 import { Schedules } from './pages/content/Schedules';
+import { Screens } from './pages/content/Screens';
 import { StudioEditor } from './pages/content/StudioEditor';
 import { StudioList } from './pages/content/StudioList';
 import { Dashboard } from './pages/customer/Dashboard';
@@ -34,6 +35,7 @@ import { adminNav, customerNav, type NavGroup } from './shell/nav';
 const PAGES: Record<string, ReactNode> = {
   '/': <Dashboard />,
   '/library': <Library />,
+  '/screens': <Screens />,
   '/studio': <StudioList />,
   '/playlists': <Playlists />,
   '/schedules': <Schedules />,

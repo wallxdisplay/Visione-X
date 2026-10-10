@@ -126,6 +126,15 @@
   cursor: pointer;
 }
 
+.pairing-input {
+  font-size: 22px;
+  letter-spacing: 0.3em;
+  font-weight: 700;
+  text-transform: uppercase;
+  height: 48px;
+  font-variant-numeric: tabular-nums;
+}
+
 /* ---------- media ---------- */
 .library--dragging {
   outline: 2px dashed var(--color-primary);

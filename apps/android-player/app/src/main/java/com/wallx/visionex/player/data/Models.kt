@@ -1,0 +1,149 @@
+package com.wallx.visionex.player.data
+
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonPrimitive
+
+/**
+ * Kotlin mirror of packages/layout-spec (SPEC_VERSION 1) and the device API payloads.
+ * Zone/item content and widgets are kept as JSON objects and interpreted by the renderer, so a
+ * newer server can add widget types without breaking older players (they show a placeholder).
+ */
+val json = Json {
+    ignoreUnknownKeys = true
+    explicitNulls = false
+    encodeDefaults = true
+}
+
+const val SUPPORTED_SPEC_VERSION = 1
+
+@Serializable
+data class Manifest(
+    val specVersion: Int,
+    val orgId: String,
+    val screenId: String,
+    val version: Int,
+    val generatedAt: Long,
+    val layouts: List<Layout>,
+    val playlists: List<Playlist>,
+    val schedules: List<ScheduleRule>,
+    val defaultPlaylistId: String? = null,
+    val fallbackMediaId: String? = null,
+    val emergency: Emergency? = null,
+    val assets: List<Asset>,
+)
+
+@Serializable
+data class Layout(val specVersion: Int, val id: String, val name: String, val canvas: Canvas, val zones: List<Zone>)
+
+@Serializable
+data class Canvas(val width: Int, val height: Int, val orientation: String, val background: String = "#000000")
+
+@Serializable
+data class Zone(
+    val id: String,
+    val name: String,
+    val x: Double,
+    val y: Double,
+    val w: Double,
+    val h: Double,
+    val z: Int,
+    val content: JsonObject,
+)
+
+@Serializable
+data class Playlist(val id: String, val items: List<PlaylistItem>)
+
+@Serializable
+data class PlaylistItem(val id: String, val content: JsonObject, val durationSec: Int, val transition: String = "none")
+
+@Serializable
+data class ScheduleRule(
+    val id: String,
+    val priority: Int,
+    val timezone: String,
+    val startDate: String? = null,
+    val endDate: String? = null,
+    val daysOfWeek: List<Int> = emptyList(),
+    val windowStart: String? = null,
+    val windowEnd: String? = null,
+    val playlistId: String,
+)
+
+@Serializable
+data class Emergency(val id: String, val playlistId: String, val expiresAt: Long? = null)
+
+@Serializable
+data class Asset(val mediaId: String, val url: String, val sha256: String, val bytes: Long, val mimeType: String)
+
+/** `content.kind` / `widget.type` helpers. */
+fun JsonObject.str(key: String): String? = (this[key] as? kotlinx.serialization.json.JsonPrimitive)?.let {
+    if (it.isString) it.content else it.content.takeIf { c -> c != "null" }
+}
+fun JsonObject.kind(): String = this["kind"]?.jsonPrimitive?.content ?: ""
+
+// ---------------------------------------------------------------- device API
+
+@Serializable
+data class DeviceHardware(
+    val manufacturer: String,
+    val model: String,
+    val androidVersion: String,
+    val sdkInt: Int,
+    val appVersion: String,
+    val display: Size,
+)
+
+@Serializable
+data class Size(val width: Int, val height: Int)
+
+@Serializable
+data class RegisterRequest(val hardware: DeviceHardware)
+
+@Serializable
+data class RegisterResponse(
+    val deviceId: String,
+    val deviceSecret: String,
+    val pairingCode: String,
+    val pairingExpiresAt: Long,
+    val pairingUrl: String,
+)
+
+@Serializable
+data class DeviceState(
+    val deviceId: String,
+    val status: String,
+    val pairingCode: String? = null,
+    val pairingExpiresAt: Long? = null,
+    val pairingUrl: String? = null,
+    val orgName: String? = null,
+    val screen: ScreenInfo? = null,
+    val config: DeviceConfig = DeviceConfig(),
+    val serverTime: Long = 0,
+)
+
+@Serializable
+data class ScreenInfo(
+    val id: String,
+    val name: String,
+    val orientation: String,
+    val resolution: Size,
+    val manifestVersion: Int,
+)
+
+@Serializable
+data class DeviceConfig(val pollSec: Int = 60, val heartbeatSec: Int = 300)
+
+@Serializable
+data class Playing(val playlistId: String?, val itemId: String?, val source: String)
+
+@Serializable
+data class Heartbeat(
+    val appVersion: String,
+    val display: Size,
+    val storageFreeMb: Long?,
+    val playing: Playing?,
+    val manifestVersion: Int?,
+    val errors: List<String>,
+)

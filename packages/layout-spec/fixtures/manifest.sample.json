@@ -1,0 +1,41 @@
+{
+  "specVersion": 1,
+  "orgId": "org1",
+  "screenId": "screen1",
+  "version": 7,
+  "generatedAt": 1791600000000,
+  "layouts": [
+    {
+      "specVersion": 1,
+      "id": "l1",
+      "name": "L-bar with ticker",
+      "canvas": { "width": 1920, "height": 1080, "orientation": "landscape", "background": "#000000" },
+      "zones": [
+        { "id": "z1", "name": "Main", "x": 0, "y": 0, "w": 0.75, "h": 0.85, "z": 0, "content": { "kind": "media", "mediaId": "m1", "fit": "cover" } },
+        { "id": "z2", "name": "Side", "x": 0.75, "y": 0, "w": 0.25, "h": 0.85, "z": 1, "content": { "kind": "widget", "widget": { "type": "clock", "format": "time", "timezone": "Asia/Kolkata", "seconds": false, "style": { "color": "#FFFFFF", "fontScale": 0.45 } } } },
+        { "id": "z3", "name": "Ticker", "x": 0, "y": 0.85, "w": 1, "h": 0.15, "z": 2, "content": { "kind": "widget", "widget": { "type": "text", "text": "दिवाली ऑफर – 30% off", "style": { "bold": true, "align": "center" } } } },
+        { "id": "z4", "name": "Spare", "x": 0, "y": 0, "w": 0.1, "h": 0.1, "z": 3, "content": { "kind": "empty" } }
+      ]
+    }
+  ],
+  "playlists": [
+    {
+      "id": "p1",
+      "items": [
+        { "id": "i1", "content": { "kind": "media", "mediaId": "m2" }, "durationSec": 12, "transition": "fade" },
+        { "id": "i2", "content": { "kind": "layout", "layoutId": "l1" }, "durationSec": 15, "transition": "none" },
+        { "id": "i3", "content": { "kind": "widget", "widget": { "type": "qr", "value": "https://example.com", "foreground": "#000000", "background": "#FFFFFF" } }, "durationSec": 10, "transition": "slide" }
+      ]
+    }
+  ],
+  "schedules": [
+    { "id": "s1", "priority": 10, "timezone": "Asia/Kolkata", "startDate": null, "endDate": null, "daysOfWeek": [1, 2, 3, 4, 5], "windowStart": "09:00", "windowEnd": "18:00", "playlistId": "p1" }
+  ],
+  "defaultPlaylistId": "p1",
+  "fallbackMediaId": null,
+  "emergency": null,
+  "assets": [
+    { "mediaId": "m1", "url": "https://firebasestorage.googleapis.com/v0/b/b/o/m1?alt=media&token=t", "sha256": "1111111111111111111111111111111111111111111111111111111111111111", "bytes": 43805, "mimeType": "image/png" },
+    { "mediaId": "m2", "url": "https://firebasestorage.googleapis.com/v0/b/b/o/m2?alt=media&token=t", "sha256": "2222222222222222222222222222222222222222222222222222222222222222", "bytes": 117597, "mimeType": "video/mp4" }
+  ]
+}

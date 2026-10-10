@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Visione-X mark: indigo tile with the WallX orange X. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="32"
+    android:viewportHeight="32">
+    <path
+        android:fillColor="#4F46E5"
+        android:pathData="M7,0h18a7,7 0,0 1,7 7v18a7,7 0,0 1,-7 7h-18a7,7 0,0 1,-7 -7v-18a7,7 0,0 1,7 -7z" />
+    <path
+        android:pathData="M9,9L23,23M23,9L9,23"
+        android:strokeWidth="4"
+        android:strokeColor="#D77836"
+        android:strokeLineCap="round" />
+</vector>

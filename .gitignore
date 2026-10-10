@@ -21,6 +21,7 @@ ui-debug.log*
 
 # Android
 apps/android-player/.gradle/
+apps/android-player/.kotlin/
 apps/android-player/build/
 apps/android-player/app/build/
 apps/android-player/local.properties

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Visione-X Player</string>
+    <string name="starting">Starting…</string>
+    <string name="pair_title">Pair this screen</string>
+    <string name="pair_step1">Sign in to Visione-X and open Screens → Add screen</string>
+    <string name="pair_step2">Enter this code, or scan the QR code with your phone</string>
+    <string name="pair_expires">Code valid until %1$s</string>
+    <string name="waiting_title">Waiting for authorization</string>
+    <string name="waiting_body">%1$s · %2$s is paired. An administrator of the organization must authorize it before content plays.</string>
+    <string name="no_content_title">Nothing to show yet</string>
+    <string name="no_content_body">%1$s · %2$s is connected. Publish content to this screen from Visione-X.</string>
+    <string name="offline_note">Offline · playing saved content</string>
+    <string name="cannot_connect">Cannot reach Visione-X. Check the network cable or Wi-Fi.</string>
+    <string name="syncing">Downloading new content… %1$d%%</string>
+</resources>
