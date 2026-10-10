@@ -8,7 +8,7 @@ export default tseslint.config(
     ignores: [
       '**/node_modules/**',
       '**/dist/**',
-      '**/lib/**',
+      'functions/lib/**',
       '**/coverage/**',
       'apps/android-player/**',
     ],

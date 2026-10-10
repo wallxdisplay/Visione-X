@@ -1,6 +1,7 @@
 node_modules/
 dist/
-lib/
+# Functions build output only (not functions/src/lib, which is source)
+/functions/lib/
 coverage/
 *.log
 .env
