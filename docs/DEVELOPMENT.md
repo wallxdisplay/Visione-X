@@ -48,6 +48,24 @@ transaction (`functions/src/lib/audit.ts`, hash-chained per org).
 Every deploy names the project explicitly, e.g.
 `npx firebase deploy --only firestore:rules,firestore:indexes --project prod`.
 
+Done (2026-10-11): Blaze plan, Email/Password + Google sign-in, Storage bucket (asia-south1),
+Firestore + Storage rules, all functions deployed (asia-south1), web app on Hosting.
+
+### Organization setup notes (avinyabharat.com Google Cloud organization)
+The project sits in an organization with Google's secure-by-default policies. Three one-time
+fixes were needed and may be needed again for future projects:
+- **Build service account** — `iam.automaticIamGrantsForDefaultServiceAccounts` is enforced, so
+  `281302718007-compute@developer.gserviceaccount.com` was granted
+  *Cloud Build Service Account* (`roles/cloudbuild.builds.builder`) manually.
+- **Public endpoints** — *Domain restricted sharing* (`iam.allowedPolicyMemberDomains`) blocked
+  `allUsers`. It is overridden to **Allow all on the visione-x project only**. Firebase grants
+  public invoker to callable functions only when they are **created**; if a callable ever
+  returns a 403 HTML page, delete and redeploy it (`npx firebase functions:delete <name>
+  --region asia-south1 --project prod`, then deploy).
+- **Cloud Run CPU quota** — new projects have a small regional CPU quota, so functions use
+  `cpu: 'gcf_gen1'` and `maxInstances: 10` (`functions/src/options.ts`). Request a quota
+  increase before raising these.
+
 Remaining one-time steps (console):
 1. Upgrade to the **Blaze** plan (needed for Cloud Functions, Cloud Run, Secret Manager).
 2. Authentication → enable **Email/Password** and **Google** providers.
