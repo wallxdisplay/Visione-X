@@ -13,6 +13,12 @@ import { ForgotPassword } from './pages/auth/ForgotPassword';
 import { SignIn } from './pages/auth/SignIn';
 import { SignUp } from './pages/auth/SignUp';
 import { VerifyEmail } from './pages/auth/VerifyEmail';
+import { Library } from './pages/content/Library';
+import { PlaylistEditor } from './pages/content/PlaylistEditor';
+import { Playlists } from './pages/content/Playlists';
+import { Schedules } from './pages/content/Schedules';
+import { StudioEditor } from './pages/content/StudioEditor';
+import { StudioList } from './pages/content/StudioList';
 import { Dashboard } from './pages/customer/Dashboard';
 import { OrgSettings } from './pages/customer/OrgSettings';
 import { Sites } from './pages/customer/Sites';
@@ -27,6 +33,10 @@ import { adminNav, customerNav, type NavGroup } from './shell/nav';
 /** Built pages; every other nav entry renders its "coming in phase N" placeholder. */
 const PAGES: Record<string, ReactNode> = {
   '/': <Dashboard />,
+  '/library': <Library />,
+  '/studio': <StudioList />,
+  '/playlists': <Playlists />,
+  '/schedules': <Schedules />,
   '/team': <Team />,
   '/sites': <Sites />,
   '/settings': <OrgSettings />,
@@ -85,7 +95,16 @@ export const router = createBrowserRouter([
           {
             path: '/',
             element: <CustomerGate />,
-            children: [{ element: <AppShell nav={customerNav} variant="customer" />, children: navRoutes(customerNav, '/') }],
+            children: [
+              {
+                element: <AppShell nav={customerNav} variant="customer" />,
+                children: [
+                  ...navRoutes(customerNav, '/'),
+                  { path: '/studio/:layoutId', element: <StudioEditor /> },
+                  { path: '/playlists/:playlistId', element: <PlaylistEditor /> },
+                ],
+              },
+            ],
           },
         ],
       },

@@ -13,7 +13,8 @@
     "delete": "Delete",
     "copy": "Copy link",
     "actions": "Actions",
-    "all": "All"
+    "all": "All",
+    "close": "Close"
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",

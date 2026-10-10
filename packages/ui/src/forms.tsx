@@ -154,12 +154,14 @@ export function Dialog({
   onClose,
   children,
   footer,
+  size = 'md',
 }: {
   open: boolean;
   title: ReactNode;
   onClose: () => void;
   children: ReactNode;
   footer?: ReactNode;
+  size?: 'md' | 'lg';
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -171,7 +173,7 @@ export function Dialog({
   }, [open]);
 
   return (
-    <dialog ref={ref} className="vx-dialog" onClose={onClose} aria-labelledby={titleId}>
+    <dialog ref={ref} className={`vx-dialog vx-dialog--${size}`} onClose={onClose} aria-labelledby={titleId}>
       <header className="vx-dialog__header">
         <h2 id={titleId}>{title}</h2>
       </header>

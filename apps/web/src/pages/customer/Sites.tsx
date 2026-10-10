@@ -9,6 +9,7 @@ import { db } from '../../lib/firebase';
 import { fieldErrors, timezoneOptions } from '../../lib/format';
 import { useQueryData } from '../../lib/hooks';
 import { useOrg } from '../../org/OrgProvider';
+import { ScreenGroups } from './ScreenGroups';
 
 interface Draft {
   siteId?: string;
@@ -139,9 +140,7 @@ export function Sites() {
           </table>
         </div>
       )}
-      <p className="vx-muted" style={{ marginTop: 16 }}>
-        {t('sites.groupsNote')}
-      </p>
+      <ScreenGroups />
 
       <Dialog
         open={!!draft}

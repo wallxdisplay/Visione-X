@@ -1,6 +1,7 @@
 import '@visione-x/ui/tokens.css';
 import '@visione-x/ui/base.css';
 import './shell/shell.css';
+import './content/content.css';
 import './i18n';
 
 import { StrictMode } from 'react';
