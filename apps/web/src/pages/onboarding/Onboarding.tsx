@@ -14,7 +14,7 @@ import { OrgSignupForm, toFormValues } from './OrgSignupForm';
 
 export function Onboarding() {
   const { t } = useTranslation();
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, platformRole, signOut } = useAuth();
   const uid = user!.uid;
   const requests = useQueryData<SignupRequestDoc>(`signup:${uid}`, () =>
     query(
@@ -127,6 +127,11 @@ export function Onboarding() {
           <strong>{t('product.name')}</strong>
         </div>
         <div className="onboarding__user">
+          {platformRole ? (
+            <Link to="/admin" className="vx-btn vx-btn--tertiary vx-btn--sm">
+              {t('shell.adminBadge')}
+            </Link>
+          ) : null}
           <span className="vx-muted">{user?.email}</span>
           <Button size="sm" variant="tertiary" onClick={() => void signOut()}>
             {t('shell.signOut')}

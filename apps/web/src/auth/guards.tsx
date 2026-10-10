@@ -41,10 +41,11 @@ export function RequirePlatformStaff() {
 
 /** Customer area: needs an active org; otherwise the user goes to onboarding. */
 export function CustomerGate() {
-  const { profile, profileLoading } = useAuth();
+  const { profile, profileLoading, platformRole } = useAuth();
   if (profileLoading) return <FullPageSpinner />;
   const orgId = pickActiveOrg(profile?.memberships);
-  if (!orgId) return <Navigate to="/onboarding" replace />;
+  // WallX staff usually have no customer org: send them to Super Admin, not onboarding.
+  if (!orgId) return <Navigate to={platformRole ? '/admin' : '/onboarding'} replace />;
   return (
     <OrgProvider key={orgId} orgId={orgId}>
       <Outlet />
