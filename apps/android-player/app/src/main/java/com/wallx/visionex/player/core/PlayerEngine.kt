@@ -60,8 +60,11 @@ data class Status(
  * reports health. Playback never depends on connectivity: the last fully downloaded manifest
  * keeps playing until a complete new one replaces it.
  */
-class PlayerEngine private constructor(private val context: Context) {
-    private val api = Api(BuildConfig.API_BASE)
+class PlayerEngine internal constructor(
+    private val context: Context,
+    apiBase: String = BuildConfig.API_BASE,
+) {
+    private val api = Api(apiBase)
     private val device = DeviceStore(context)
     private val manifests = ManifestStore(context)
     private val cache = AssetCache(File(context.filesDir, "assets"), api.http)
@@ -88,22 +91,35 @@ class PlayerEngine private constructor(private val context: Context) {
 
     private suspend fun pollLoop() {
         while (currentCoroutineContextActive()) {
-            try {
-                val auth = ensureRegistered()
-                handleState(api.me(auth))
-                _status.value = _status.value.copy(online = true)
-            } catch (e: ApiException) {
-                if (e.status == 401 || e.code == "revoked") {
-                    resetIdentity("server rejected credentials (${e.code ?: e.status})")
-                    continue
-                }
-                fail("api ${e.message}")
-            } catch (e: Exception) {
-                _status.value = _status.value.copy(online = false)
-                fail("network: ${e.message}")
-            }
-            delay(pollSec * 1000L)
+            if (tick()) delay(pollSec * 1000L)
         }
+    }
+
+    /**
+     * One poll cycle: register if needed, read state, sync content. Returns false when the
+     * identity was reset and the cycle should run again immediately.
+     */
+    internal suspend fun tick(): Boolean {
+        try {
+            val auth = ensureRegistered()
+            handleState(api.me(auth))
+            _status.value = _status.value.copy(online = true)
+        } catch (e: ApiException) {
+            if (e.status == 401 || e.code == "revoked") {
+                resetIdentity("server rejected credentials (${e.code ?: e.status})")
+                return false
+            }
+            fail("api ${e.message}")
+        } catch (e: java.io.IOException) {
+            _status.value = _status.value.copy(online = false)
+            fail("network: ${e.message}")
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            // e.g. an unexpected response shape: log and keep playing what we have.
+            fail("unexpected ${e.javaClass.simpleName}: ${e.message}")
+        }
+        return true
     }
 
     private suspend fun currentCoroutineContextActive() = kotlin.coroutines.coroutineContext.isActive

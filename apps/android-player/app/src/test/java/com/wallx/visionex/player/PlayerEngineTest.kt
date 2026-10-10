@@ -1,0 +1,155 @@
+package com.wallx.visionex.player
+
+import android.content.Context
+import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithText
+import androidx.test.core.app.ApplicationProvider
+import com.wallx.visionex.player.core.PlayerEngine
+import com.wallx.visionex.player.core.UiState
+import com.wallx.visionex.player.ui.PlayerRoot
+import kotlinx.coroutines.runBlocking
+import okhttp3.mockwebserver.Dispatcher
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
+import okhttp3.mockwebserver.RecordedRequest
+import okio.Buffer
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+import java.security.MessageDigest
+
+/**
+ * Drives the real PlayerEngine against a fake Visione-X server: registration, pairing, waiting
+ * for authorization, downloading and verifying a manifest's media, refusing a corrupted update,
+ * and resetting when the screen is removed. Also renders the real pairing screen.
+ */
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34])
+class PlayerEngineTest {
+    @get:Rule val compose = createComposeRule()
+
+    private lateinit var server: MockWebServer
+    private val context: Context = ApplicationProvider.getApplicationContext()
+
+    private var status = "unpaired"
+    private var manifestVersion = 0
+    private var manifest = ""
+    private val files = mutableMapOf<String, ByteArray>()
+    private var authHeaders = mutableListOf<String?>()
+
+    private val png = byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47, 1, 2, 3, 4, 5, 6, 7, 8)
+    private val video = ByteArray(200_000) { (it % 251).toByte() }
+
+    private fun sha(bytes: ByteArray) = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
+
+    @Before
+    fun setUp() {
+        server = MockWebServer()
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse {
+                val path = request.path ?: ""
+                if (path.startsWith("/api/v1/devices")) authHeaders.add(request.getHeader("Authorization"))
+                return when {
+                    path == "/api/v1/devices/register" -> json(201, """{"deviceId":"dev12345678","deviceSecret":"${"s".repeat(43)}","pairingCode":"ABC234","pairingExpiresAt":1,"pairingUrl":"https://x/screens?pair=ABC234"}""")
+                    path == "/api/v1/devices/me" && status == "revoked" -> json(403, """{"error":"revoked"}""")
+                    path == "/api/v1/devices/me" -> json(
+                        200,
+                        """{"deviceId":"dev12345678","status":"$status",
+                           "pairingCode":${if (status == "unpaired") "\"ABC234\"" else "null"},
+                           "pairingUrl":"https://x/screens?pair=ABC234","orgName":"Acme",
+                           "screen":${if (status == "unpaired") "null" else """{"id":"s1","name":"Lobby wall","orientation":"landscape","resolution":{"width":1920,"height":1080},"manifestVersion":$manifestVersion}"""},
+                           "config":{"pollSec":60,"heartbeatSec":300},"serverTime":0}""",
+                    )
+                    path == "/api/v1/devices/manifest" -> json(200, manifest)
+                    path == "/api/v1/devices/heartbeat" -> json(200, """{"ok":true}""")
+                    path.startsWith("/files/") -> files[path.removePrefix("/files/")]?.let {
+                        MockResponse().setResponseCode(200).setBody(Buffer().write(it))
+                    } ?: MockResponse().setResponseCode(404)
+                    else -> MockResponse().setResponseCode(404)
+                }
+            }
+        }
+        server.start()
+    }
+
+    @After
+    fun tearDown() = server.shutdown()
+
+    private fun json(code: Int, body: String) =
+        MockResponse().setResponseCode(code).setHeader("Content-Type", "application/json").setBody(body)
+
+    private fun manifestJson(version: Int, videoSha: String) = """
+        {"specVersion":1,"orgId":"o","screenId":"s1","version":$version,"generatedAt":0,
+         "layouts":[],"schedules":[],"defaultPlaylistId":"p1","fallbackMediaId":null,"emergency":null,
+         "playlists":[{"id":"p1","items":[
+            {"id":"i1","content":{"kind":"media","mediaId":"m1"},"durationSec":10,"transition":"fade"},
+            {"id":"i2","content":{"kind":"media","mediaId":"m2"},"durationSec":5,"transition":"none"}]}],
+         "assets":[
+            {"mediaId":"m1","url":"${server.url("/files/m1")}","sha256":"${sha(png)}","bytes":${png.size},"mimeType":"image/png"},
+            {"mediaId":"m2","url":"${server.url("/files/m2")}","sha256":"$videoSha","bytes":${video.size},"mimeType":"video/mp4"}]}
+    """.trimIndent()
+
+    private fun engine() = PlayerEngine(context, server.url("/api/v1").toString().trimEnd('/'))
+
+    @Test
+    fun pairingThenAuthorizationThenVerifiedPlayback() = runBlocking {
+        val engine = engine()
+
+        engine.tick()
+        assertEquals(UiState.Pairing("ABC234", "https://x/screens?pair=ABC234", null), engine.ui.value)
+        assertTrue("second call authenticates", authHeaders.last()?.startsWith("Device dev12345678:") == true)
+
+        status = "pending_authorization"
+        engine.tick()
+        assertEquals(UiState.Waiting("Acme", "Lobby wall"), engine.ui.value)
+
+        status = "authorized"
+        engine.tick()
+        assertEquals(UiState.NoContent("Acme", "Lobby wall"), engine.ui.value)
+
+        files["m1"] = png
+        files["m2"] = video
+        manifest = manifestJson(1, sha(video))
+        manifestVersion = 1
+        engine.tick()
+        val playing = engine.ui.value as UiState.Playing
+        assertEquals(1, playing.manifest.version)
+        assertTrue(playing.library.file("m1")!!.readBytes().contentEquals(png))
+        assertTrue(playing.library.file("m2")!!.readBytes().contentEquals(video))
+        assertEquals("video/mp4", playing.library.mimeType("m2"))
+
+        // A corrupted update (checksum mismatch) is refused; the verified version keeps playing.
+        manifest = manifestJson(2, "f".repeat(64))
+        manifestVersion = 2
+        engine.tick()
+        assertEquals(1, (engine.ui.value as UiState.Playing).manifest.version)
+        assertTrue(ErrorLog.recent(context).any { "Checksum mismatch" in it })
+    }
+
+    @Test
+    fun removedScreenResetsIdentity() = runBlocking {
+        val engine = engine()
+        engine.tick()
+        status = "revoked"
+        val continueImmediately = engine.tick()
+        assertEquals(false, continueImmediately)
+        assertEquals(UiState.Starting, engine.ui.value)
+        assertNull(context.getSharedPreferences("device", Context.MODE_PRIVATE).getString("deviceId", null))
+    }
+
+    @Test
+    fun pairingScreenShowsCode() {
+        val engine = engine()
+        runBlocking { engine.tick() }
+        compose.setContent { PlayerRoot(engine) }
+        compose.onNodeWithText("ABC 234").assertExists()
+        compose.onNodeWithText("Pair this screen").assertExists()
+    }
+}

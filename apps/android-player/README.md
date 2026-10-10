@@ -24,7 +24,13 @@ Requires the Android SDK (platform 35) and JDK 17+ (`JAVA_HOME`). From this fold
 ```bash
 ./gradlew testDebugUnitTest assembleDebug
 ```
-The APK is written to `app/build/outputs/apk/debug/app-debug.apk`.
+The APK is written to `app/build/outputs/apk/debug/app-debug.apk` — or, when the project sits in
+a OneDrive folder on Windows, to `%LOCALAPPDATA%\visione-x-player-build\app\outputs\apk\debug\`
+(OneDrive locks files mid-build, so the build directory is moved outside it).
+
+Tests: `ScheduleTest` (same cases as the TypeScript resolver), `ManifestFixtureTest` (shared
+fixture), and `PlayerEngineTest` (Robolectric + mock server: pairing → authorization → verified
+download → corrupted update refused → reset on removal; renders the pairing screen).
 Release build: `./gradlew assembleRelease` (currently signed with the debug key — create a release
 keystore before distributing to customers).
 

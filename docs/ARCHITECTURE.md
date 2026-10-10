@@ -235,7 +235,7 @@ Feature catalogue stores `releaseStatus` (what WallX has built) separately from 
 | 0 ✅ | Foundation | Monorepo, Firebase project wiring, emulators, CI, design tokens, i18n, shared schemas |
 | 1 ✅ | Identity & tenancy | Auth, signup → approval flow, orgs, members/roles, Rules + tests, audit log core, admin approvals UI |
 | 2 ✅ | Content | Media library + transcoding, layout studio, widgets (core), playlists, schedules, preview |
-| 3 | Android player | Pairing/authorization, boot-start, kiosk, HDMI playback, offline cache, rendering |
+| 3 ✅ (real-box test pending) | Android player | Pairing/authorization, boot-start, kiosk, HDMI playback, offline cache, rendering |
 | 4 | Publish & monitor | Manifest compiler, sync, bulk publish, emergency override, heartbeats, remote commands, diagnostics |
 | 5 | Sensors | Ingest API, ESP32 firmware sample, channels, thresholds, data widgets, alerts |
 | 6 | Billing & beyond | Razorpay, invoices/GST, admin billing tools, integrations, Hindi/Marathi, reseller groundwork |
