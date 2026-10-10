@@ -62,6 +62,12 @@ fixes were needed and may be needed again for future projects:
   public invoker to callable functions only when they are **created**; if a callable ever
   returns a 403 HTML page, delete and redeploy it (`npx firebase functions:delete <name>
   --region asia-south1 --project prod`, then deploy).
+- **Storage rules → Firestore** — `storage.rules` reads membership from Firestore, which needs
+  `service-281302718007@gcp-sa-firebasestorage.iam.gserviceaccount.com` to hold
+  *Firebase Rules Firestore Service Agent* (`roles/firebaserules.firestoreServiceAgent`).
+  A non-interactive deploy does not grant it; without it every upload/read is denied.
+- **Media processing trigger** — the first Eventarc deploy can fail with "Permission denied while
+  using the Eventarc Service Agent"; it is propagation delay, redeploy `functions:processMedia`.
 - **Cloud Run CPU quota** — new projects have a small regional CPU quota, so functions use
   `cpu: 'gcf_gen1'` and `maxInstances: 10` (`functions/src/options.ts`). Request a quota
   increase before raising these.
