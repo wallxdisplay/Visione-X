@@ -1,7 +1,5 @@
-import { setGlobalOptions } from 'firebase-functions/v2';
-import { REGION } from '@visione-x/shared';
-
-// Every function runs in Mumbai next to Firestore and Storage.
-setGlobalOptions({ region: REGION, maxInstances: 20 });
+// Every function runs in Mumbai (asia-south1) next to Firestore and Storage.
+import './options';
 
 export { api } from './api/index';
+export * from './callables';

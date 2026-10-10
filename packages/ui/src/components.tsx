@@ -4,13 +4,16 @@ type ButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'danger';
 
 export function Button({
   variant = 'secondary',
+  size = 'md',
   className,
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: ButtonVariant }) {
+}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: ButtonVariant; size?: 'sm' | 'md' }) {
   return (
     <button
       type="button"
-      className={['vx-btn', `vx-btn--${variant}`, className].filter(Boolean).join(' ')}
+      className={['vx-btn', `vx-btn--${variant}`, size === 'sm' && 'vx-btn--sm', className]
+        .filter(Boolean)
+        .join(' ')}
       {...props}
     />
   );

@@ -1,33 +1,95 @@
-import { createBrowserRouter, type RouteObject } from 'react-router';
+import type { ReactNode } from 'react';
+import { createBrowserRouter, Outlet, type RouteObject } from 'react-router';
+import { AuthProvider } from './auth/AuthProvider';
+import { CustomerGate, RedirectIfSignedIn, RequirePlatformStaff, RequireUser } from './auth/guards';
+import { AcceptInvite } from './pages/AcceptInvite';
+import { AdminOverview } from './pages/admin/AdminOverview';
+import { ApprovalReview } from './pages/admin/ApprovalReview';
+import { Approvals } from './pages/admin/Approvals';
+import { AuditLogs } from './pages/admin/AuditLogs';
+import { Orgs } from './pages/admin/Orgs';
+import { PlatformUsers } from './pages/admin/PlatformUsers';
+import { ForgotPassword } from './pages/auth/ForgotPassword';
+import { SignIn } from './pages/auth/SignIn';
+import { SignUp } from './pages/auth/SignUp';
+import { VerifyEmail } from './pages/auth/VerifyEmail';
+import { Dashboard } from './pages/customer/Dashboard';
+import { OrgSettings } from './pages/customer/OrgSettings';
+import { Sites } from './pages/customer/Sites';
+import { Team } from './pages/customer/Team';
 import { NotFound } from './pages/NotFound';
+import { Onboarding } from './pages/onboarding/Onboarding';
 import { Placeholder } from './pages/Placeholder';
 import { PlayerRegistration } from './pages/PlayerRegistration';
 import { AppShell } from './shell/AppShell';
 import { adminNav, customerNav, type NavGroup } from './shell/nav';
 
-function placeholderRoutes(nav: NavGroup[], base: string): RouteObject[] {
+/** Built pages; every other nav entry renders its "coming in phase N" placeholder. */
+const PAGES: Record<string, ReactNode> = {
+  '/': <Dashboard />,
+  '/team': <Team />,
+  '/sites': <Sites />,
+  '/settings': <OrgSettings />,
+  '/admin': <AdminOverview />,
+  '/admin/approvals': <Approvals />,
+  '/admin/orgs': <Orgs />,
+  '/admin/users': <PlatformUsers />,
+  '/admin/audit': <AuditLogs />,
+};
+
+function navRoutes(nav: NavGroup[], base: string): RouteObject[] {
   return nav
     .flatMap((group) => group.items)
-    .map((item) =>
-      item.path === base
-        ? { index: true, element: <Placeholder item={item} /> }
-        : { path: item.path, element: <Placeholder item={item} /> },
-    );
+    .map((item) => {
+      const element = PAGES[item.path] ?? <Placeholder item={item} />;
+      return item.path === base ? { index: true, element } : { path: item.path, element };
+    });
 }
 
-// Route guards (auth, org membership, platform role) arrive in phase 1. They improve UX only;
-// every permission is enforced again by Security Rules and Cloud Functions.
+function Root() {
+  return (
+    <AuthProvider>
+      <Outlet />
+    </AuthProvider>
+  );
+}
+
+// Guards improve UX only; Firestore rules and Cloud Functions enforce every permission.
 export const router = createBrowserRouter([
   {
-    path: '/',
-    element: <AppShell nav={customerNav} variant="customer" />,
-    children: placeholderRoutes(customerNav, '/'),
+    element: <Root />,
+    children: [
+      { path: '/signin', element: <RedirectIfSignedIn><SignIn /></RedirectIfSignedIn> },
+      { path: '/signup', element: <RedirectIfSignedIn><SignUp /></RedirectIfSignedIn> },
+      { path: '/forgot-password', element: <ForgotPassword /> },
+      { path: '/verify-email', element: <VerifyEmail /> },
+      { path: '/player', element: <PlayerRegistration /> },
+      {
+        element: <RequireUser />,
+        children: [
+          { path: '/onboarding', element: <Onboarding /> },
+          { path: '/invite/:token', element: <AcceptInvite /> },
+          {
+            path: '/admin',
+            element: <RequirePlatformStaff />,
+            children: [
+              {
+                element: <AppShell nav={adminNav} variant="admin" />,
+                children: [
+                  ...navRoutes(adminNav, '/admin'),
+                  { path: '/admin/approvals/:requestId', element: <ApprovalReview /> },
+                ],
+              },
+            ],
+          },
+          {
+            path: '/',
+            element: <CustomerGate />,
+            children: [{ element: <AppShell nav={customerNav} variant="customer" />, children: navRoutes(customerNav, '/') }],
+          },
+        ],
+      },
+      { path: '*', element: <NotFound /> },
+    ],
   },
-  {
-    path: '/admin',
-    element: <AppShell nav={adminNav} variant="admin" />,
-    children: placeholderRoutes(adminNav, '/admin'),
-  },
-  { path: '/player', element: <PlayerRegistration /> },
-  { path: '*', element: <NotFound /> },
 ]);

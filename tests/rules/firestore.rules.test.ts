@@ -77,6 +77,68 @@ describe('organizations', () => {
   });
 });
 
+describe('phase 1 collections', () => {
+  beforeEach(async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await setDoc(doc(db, 'orgs/org1/members/ed'), {
+        role: 'editor',
+        status: 'active',
+        permissions: ['member.view', 'screen.view'],
+      });
+      await setDoc(doc(db, 'orgs/org1/members/own'), {
+        role: 'owner',
+        status: 'active',
+        permissions: ['member.view', 'member.manage', 'billing.view'],
+      });
+      await setDoc(doc(db, 'orgs/org1/invites/i1'), { email: 'x@example.com', status: 'pending' });
+      await setDoc(doc(db, 'orgs/org1/sites/hq'), { name: 'HQ' });
+      await setDoc(doc(db, 'orgs/org1/billing/subscription'), { planId: 'trial' });
+      await setDoc(doc(db, 'users/alice'), { memberships: {} });
+      await setDoc(doc(db, 'signupRequests/r1'), { requestedBy: 'alice', status: 'pending' });
+      await setDoc(doc(db, 'inviteTokens/abc'), { orgId: 'org1', inviteId: 'i1' });
+      await setDoc(doc(db, 'auditHeads/org1'), { seq: 1, hash: 'h' });
+    });
+  });
+
+  it('users read only their own profile', async () => {
+    await assertSucceeds(getDoc(doc(env.authenticatedContext('alice').firestore(), 'users/alice')));
+    await assertFails(getDoc(doc(env.authenticatedContext('bob').firestore(), 'users/alice')));
+    await assertFails(setDoc(doc(env.authenticatedContext('alice').firestore(), 'users/alice'), { memberships: { x: {} } }));
+  });
+
+  it('signup requests are visible to the requester and staff only', async () => {
+    await assertSucceeds(getDoc(doc(env.authenticatedContext('alice').firestore(), 'signupRequests/r1')));
+    await assertFails(getDoc(doc(env.authenticatedContext('bob').firestore(), 'signupRequests/r1')));
+    await assertSucceeds(
+      getDoc(doc(env.authenticatedContext('s', { platformRole: 'support' }).firestore(), 'signupRequests/r1')),
+    );
+  });
+
+  it('invites need member.manage; members list needs member.view', async () => {
+    await assertSucceeds(getDoc(doc(env.authenticatedContext('own').firestore(), 'orgs/org1/invites/i1')));
+    await assertFails(getDoc(doc(env.authenticatedContext('ed').firestore(), 'orgs/org1/invites/i1')));
+    await assertSucceeds(getDoc(doc(env.authenticatedContext('ed').firestore(), 'orgs/org1/members/own')));
+  });
+
+  it('billing needs billing.view', async () => {
+    await assertSucceeds(getDoc(doc(env.authenticatedContext('own').firestore(), 'orgs/org1/billing/subscription')));
+    await assertFails(getDoc(doc(env.authenticatedContext('ed').firestore(), 'orgs/org1/billing/subscription')));
+  });
+
+  it('sites are readable by members but never writable from clients', async () => {
+    const db = env.authenticatedContext('own').firestore();
+    await assertSucceeds(getDoc(doc(db, 'orgs/org1/sites/hq')));
+    await assertFails(setDoc(doc(db, 'orgs/org1/sites/new'), { name: 'X' }));
+  });
+
+  it('invite tokens and audit heads are never client-readable', async () => {
+    const root = env.authenticatedContext('root', { platformRole: 'superadmin' }).firestore();
+    await assertFails(getDoc(doc(root, 'inviteTokens/abc')));
+    await assertFails(getDoc(doc(root, 'auditHeads/org1')));
+  });
+});
+
 describe('platform data', () => {
   it('active plans are public, inactive ones are not', async () => {
     const db = env.unauthenticatedContext().firestore();

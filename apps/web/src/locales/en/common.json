@@ -4,6 +4,29 @@
     "byline": "by WallX",
     "tagline": "One Platform. Every Screen."
   },
+  "common": {
+    "loading": "Loading…",
+    "done": "Done",
+    "cancel": "Cancel",
+    "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete",
+    "copy": "Copy link",
+    "actions": "Actions",
+    "all": "All"
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "network": "Network problem. Check your connection and try again.",
+    "permissionDenied": "You do not have permission for this action.",
+    "auth": {
+      "invalidCredential": "Email or password is incorrect.",
+      "emailInUse": "An account with this email already exists. Sign in instead.",
+      "weakPassword": "Choose a stronger password.",
+      "tooManyRequests": "Too many attempts. Wait a few minutes and try again.",
+      "popupClosed": "The sign-in window was closed before finishing."
+    }
+  },
   "nav": {
     "groups": {
       "overview": "Overview",
@@ -47,21 +70,19 @@
     }
   },
   "shell": {
+    "navigation": "Main navigation",
     "toggleNav": "Toggle navigation",
     "notifications": "Notifications",
     "help": "Help",
     "account": "Account menu",
-    "orgPlaceholder": "No organization selected",
     "adminBadge": "Super Admin",
-    "backToApp": "Back to app"
+    "backToApp": "Back to app",
+    "signOut": "Sign out",
+    "switchOrg": "Switch organization"
   },
   "placeholder": {
     "title": "Coming in phase {{phase}}",
     "description": "This area is part of the Visione-X roadmap and will be built in phase {{phase}}."
-  },
-  "studio": {
-    "title": "Layout Studio",
-    "description": "Design multi-zone layouts for landscape and portrait screens."
   },
   "player": {
     "title": "Player registration",
@@ -75,5 +96,262 @@
     "title": "Page not found",
     "description": "The page you are looking for does not exist or has moved.",
     "action": "Go to dashboard"
+  },
+  "notAuthorized": {
+    "title": "No access",
+    "description": "This area is only for WallX platform administrators."
+  },
+  "auth": {
+    "email": "Email",
+    "workEmail": "Work email",
+    "password": "Password",
+    "or": "or",
+    "google": "Continue with Google",
+    "backToSignIn": "Back to sign in",
+    "signIn": {
+      "title": "Sign in to Visione-X",
+      "action": "Sign in",
+      "noAccount": "New to Visione-X?"
+    },
+    "signUp": {
+      "title": "Create your account",
+      "description": "After verifying your email you can request an organization. WallX reviews every new organization before it goes live.",
+      "action": "Create account",
+      "haveAccount": "Already have an account?",
+      "confirm": "Confirm password",
+      "passwordHint": "At least {{min}} characters.",
+      "passwordTooShort": "Use at least {{min}} characters.",
+      "passwordMismatch": "Passwords do not match."
+    },
+    "forgot": {
+      "link": "Forgot password?",
+      "title": "Reset your password",
+      "description": "Enter your email and we will send you a reset link.",
+      "action": "Send reset link",
+      "sent": "If an account exists for this email, a reset link is on its way."
+    },
+    "verify": {
+      "title": "Verify your email",
+      "description": "We sent a verification link to {{email}}. Open it, then come back here.",
+      "done": "I have verified my email",
+      "resend": "Resend email",
+      "resent": "Verification email sent again.",
+      "notYet": "Your email is not verified yet. Check your inbox and spam folder."
+    }
+  },
+  "onboarding": {
+    "title": "Set up your organization",
+    "description": "Tell us about your business. A WallX administrator reviews each request, usually within one business day.",
+    "orgName": "Organization name",
+    "contactName": "Contact person",
+    "phone": "Phone",
+    "city": "City",
+    "state": "State / UT",
+    "expectedScreens": "Expected number of screens",
+    "gstin": "GSTIN",
+    "gstinHint": "Optional now; needed for GST invoices.",
+    "timezone": "Time zone",
+    "notes": "Anything else we should know?",
+    "notesHint": "For example: locations, LED wall sizes or integrations you need.",
+    "submit": "Submit for approval",
+    "resubmit": "Send updated request",
+    "response": "Your reply to the reviewer",
+    "responseRequired": "Add a short reply for the reviewer.",
+    "pendingBody": "Your request for {{org}} is waiting for WallX approval. You will be able to add screens and publish content once it is approved.",
+    "submittedAt": "Submitted {{at}}",
+    "infoRequestedTitle": "WallX needs more information",
+    "rejectedTitle": "Your request was not approved",
+    "newRequest": "Submit a new request",
+    "approvedNoAccess": "This organization is approved but not currently active. Contact WallX support if this is unexpected.",
+    "hasActiveOrg": "You already belong to an active organization.",
+    "goToDashboard": "Go to dashboard",
+    "inviteHint": "Joining an existing organization? Open the invitation link your administrator sent you."
+  },
+  "invite": {
+    "title": "Join organization",
+    "description": "You are signed in as {{email}}. Accept the invitation to join the organization.",
+    "accept": "Accept invitation"
+  },
+  "status": {
+    "pending": "Pending approval",
+    "info_requested": "Information requested",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "active": "Active",
+    "suspended": "Suspended"
+  },
+  "roles": {
+    "owner": "Owner",
+    "admin": "Admin",
+    "editor": "Editor",
+    "approver": "Approver",
+    "viewer": "Viewer",
+    "custom": "Custom",
+    "ownerHint": "Full control, including billing and other owners.",
+    "adminHint": "Manages team, screens, content and settings. Cannot change billing.",
+    "editorHint": "Creates and publishes content.",
+    "approverHint": "Creates content and approves others’ content before publishing.",
+    "viewerHint": "Read-only access to screens, content and reports."
+  },
+  "platformRoles": {
+    "superadmin": "Superadmin",
+    "support": "Support",
+    "billing": "Billing",
+    "ops": "Operations",
+    "auditor": "Auditor"
+  },
+  "plans": {
+    "trial": "Free Trial",
+    "starter": "Starter",
+    "professional": "Professional",
+    "enterprise": "Enterprise"
+  },
+  "dashboard": {
+    "title": "Overview",
+    "plan": "Plan",
+    "trialEnds": "{{days}} days left · ends {{date}}",
+    "screenLimit": "Screen limit",
+    "userLimit": "User limit",
+    "sites": "Sites",
+    "setupTitle": "Get started",
+    "steps": {
+      "approved": "Organization approved by WallX",
+      "site": "Add your first site",
+      "team": "Invite your team",
+      "screen": "Pair your first screen",
+      "screenNote": "available when the Android player ships (phase 3)"
+    }
+  },
+  "team": {
+    "description": "{{count}} of {{limit}} users on your plan",
+    "invite": "Invite member",
+    "email": "Email",
+    "role": "Role",
+    "joined": "Joined",
+    "you": "you",
+    "roleFor": "Role for {{email}}",
+    "leave": "Leave",
+    "remove": "Remove",
+    "pendingInvites": "Pending invitations",
+    "expires": "Expires",
+    "revoke": "Revoke",
+    "createInvite": "Create invitation",
+    "inviteCreated": "Invitation created",
+    "inviteLinkHint": "Send this link to the person you invited. It works once, only for their email address, and expires in 7 days.",
+    "inviteLink": "Invitation link",
+    "leaveTitle": "Leave organization?",
+    "removeTitle": "Remove member?",
+    "removeBody": "{{email}} will lose access to this organization immediately.",
+    "emailNote": "Invitation emails are sent automatically once the notification service is enabled; until then, share the link yourself."
+  },
+  "sites": {
+    "title": "Sites & Groups",
+    "description": "Locations where your screens are installed.",
+    "add": "Add site",
+    "edit": "Edit site",
+    "name": "Site name",
+    "address": "Address",
+    "timezone": "Time zone",
+    "emptyTitle": "No sites yet",
+    "emptyBody": "Add a site for each location, such as a store, lobby or factory floor. Screens and sensors are assigned to sites.",
+    "groupsNote": "Screen groups arrive with screen pairing in phase 3.",
+    "deleteTitle": "Delete site?",
+    "deleteConfirm": "Delete site",
+    "deleteBody": "{{name}} will be deleted. Sites with screens cannot be deleted."
+  },
+  "settings": {
+    "description": "General settings for your organization.",
+    "general": "General",
+    "saved": "Settings saved.",
+    "readOnly": "Only owners and admins can change these settings.",
+    "orgName": "Organization name",
+    "timezone": "Default time zone",
+    "timezoneHint": "Used for new sites and schedules."
+  },
+  "admin": {
+    "overview": {
+      "description": "Platform health and work waiting for you.",
+      "pending": "Awaiting approval",
+      "active": "Active organizations",
+      "suspended": "Suspended organizations",
+      "comingTitle": "More metrics coming",
+      "comingBody": "Screen health, storage usage and billing issues appear here as those modules are built."
+    },
+    "approvals": {
+      "description": "Every new organization must be approved before it can pair screens or publish content.",
+      "tabs": { "open": "Open", "decided": "Decided" },
+      "empty": "Nothing waiting for review.",
+      "company": "Company",
+      "requester": "Requested by",
+      "location": "Location",
+      "screens": "Screens",
+      "submitted": "Submitted",
+      "status": "Status",
+      "notFound": "Request not found.",
+      "requestInfo": "Request information",
+      "reject": "Reject",
+      "approve": "Approve organization",
+      "details": "Request details",
+      "conversation": "Messages",
+      "from": { "requester": "Requester", "admin": "WallX" },
+      "confirm": {
+        "approve": "Approve organization?",
+        "reject": "Reject organization?",
+        "request_info": "Request more information"
+      },
+      "confirmAction": {
+        "approve": "Approve organization",
+        "reject": "Reject organization",
+        "request_info": "Send request"
+      },
+      "confirmBody": {
+        "approve": "{{org}} becomes active with a 14-day free trial. Its users can then add sites, team members and screens.",
+        "reject": "{{org}} will not be able to use Visione-X. The requester sees your reason.",
+        "request_info": "{{org}} stays inactive until the requester answers. They see your message."
+      },
+      "messageRequired": "Message to requester",
+      "messageOptional": "Note (optional)",
+      "messageHint": "Visible to the requester and recorded in the audit log."
+    },
+    "orgs": {
+      "description": "All customer organizations.",
+      "name": "Organization",
+      "created": "Created",
+      "suspend": "Suspend",
+      "reactivate": "Reactivate",
+      "suspendTitle": "Suspend {{org}}?",
+      "reactivateTitle": "Reactivate {{org}}?",
+      "suspendBody": "Users lose the ability to make changes and publish. This is recorded in the audit log.",
+      "reactivateBody": "The organization becomes active again.",
+      "reason": "Reason",
+      "reasonHint": "At least 5 characters. Recorded in the audit log."
+    },
+    "users": {
+      "description": "WallX staff and their platform roles.",
+      "grant": "Grant or change a role",
+      "grantAction": "Save role",
+      "emailHint": "The person must already have a Visione-X account.",
+      "saved": "Role updated for {{email}}. They must sign in again for it to apply.",
+      "superadminOnly": "Only superadmins can manage platform roles.",
+      "updated": "Updated",
+      "revoked": "Revoked",
+      "revoke": "Revoke"
+    },
+    "audit": {
+      "description": "Append-only record of sensitive actions. Entries are hash-chained per organization.",
+      "notAllowed": "Only superadmins and auditors can view audit logs.",
+      "filterOrg": "Organization ID",
+      "filterOrgPlaceholder": "All organizations",
+      "when": "When",
+      "action": "Action",
+      "actor": "Actor",
+      "target": "Target",
+      "reason": "Reason",
+      "actorType": {
+        "user": "Customer user",
+        "platform_user": "WallX staff",
+        "system": "System"
+      }
+    }
   }
 }

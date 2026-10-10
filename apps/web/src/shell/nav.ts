@@ -98,7 +98,7 @@ export const adminNav: NavGroup[] = [
     labelKey: 'nav.groups.operations',
     items: [
       { labelKey: 'nav.admin.devices', path: '/admin/devices', icon: Activity, phase: 4 },
-      { labelKey: 'nav.admin.features', path: '/admin/features', icon: SlidersHorizontal, phase: 1 },
+      { labelKey: 'nav.admin.features', path: '/admin/features', icon: SlidersHorizontal, phase: 6 },
       { labelKey: 'nav.admin.billing', path: '/admin/billing', icon: CreditCard, phase: 6 },
       { labelKey: 'nav.admin.integrations', path: '/admin/integrations', icon: KeyRound, phase: 5 },
     ],
@@ -108,7 +108,7 @@ export const adminNav: NavGroup[] = [
     items: [
       { labelKey: 'nav.admin.support', path: '/admin/support', icon: ShieldCheck, phase: 6 },
       { labelKey: 'nav.admin.audit', path: '/admin/audit', icon: FileClock, phase: 1 },
-      { labelKey: 'nav.admin.settings', path: '/admin/settings', icon: Settings, phase: 1 },
+      { labelKey: 'nav.admin.settings', path: '/admin/settings', icon: Settings, phase: 6 },
     ],
   },
 ];
