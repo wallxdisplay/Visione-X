@@ -18,6 +18,7 @@
   "errors": {
     "generic": "Something went wrong. Please try again.",
     "network": "Network problem. Check your connection and try again.",
+    "emulatorsDown": "Development mode: the local Firebase emulators are not running. Start them with “npm run emulators”, then try again.",
     "permissionDenied": "You do not have permission for this action.",
     "auth": {
       "invalidCredential": "Email or password is incorrect.",
