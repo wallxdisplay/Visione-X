@@ -148,6 +148,14 @@ Rules: deny-by-default; anything money-, limit-, status- or audit-related is Fun
 4. Device downloads manifest → downloads/validates missing assets → atomically switches only when everything is ready → reports `lastPublish` result.
 5. Priority on device (works offline): Emergency > high-priority schedule > normal schedule > default playlist > fallback.
 
+**As built (phase 4):**
+- **Manifest storage.** The manifest is stored at `orgs/{org}/screenManifests/{screenId}` in Firestore, not in Storage. The device polls `GET /api/v1/devices/me` every 30 s and fetches the manifest when `manifestVersion` changes. An FCM nudge is deferred, since many boxes have no Play Services.
+- **Publish approval.** When an org turns on `settings.requirePublishApproval` (Professional plan and above), publishing by members without `content.approve` creates `approvals/{id}` and notifies approvers. `reviewPublish` then approves (publishes) or rejects (a note is required).
+- **Emergency override.** An emergency lives in `emergencies/{id}`. It targets all screens, sites, groups or individual screens. Starting one requires typing `START EMERGENCY`. The content is a playlist or a full-screen message, with an optional duration. The emergency is compiled into every affected manifest and republished on start and end. Timed emergencies are expired by the monitor.
+- **Remote commands.** Commands are stored in `screens/{id}/commands/{cmd}`: refresh, restart_app, reboot (falls back to restart without Device Owner), clear_cache, screenshot (JPEG in Storage at `orgs/{org}/screenshots/...`) and diagnostics. `/me` carries `commandsPending`. The player fetches pending commands from `GET /devices/commands` and reports the outcome to `POST /devices/commands/result`. Unanswered commands expire after 30 minutes.
+- **Monitoring.** The scheduled function `monitorScreens` runs every 5 minutes (Asia/Kolkata). It raises one `screen_offline` notification per outage; the heartbeat clears it and sends `screen_online`. It also expires emergencies and stale commands.
+- **Notifications.** Notifications are stored in-app at `notifications/{id}` with a per-user `readBy`. Email delivery comes later.
+
 ## 8. Android player (core requirement)
 **Recommended stack:** Kotlin, Jetpack Compose for layout zones, **Media3/ExoPlayer** (hardware decoding) for video/audio, Coil for images, WebView only for web-page/HTML widgets, WorkManager + OkHttp for resumable downloads, Room for local manifest/state, Firebase Auth + FCM SDKs.
 
@@ -236,7 +244,7 @@ Feature catalogue stores `releaseStatus` (what WallX has built) separately from 
 | 1 ✅ | Identity & tenancy | Auth, signup → approval flow, orgs, members/roles, Rules + tests, audit log core, admin approvals UI |
 | 2 ✅ | Content | Media library + transcoding, layout studio, widgets (core), playlists, schedules, preview |
 | 3 ✅ (real-box test pending) | Android player | Pairing/authorization, boot-start, kiosk, HDMI playback, offline cache, rendering |
-| 4 | Publish & monitor | Manifest compiler, sync, bulk publish, emergency override, heartbeats, remote commands, diagnostics |
+| 4 ✅ | Publish & monitor | Manifest compiler, sync, bulk publish, emergency override, heartbeats, remote commands, diagnostics |
 | 5 | Sensors | Ingest API, ESP32 firmware sample, channels, thresholds, data widgets, alerts |
 | 6 | Billing & beyond | Razorpay, invoices/GST, admin billing tools, integrations, Hindi/Marathi, reseller groundwork |
 

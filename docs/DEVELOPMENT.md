@@ -4,7 +4,9 @@
 - Node.js 22+ (`.nvmrc`)
 - Java 21 (Temurin) — required by the Firestore/Auth emulators.
 - Firebase CLI is a dev dependency; use `npx firebase …`.
-- Android Studio + JDK 17 for the player (phase 3).
+- Android SDK for the player (`apps/android-player`, Gradle wrapper; Java 21 works). Build output
+  goes to `%LOCALAPPDATA%\visione-x-player-build` because OneDrive locks build files. Tests run on
+  Robolectric (`gradlew testDebugUnitTest`), so no emulator or hypervisor is needed.
 
 ## Run locally
 ```bash
@@ -66,7 +68,10 @@ fixes were needed and may be needed again for future projects:
   which (because automatic grants are off) had no data access. Granted: *Cloud Datastore User*,
   *Storage Object Admin*, *Firebase Authentication Admin* (plus the Cloud Build / Run Invoker /
   Eventarc Event Receiver roles above). Symptom when missing: `7 PERMISSION_DENIED` in function logs.
-  Phase 3/4 signed URLs will additionally need *Service Account Token Creator* on itself.
+  (Media is served with Firebase Storage download-token URLs, so *Service Account Token Creator*
+  is not needed.)
+- **Scheduled functions** — the first deploy of `monitorScreens` enabled the Cloud Scheduler API
+  automatically. Its job is `firebase-schedule-monitorScreens-asia-south1` (every 5 minutes).
 - **Storage rules → Firestore** — `storage.rules` reads membership from Firestore, which needs
   `service-281302718007@gcp-sa-firebasestorage.iam.gserviceaccount.com` to hold
   *Firebase Rules Firestore Service Agent* (`roles/firebaserules.firestoreServiceAgent`).

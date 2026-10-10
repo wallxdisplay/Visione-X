@@ -17,8 +17,8 @@ android {
         applicationId = "com.wallx.visionex.player"
         minSdk = 24
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.3.0"
+        versionCode = 4
+        versionName = "0.4.0"
         buildConfigField("String", "API_BASE", "\"$apiBase\"")
     }
 
