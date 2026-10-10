@@ -8,22 +8,39 @@ import {
   type Zone,
 } from '@visione-x/layout-spec';
 import {
+  emergencyPlaylistId,
   paths,
+  type EmergencyDoc,
+  type EmergencyTarget,
   type LayoutDoc,
   type MediaDoc,
   type PlaylistDoc,
   type ScheduleDoc,
+  type ScheduleTarget,
   type ScreenDoc,
 } from '@visione-x/shared';
 import type { Deps } from '../lib/context';
 import { downloadUrl } from '../lib/storageUrl';
 
-/** Does a schedule apply to this screen? */
-export function targetsScreen(schedule: ScheduleDoc, screen: Pick<ScreenDoc, 'siteId' | 'groupIds'>): boolean {
-  const t = schedule.target;
+type TargetScreen = Pick<ScreenDoc, 'id' | 'siteId' | 'groupIds'>;
+
+/** Does a schedule or emergency target include this screen? */
+export function matchesTarget(t: ScheduleTarget | EmergencyTarget, screen: TargetScreen): boolean {
   if (t.kind === 'all') return true;
   if (t.kind === 'sites') return !!screen.siteId && t.ids.includes(screen.siteId);
+  if (t.kind === 'screens') return t.ids.includes(screen.id);
   return t.ids.some((id) => screen.groupIds.includes(id));
+}
+
+export const targetsScreen = (schedule: ScheduleDoc, screen: TargetScreen) => matchesTarget(schedule.target, screen);
+
+/** The emergency that applies to a screen now: the most recently started active one. */
+export function activeEmergencyFor(emergencies: EmergencyDoc[], screen: TargetScreen, now: number): EmergencyDoc | null {
+  return (
+    emergencies
+      .filter((e) => e.active && (e.expiresAt === null || e.expiresAt > now) && matchesTarget(e.target, screen))
+      .sort((a, b) => b.startedAt - a.startedAt)[0] ?? null
+  );
 }
 
 export interface ManifestSources {
@@ -37,6 +54,8 @@ export interface ManifestSources {
   media: Map<string, MediaDoc>;
   /** Download URL per media id (only for media that is ready). */
   assetUrls: Map<string, string>;
+  /** Active emergency override for this screen, if any. */
+  emergency?: EmergencyDoc | null;
 }
 
 /**
@@ -84,6 +103,36 @@ export function assembleManifest(src: ManifestSources): Manifest {
   }));
   const playlists = [...src.playlists.values()].map((p) => ({ id: p.id, items: cleanItems(p.items) }));
 
+  // Emergency override: a referenced playlist, or a synthetic full-screen message playlist.
+  let emergency: Manifest['emergency'] = null;
+  const e = src.emergency;
+  if (e) {
+    if (e.content.kind === 'message') {
+      const pid = emergencyPlaylistId(e.id);
+      playlists.push({
+        id: pid,
+        items: [
+          {
+            id: 'message',
+            durationSec: 3600,
+            transition: 'none',
+            content: {
+              kind: 'widget',
+              widget: {
+                type: 'text',
+                text: e.content.text,
+                style: { color: e.content.color, background: e.content.background, bold: true, align: 'center', fontScale: 0.12 },
+              },
+            },
+          },
+        ],
+      });
+      emergency = { id: e.id, playlistId: pid, expiresAt: e.expiresAt };
+    } else if (src.playlists.has(e.content.playlistId)) {
+      emergency = { id: e.id, playlistId: e.content.playlistId, expiresAt: e.expiresAt };
+    }
+  }
+
   const assets = [...src.assetUrls.entries()].map(([mediaId, url]) => {
     const m = src.media.get(mediaId)!;
     const d = m.display!;
@@ -101,7 +150,7 @@ export function assembleManifest(src: ManifestSources): Manifest {
     schedules: rules,
     defaultPlaylistId,
     fallbackMediaId: null,
-    emergency: null,
+    emergency,
     assets,
   });
 }
@@ -124,9 +173,15 @@ export async function compileManifest(
     .map((d) => d.data() as ScheduleDoc)
     .filter((s) => targetsScreen(s, screen));
 
-  // Playlists from schedules + default, then layouts they contain, then zone playlists.
+  const emergencies = (await db.collection(paths.emergencies(orgId)).where('active', '==', true).get()).docs.map(
+    (d) => d.data() as EmergencyDoc,
+  );
+  const emergency = activeEmergencyFor(emergencies, screen, now());
+
+  // Playlists from schedules + default + emergency, then layouts they contain, then zone playlists.
   const playlistIds = new Set(schedules.map((s) => s.playlistId));
   if (screen.defaultPlaylistId) playlistIds.add(screen.defaultPlaylistId);
+  if (emergency?.content.kind === 'playlist') playlistIds.add(emergency.content.playlistId);
   const playlists = await getMany<PlaylistDoc>(db, (id) => paths.playlist(orgId, id), playlistIds);
   const layouts = await getMany<LayoutDoc>(db, (id) => paths.layout(orgId, id), [...playlists.values()].flatMap((p) => p.layoutIds));
   const zonePlaylistIds = [...layouts.values()].flatMap((l) => l.playlistIds).filter((id) => !playlists.has(id));
@@ -141,5 +196,5 @@ export async function compileManifest(
       .map(async (m) => assetUrls.set(m.id, await downloadUrl(bucket, m.display!.path))),
   );
 
-  return assembleManifest({ orgId, screen, version, now: now(), schedules, playlists, layouts, media, assetUrls });
+  return assembleManifest({ orgId, screen, version, now: now(), schedules, playlists, layouts, media, assetUrls, emergency });
 }

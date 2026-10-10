@@ -1,6 +1,8 @@
 import { PRODUCT_NAME, REGION } from '@visione-x/shared';
 import type { Deps } from '../lib/context';
 import {
+  deviceCommandResult,
+  deviceCommands,
   deviceHeartbeat,
   deviceManifest,
   deviceState,
@@ -25,6 +27,8 @@ const ROUTES: Record<string, Handler> = {
   'GET /v1/devices/me': deviceState,
   'GET /v1/devices/manifest': deviceManifest,
   'POST /v1/devices/heartbeat': deviceHeartbeat,
+  'GET /v1/devices/commands': deviceCommands,
+  'POST /v1/devices/commands/result': deviceCommandResult,
 };
 
 export function findRoute(method: string, rawPath: string): Handler | null {

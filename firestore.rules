@@ -106,8 +106,15 @@ service cloud.firestore {
 
       // Content (phase 2): readable by any active member, written only by Functions.
       match /{collection}/{docId} {
-        allow read: if collection in ['media', 'folders', 'layouts', 'playlists', 'screenGroups', 'schedules', 'screens']
+        allow read: if collection in ['media', 'folders', 'layouts', 'playlists', 'screenGroups', 'schedules', 'screens',
+                                      'emergencies', 'notifications', 'approvals']
           && (isActiveMember(orgId) || isPlatformStaff());
+        allow write: if false;
+      }
+
+      // Remote command history (results, diagnostics) per screen.
+      match /screens/{screenId}/commands/{commandId} {
+        allow read: if isActiveMember(orgId) || isPlatformStaff();
         allow write: if false;
       }
 

@@ -4,7 +4,10 @@
  * registration and only its SHA-256 is stored. Responses are JSON.
  */
 import { createHash, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
+import { notify } from '../lib/notify';
+import { completeCommand, takePendingCommands } from '../ops/commands';
 import {
+  CommandResultBody,
   DEVICE_HEARTBEAT_SEC,
   DEVICE_POLL_SEC,
   HeartbeatBody,
@@ -161,10 +164,36 @@ export async function deviceState(deps: Deps, req: ApiRequest): Promise<ApiResul
           manifestVersion: screen.manifestVersion,
         }
       : null,
+    commandsPending: device.status === 'authorized' ? (screen?.pendingCommands ?? 0) : 0,
     config: { pollSec: DEVICE_POLL_SEC, heartbeatSec: DEVICE_HEARTBEAT_SEC },
     serverTime: now(),
   };
   return { status: 200, body };
+}
+
+/** GET /devices/commands — pending remote commands for this screen (marks them delivered). */
+export async function deviceCommands(deps: Deps, req: ApiRequest): Promise<ApiResult> {
+  const auth = await authenticate(deps, req);
+  if ('status' in auth && 'body' in auth) return auth;
+  const device = auth as DeviceDoc;
+  if (device.status !== 'authorized' || !device.orgId || !device.screenId) {
+    return fail(403, 'not_authorized', 'This player is not authorized yet.');
+  }
+  return { status: 200, body: { commands: await takePendingCommands(deps, device.orgId, device.screenId) } };
+}
+
+/** POST /devices/commands/result — outcome of a command (optionally with a screenshot). */
+export async function deviceCommandResult(deps: Deps, req: ApiRequest): Promise<ApiResult> {
+  const auth = await authenticate(deps, req);
+  if ('status' in auth && 'body' in auth) return auth;
+  const device = auth as DeviceDoc;
+  if (device.status !== 'authorized' || !device.orgId || !device.screenId) {
+    return fail(403, 'not_authorized', 'This player is not authorized yet.');
+  }
+  const parsed = CommandResultBody.safeParse(req.body);
+  if (!parsed.success) return fail(400, 'invalid_argument', 'Invalid command result.');
+  const ok = await completeCommand(deps, device.orgId, device.screenId, parsed.data);
+  return ok ? { status: 200, body: { ok: true } } : fail(404, 'not_found', 'Unknown or already completed command.');
 }
 
 export async function deviceManifest(deps: Deps, req: ApiRequest): Promise<ApiResult> {
@@ -201,10 +230,13 @@ export async function deviceHeartbeat(deps: Deps, req: ApiRequest): Promise<ApiR
     updatedAt: at,
   });
   if (device.orgId && device.screenId) {
-    batch.update(db.doc(paths.screen(device.orgId, device.screenId)), {
-      lastSeen: at,
-      health: { ...parsed.data, reportedAt: at },
-    });
+    const screenRef = db.doc(paths.screen(device.orgId, device.screenId));
+    const screen = (await screenRef.get()).data() as ScreenDoc | undefined;
+    if (screen) {
+      batch.update(screenRef, { lastSeen: at, health: { ...parsed.data, reportedAt: at }, offlineAlertedAt: null });
+      // The monitor had raised an offline alert: tell the org it is back.
+      if (screen.offlineAlertedAt) notify(batch, db, device.orgId, 'screen_online', { screen: screen.name }, '/screens', at);
+    }
   }
   await batch.commit();
   return { status: 200, body: { ok: true, serverTime: at } };

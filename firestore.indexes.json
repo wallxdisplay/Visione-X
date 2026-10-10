@@ -48,6 +48,32 @@
         { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
     }
+    ,
+    {
+      "collectionGroup": "screens",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "offlineAlertedAt", "order": "ASCENDING" },
+        { "fieldPath": "lastSeen", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "emergencies",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "active", "order": "ASCENDING" },
+        { "fieldPath": "expiresAt", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "commands",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "ASCENDING" }
+      ]
+    }
   ],
   "fieldOverrides": []
 }

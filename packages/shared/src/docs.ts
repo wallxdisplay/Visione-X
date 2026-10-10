@@ -34,6 +34,12 @@ export interface OrgDoc {
   createdAt: number;
   updatedAt: number;
   statusReason?: string;
+  settings?: OrgSettings;
+}
+
+export interface OrgSettings {
+  /** Publishing by members without content.approve becomes an approval request. */
+  requirePublishApproval?: boolean;
 }
 
 /** orgs/{orgId}/members/{uid}; `permissions` is denormalized so rules can check it. */

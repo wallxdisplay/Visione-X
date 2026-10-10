@@ -6,7 +6,9 @@ import {
   withinLimit,
   type ClaimDeviceInput,
   type DeviceDoc,
+  type PublishApprovalDoc,
   type PublishScreensInput,
+  type ReviewPublishInput,
   type ScreenDoc,
   type ScreenRefInput,
   type UpdateScreenInput,
@@ -16,6 +18,7 @@ import { requireActiveOrgPermission, requireOrgPermission } from '../lib/authz';
 import type { Actor, Deps } from '../lib/context';
 import { readEntitlements } from '../lib/entitlements';
 import { userAudit } from '../content/media';
+import { notify } from '../lib/notify';
 import { compileManifest } from './manifest';
 
 async function checkTargets(
@@ -86,6 +89,8 @@ export async function claimDevice(
       lastSeen: device.lastSeen,
       device: { manufacturer: device.hardware.manufacturer, model: device.hardware.model, androidVersion: device.hardware.androidVersion },
       health: null,
+      pendingCommands: 0,
+      offlineAlertedAt: null,
       createdBy: actor.uid,
       createdAt: at,
       updatedAt: at,
@@ -199,35 +204,79 @@ export async function removeScreen(
   });
 }
 
+/** Authorized screens of an org, optionally limited to ids (empty = all). */
+export async function authorizedScreens(db: Deps['db'], orgId: string, screenIds: string[] = []): Promise<ScreenDoc[]> {
+  const snap = await db.collection(paths.screens(orgId)).where('status', '==', 'authorized').get();
+  return snap.docs.map((d) => d.data() as ScreenDoc).filter((s) => screenIds.length === 0 || screenIds.includes(s.id));
+}
+
 /**
- * Compiles and stores a fresh manifest for each target screen and bumps its version; players
- * notice the new version on their next poll and download it.
+ * Compiles and stores a fresh manifest for each screen and bumps its version; players notice
+ * the new version on their next poll (≤ 30 s) and download it. Used by publish, approvals and
+ * emergency overrides.
+ */
+export async function publishToScreens(deps: Deps, orgId: string, screens: ScreenDoc[]): Promise<number> {
+  const { db, now } = deps;
+  for (const screen of screens) {
+    // Re-read so concurrent publishes never reuse a version number.
+    const fresh = ((await db.doc(paths.screen(orgId, screen.id)).get()).data() as ScreenDoc | undefined) ?? screen;
+    const version = fresh.manifestVersion + 1;
+    const manifest = await compileManifest(deps, orgId, fresh, version);
+    const at = now();
+    const batch = db.batch();
+    batch.set(db.doc(paths.screenManifest(orgId, screen.id)), manifest);
+    batch.update(db.doc(paths.screen(orgId, screen.id)), { manifestVersion: version, publishedAt: at, updatedAt: at });
+    await batch.commit();
+  }
+  return screens.length;
+}
+
+/**
+ * Publish to screens. If the org requires approval and the caller cannot approve, this files
+ * an approval request instead and publishes nothing yet.
  */
 export async function publishScreens(
   deps: Deps,
   actor: Actor,
-  input: z.infer<typeof PublishScreensInput>,
-): Promise<{ published: number }> {
+  input: z.infer<typeof PublishScreensInput> & { note?: string },
+): Promise<{ published: number; approvalId?: string }> {
   const { db, now } = deps;
-  const screens = await db.runTransaction(async (tx) => {
-    await requireActiveOrgPermission(tx, db, actor, input.orgId, 'content.publish');
-    const snap = await tx.get(db.collection(paths.screens(input.orgId)).where('status', '==', 'authorized'));
-    return snap.docs
-      .map((d) => d.data() as ScreenDoc)
-      .filter((s) => input.screenIds.length === 0 || input.screenIds.includes(s.id));
-  });
+  const { member, org } = await db.runTransaction((tx) =>
+    requireActiveOrgPermission(tx, db, actor, input.orgId, 'content.publish'),
+  );
+  const screens = await authorizedScreens(db, input.orgId, input.screenIds);
   if (screens.length === 0) throw new HttpsError('failed-precondition', 'There are no authorized screens to publish to.');
 
-  for (const screen of screens) {
-    const version = screen.manifestVersion + 1;
-    const manifest = await compileManifest(deps, input.orgId, screen, version);
-    const at = now();
-    const batch = db.batch();
-    batch.set(db.doc(paths.screenManifest(input.orgId, screen.id)), manifest);
-    batch.update(db.doc(paths.screen(input.orgId, screen.id)), { manifestVersion: version, publishedAt: at, updatedAt: at });
-    await batch.commit();
+  if (org.settings?.requirePublishApproval && !member.permissions.includes('content.approve')) {
+    const ref = db.collection(paths.approvals(input.orgId)).doc();
+    await auditedTransaction(db, [input.orgId], async (tx, audit) => {
+      const approval: PublishApprovalDoc = {
+        id: ref.id,
+        screenIds: input.screenIds,
+        note: input.note ?? null,
+        status: 'pending',
+        requestedBy: actor.uid,
+        requestedByEmail: actor.email,
+        requestedAt: now(),
+        decidedBy: null,
+        decidedAt: null,
+        decisionNote: null,
+      };
+      tx.create(ref, approval);
+      notify(tx, db, input.orgId, 'approval_requested', { by: actor.email ?? actor.uid, screens: screens.length }, '/screens', now());
+      audit(input.orgId, {
+        at: now(),
+        ...userAudit(actor),
+        orgId: input.orgId,
+        action: 'publish.requested',
+        target: { type: 'approval', id: ref.id },
+        data: { screens: screens.length },
+      });
+    });
+    return { published: 0, approvalId: ref.id };
   }
 
+  const published = await publishToScreens(deps, input.orgId, screens);
   await auditedTransaction(db, [input.orgId], async (_tx, audit) => {
     audit(input.orgId, {
       at: now(),
@@ -235,8 +284,38 @@ export async function publishScreens(
       orgId: input.orgId,
       action: 'content.published',
       target: { type: 'screens', id: input.screenIds.length ? input.screenIds.join(',').slice(0, 200) : 'all' },
-      data: { screens: screens.length },
+      data: { screens: published },
     });
   });
-  return { published: screens.length };
+  return { published };
+}
+
+/** An approver approves (publishes now) or rejects a pending publish request. */
+export async function reviewPublish(
+  deps: Deps,
+  actor: Actor,
+  input: z.infer<typeof ReviewPublishInput>,
+): Promise<{ published: number }> {
+  const { db, now } = deps;
+  const ref = db.doc(paths.approval(input.orgId, input.approvalId));
+  const approval = await auditedTransaction(db, [input.orgId], async (tx, audit) => {
+    await requireActiveOrgPermission(tx, db, actor, input.orgId, 'content.approve');
+    const doc = (await tx.get(ref)).data() as PublishApprovalDoc | undefined;
+    if (!doc) throw new HttpsError('not-found', 'Approval request not found.');
+    if (doc.status !== 'pending') throw new HttpsError('failed-precondition', `This request was already ${doc.status}.`);
+    const status = input.decision === 'approve' ? 'approved' : 'rejected';
+    tx.update(ref, { status, decidedBy: actor.uid, decidedAt: now(), decisionNote: input.note ?? null });
+    notify(tx, db, input.orgId, 'approval_decided', { decision: status, by: actor.email ?? actor.uid }, '/screens', now());
+    audit(input.orgId, {
+      at: now(),
+      ...userAudit(actor),
+      orgId: input.orgId,
+      action: `publish.${status}`,
+      target: { type: 'approval', id: input.approvalId },
+      ...(input.note ? { reason: input.note } : {}),
+    });
+    return doc;
+  });
+  if (input.decision === 'reject') return { published: 0 };
+  return { published: await publishToScreens(deps, input.orgId, await authorizedScreens(db, input.orgId, approval.screenIds)) };
 }

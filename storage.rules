@@ -29,6 +29,12 @@ service firebase.storage {
       allow update, delete: if false;
     }
 
+    // Screenshots requested with the "screenshot" remote command (written by Functions).
+    match /orgs/{orgId}/screenshots/{allPaths=**} {
+      allow read: if isActiveMember(orgId);
+      allow write: if false;
+    }
+
     function reservationAllows(orgId, mediaId) {
       let media = firestore.get(/databases/(default)/documents/orgs/$(orgId)/media/$(mediaId)).data;
       return media.status == 'uploading'

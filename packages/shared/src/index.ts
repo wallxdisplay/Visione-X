@@ -8,3 +8,4 @@ export * from './docs';
 export * from './india';
 export * from './content';
 export * from './devices';
+export * from './ops';

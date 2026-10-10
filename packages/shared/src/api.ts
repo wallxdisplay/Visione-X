@@ -67,6 +67,7 @@ export const UpdateOrgSettingsInput = z.object({
   orgId: id,
   name: trimmed(2, 120),
   timezone: Timezone,
+  requirePublishApproval: z.boolean().optional(),
 });
 
 export const InvitableRole = z.enum(SYSTEM_ORG_ROLES);
@@ -135,4 +136,9 @@ export const CALLABLES = {
   updateScreen: 'updateScreen',
   removeScreen: 'removeScreen',
   publishScreens: 'publishScreens',
+  triggerEmergency: 'triggerEmergency',
+  endEmergency: 'endEmergency',
+  sendScreenCommand: 'sendScreenCommand',
+  markNotificationsRead: 'markNotificationsRead',
+  reviewPublish: 'reviewPublish',
 } as const;

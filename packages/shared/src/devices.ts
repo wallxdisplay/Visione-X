@@ -13,7 +13,7 @@ export const PAIRING_CODE_ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ'; // no 0/
 export const PAIRING_CODE_LENGTH = 6;
 export const PAIRING_TTL_MS = 24 * 3_600_000;
 /** Device polls /me this often; heartbeats are sent less often. */
-export const DEVICE_POLL_SEC = 60;
+export const DEVICE_POLL_SEC = 30;
 export const DEVICE_HEARTBEAT_SEC = 300;
 /** A screen is shown as offline when no heartbeat arrived for this long. */
 export const OFFLINE_AFTER_MS = 2.5 * DEVICE_HEARTBEAT_SEC * 1000;
@@ -69,6 +69,10 @@ export interface ScreenDoc {
   lastSeen: number | null;
   device: { manufacturer: string; model: string; androidVersion: string } | null;
   health: ScreenHealth | null;
+  /** Commands queued for the player (it fetches them when this is > 0). */
+  pendingCommands: number;
+  /** Set when the monitor raised an offline alert; cleared by the next heartbeat. */
+  offlineAlertedAt: number | null;
   createdBy: string;
   createdAt: number;
   updatedAt: number;
@@ -138,6 +142,8 @@ export interface DeviceStateResponse {
     resolution: { width: number; height: number };
     manifestVersion: number;
   } | null;
+  /** Number of remote commands waiting; fetch them from /devices/commands. */
+  commandsPending: number;
   config: { pollSec: number; heartbeatSec: number };
   serverTime: number;
 }

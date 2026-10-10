@@ -10,6 +10,7 @@ import {
 import { auditedTransaction } from '../lib/audit';
 import { getOrg, requireOrgActive, requireOrgPermission } from '../lib/authz';
 import type { Actor, Deps } from '../lib/context';
+import { readEntitlements, requireFeature } from '../lib/entitlements';
 import { fanOutOrgToProfiles, readMembers } from '../lib/profiles';
 
 function userAudit(actor: Actor) {
@@ -31,10 +32,16 @@ export async function updateOrgSettings(
     const org = await getOrg(tx, db, input.orgId);
     requireOrgActive(org);
     const members = org.name !== input.name ? await readMembers(tx, db, input.orgId) : [];
+    if (input.requirePublishApproval) {
+      requireFeature(await readEntitlements(tx, db, input.orgId), 'content.approvals', 'Publish approvals');
+    }
 
     tx.update(db.doc(paths.org(input.orgId)), {
       name: input.name,
       timezone: input.timezone,
+      ...(input.requirePublishApproval !== undefined
+        ? { 'settings.requirePublishApproval': input.requirePublishApproval }
+        : {}),
       updatedAt: at,
     });
     fanOutOrgToProfiles(tx, db, members, { id: org.id, name: input.name, status: org.status }, at);
@@ -47,6 +54,10 @@ export async function updateOrgSettings(
       data: {
         name: { before: org.name, after: input.name },
         timezone: { before: org.timezone, after: input.timezone },
+        requirePublishApproval: {
+          before: org.settings?.requirePublishApproval ?? false,
+          after: input.requirePublishApproval ?? org.settings?.requirePublishApproval ?? false,
+        },
       },
     });
   });

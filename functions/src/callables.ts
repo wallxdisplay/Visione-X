@@ -1,10 +1,15 @@
 import { HttpsError, onCall, type CallableRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
-import type { z } from 'zod';
+import { z } from 'zod';
 import {
   AcceptInviteInput,
   ClaimDeviceInput,
+  EndEmergencyInput,
+  MarkNotificationsReadInput,
   PublishScreensInput,
+  ReviewPublishInput,
+  SendScreenCommandInput,
+  TriggerEmergencyInput,
   ScreenRefInput,
   UpdateScreenInput,
   CreateMediaUploadInput,
@@ -46,6 +51,8 @@ import { reviewOrgSignup as reviewSvc, setOrgStatus as setOrgStatusSvc } from '.
 import * as settings from './orgs/settings';
 import * as signup from './orgs/signup';
 import * as screens from './screens/screens';
+import * as commands from './ops/commands';
+import * as emergency from './ops/emergency';
 import { BASE_OPTIONS } from './options';
 
 export function actorFrom(request: CallableRequest): Actor {
@@ -116,4 +123,11 @@ export const claimDevice = callable(ClaimDeviceInput, screens.claimDevice);
 export const authorizeScreen = callable(ScreenRefInput, screens.authorizeScreen);
 export const updateScreen = callable(UpdateScreenInput, screens.updateScreen);
 export const removeScreen = callable(ScreenRefInput, screens.removeScreen);
-export const publishScreens = callable(PublishScreensInput, screens.publishScreens);
+export const publishScreens = callable(PublishScreensInput.extend({ note: z.string().trim().max(500).optional() }), screens.publishScreens);
+
+// Operations (phase 4)
+export const reviewPublish = callable(ReviewPublishInput, screens.reviewPublish);
+export const triggerEmergency = callable(TriggerEmergencyInput, emergency.triggerEmergency);
+export const endEmergency = callable(EndEmergencyInput, emergency.endEmergency);
+export const sendScreenCommand = callable(SendScreenCommandInput, commands.sendScreenCommand);
+export const markNotificationsRead = callable(MarkNotificationsReadInput, commands.markNotificationsRead);
