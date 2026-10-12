@@ -1,14 +1,15 @@
 import { Alert, Button, Spinner } from '@visione-x/ui';
 import { LayoutBody, RESOLUTION_PRESETS, type Zone } from '@visione-x/layout-spec';
 import { paths, type LayoutDoc } from '@visione-x/shared';
-import { ArrowLeft, Clock, Image as ImageIcon, Play, Plus, QrCode, Redo2, Save, Type, Undo2 } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { ArrowLeft, Clock, Image as ImageIcon, Play, Plus, QrCode, Radio, Redo2, Save, Type, Undo2 } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useBlocker, useParams } from 'react-router';
 import { newId } from '../../content/data';
 import { PreviewOverlay } from '../../content/PreviewOverlay';
 import { useRenderLibrary } from '../../content/useLibrary';
-import { defaultWidget, type EditableWidgetType } from '../../content/widgetDefaults';
+import { useAllChannels } from '../../content/sensors';
+import { defaultSensorWidget, defaultWidget, type ChannelChoice, type EditableWidgetType } from '../../content/widgetDefaults';
 import { ZoneInspector } from '../../content/ZoneInspector';
 import { call, errorMessage } from '../../lib/api';
 import { fieldErrors } from '../../lib/format';
@@ -65,7 +66,25 @@ function applyDrag(d: Drag, clientX: number, clientY: number): Zone {
 export function StudioEditor() {
   const { t } = useTranslation();
   const { layoutId = '' } = useParams();
-  const { orgId, org, can } = useOrg();
+  const { orgId, org, can, entitlements } = useOrg();
+  const sensorsOn = !!entitlements?.features.includes('sensor.esp32') && can('sensor.view');
+  const sensorChannels = useAllChannels(orgId, sensorsOn);
+  const channelChoices = useMemo<ChannelChoice[] | null>(
+    () =>
+      sensorsOn
+        ? sensorChannels.options.map(({ device, channel }) => ({
+            sensorDeviceId: device.id,
+            channelId: channel.id,
+            name: `${device.name} · ${channel.name}`,
+            channelName: channel.name,
+            unit: channel.unit,
+            valueType: channel.valueType,
+            min: channel.min,
+            max: channel.max,
+          }))
+        : null,
+    [sensorsOn, sensorChannels.options],
+  );
   const readOnly = !can('layout.edit');
   const saved = useDoc<LayoutDoc>(paths.layout(orgId, layoutId));
   const { library, media, playlists } = useRenderLibrary(orgId);
@@ -153,7 +172,7 @@ export function StudioEditor() {
     }
   }
 
-  function addZone(kind: 'empty' | 'media' | EditableWidgetType) {
+  function addZone(kind: 'empty' | 'media' | 'sensorValue' | EditableWidgetType) {
     if (!draft) return;
     const zone: Zone = {
       id: newId(),
@@ -163,7 +182,12 @@ export function StudioEditor() {
       w: 0.3,
       h: 0.3,
       z: Math.max(0, ...draft.zones.map((z) => z.z)) + 1,
-      content: kind === 'empty' || kind === 'media' ? { kind: 'empty' } : { kind: 'widget', widget: defaultWidget(kind, org?.timezone ?? 'Asia/Kolkata') },
+      content:
+        kind === 'empty' || kind === 'media'
+          ? { kind: 'empty' }
+          : kind === 'sensorValue'
+            ? { kind: 'widget', widget: defaultSensorWidget('sensorValue', channelChoices![0]!) }
+            : { kind: 'widget', widget: defaultWidget(kind, org?.timezone ?? 'Asia/Kolkata') },
     };
     commit((d) => ({ ...d, zones: [...d.zones, zone] }));
     setSelected(zone.id);
@@ -345,6 +369,11 @@ export function StudioEditor() {
                 <Button size="sm" onClick={() => addZone('media')}>
                   <ImageIcon size={14} aria-hidden /> {t('studio.contentTypes.media')}
                 </Button>
+                {channelChoices?.length ? (
+                  <Button size="sm" onClick={() => addZone('sensorValue')}>
+                    <Radio size={14} aria-hidden /> {t('studio.contentTypes.sensorValue')}
+                  </Button>
+                ) : null}
               </div>
               <p className="vx-muted studio__later">{t('studio.laterWidgets')}</p>
             </>
@@ -412,6 +441,7 @@ export function StudioEditor() {
               playlists={playlists.data}
               timezone={org?.timezone ?? 'Asia/Kolkata'}
               readOnly={readOnly}
+              sensors={channelChoices}
               autoPickMedia={pickFor === zone.id}
               onChange={(z) => updateZone(z)}
               onRemove={() => removeZone(zone.id)}

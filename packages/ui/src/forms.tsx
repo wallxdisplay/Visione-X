@@ -99,7 +99,7 @@ export function SelectField({
   options,
   ...select
 }: FieldShell &
-  SelectHTMLAttributes<HTMLSelectElement> & { options: Array<{ value: string; label: string }> }) {
+  SelectHTMLAttributes<HTMLSelectElement> & { options: Array<{ value: string; label: string; disabled?: boolean }> }) {
   const id = useId();
   return (
     <Shell id={id} label={label} hint={hint} error={error} required={required}>
@@ -112,7 +112,7 @@ export function SelectField({
         {...select}
       >
         {options.map((o) => (
-          <option key={o.value} value={o.value}>
+          <option key={o.value} value={o.value} disabled={o.disabled}>
             {o.label}
           </option>
         ))}

@@ -8,8 +8,8 @@ export function useRenderLibrary(orgId: string) {
   const playlists = usePlaylists(orgId);
   const layouts = useLayouts(orgId);
   const library = useMemo<RenderLibrary>(
-    () => ({ media: byId(media.data), playlists: byId(playlists.data), layouts: byId(layouts.data) }),
-    [media.data, playlists.data, layouts.data],
+    () => ({ media: byId(media.data), playlists: byId(playlists.data), layouts: byId(layouts.data), orgId }),
+    [media.data, playlists.data, layouts.data, orgId],
   );
   return { library, media, playlists, layouts, loading: media.loading || playlists.loading || layouts.loading };
 }

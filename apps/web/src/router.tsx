@@ -20,6 +20,9 @@ import { Schedules } from './pages/content/Schedules';
 import { Screens } from './pages/content/Screens';
 import { StudioEditor } from './pages/content/StudioEditor';
 import { StudioList } from './pages/content/StudioList';
+import { Alerts } from './pages/sensors/Alerts';
+import { SensorDetail } from './pages/sensors/SensorDetail';
+import { Sensors } from './pages/sensors/Sensors';
 import { Dashboard } from './pages/customer/Dashboard';
 import { OrgSettings } from './pages/customer/OrgSettings';
 import { Sites } from './pages/customer/Sites';
@@ -39,6 +42,8 @@ const PAGES: Record<string, ReactNode> = {
   '/studio': <StudioList />,
   '/playlists': <Playlists />,
   '/schedules': <Schedules />,
+  '/sensors': <Sensors />,
+  '/alerts': <Alerts />,
   '/team': <Team />,
   '/sites': <Sites />,
   '/settings': <OrgSettings />,
@@ -104,6 +109,7 @@ export const router = createBrowserRouter([
                   ...navRoutes(customerNav, '/'),
                   { path: '/studio/:layoutId', element: <StudioEditor /> },
                   { path: '/playlists/:playlistId', element: <PlaylistEditor /> },
+                  { path: '/sensors/:sensorDeviceId', element: <SensorDetail /> },
                 ],
               },
             ],

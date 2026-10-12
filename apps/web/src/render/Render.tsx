@@ -10,12 +10,15 @@ import QRCode from 'qrcode';
 import { createContext, useContext, useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStorageUrl } from '../content/data';
+import { ChartView, GaugeView, SensorValueView, StatusView } from './SensorWidgets';
 import './render.css';
 
 export interface RenderLibrary {
   media: Map<string, MediaDoc>;
   playlists: Map<string, PlaylistDoc>;
   layouts: Map<string, LayoutDoc>;
+  /** Org whose live sensor values sensor widgets show (absent = no live data). */
+  orgId?: string;
 }
 
 const LibraryContext = createContext<RenderLibrary>({ media: new Map(), playlists: new Map(), layouts: new Map() });
@@ -98,7 +101,16 @@ function ClockView({ widget }: { widget: Extract<Widget, { type: 'clock' }> }) {
 
 export function WidgetView({ widget }: { widget: Widget }) {
   const { t } = useTranslation();
+  const { orgId } = useContext(LibraryContext);
   switch (widget.type) {
+    case 'sensorValue':
+      return <SensorValueView widget={widget} orgId={orgId} />;
+    case 'gauge':
+      return <GaugeView widget={widget} orgId={orgId} />;
+    case 'chart':
+      return <ChartView widget={widget} orgId={orgId} />;
+    case 'status':
+      return <StatusView widget={widget} orgId={orgId} />;
     case 'text':
       return (
         <div className="r-fill r-text" style={textStyle(widget.style, 0.4)}>

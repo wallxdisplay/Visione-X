@@ -3,7 +3,8 @@
     "laterWidget": "“{{type}}” widget arrives in a later phase",
     "missingMedia": "Media file not found",
     "missingPlaylist": "Playlist not found",
-    "emptyPlaylist": "This playlist is empty"
+    "emptyPlaylist": "This playlist is empty",
+    "sensor": { "nodata": "No data", "stale": "Stale", "offline": "Sensor offline" }
   },
   "library": {
     "description": "Images, videos and audio for your screens. Your plan includes {{limit}} GB of storage.",
@@ -86,7 +87,7 @@
     "discard": "Discard changes",
     "layers": "Layers",
     "add": "Add zone",
-    "laterWidgets": "Weather, RSS and sensor widgets arrive in later phases.",
+    "laterWidgets": "Weather and RSS widgets arrive in a later phase. Sensor widgets (value, gauge, chart, status) are under Content once a sensor channel exists.",
     "untitledZone": "Untitled zone",
     "contentTypes": {
       "empty": "Empty zone",
@@ -244,7 +245,12 @@
       "emergency_started": "Emergency “{{name}}” started by {{by}} (screens: {{screens}})",
       "emergency_ended": "Emergency “{{name}}” ended ({{by}})",
       "approval_requested": "{{by}} asked to publish (screens: {{screens}})",
-      "approval_decided": "Publish request {{decision}} by {{by}}"
+      "approval_decided": "Publish request {{decision}} by {{by}}",
+      "sensor_alert": "{{sensor}} · {{channel}}: {{rule}} ({{value}} {{unit}})",
+      "sensor_recovered": "{{sensor}} · {{channel}} is back to normal",
+      "sensor_stale": "{{sensor}} · {{channel}} stopped sending new data",
+      "sensor_offline": "Sensor {{sensor}} is offline",
+      "sensor_online": "Sensor {{sensor}} is back online"
     }
   },
   "emergency": {

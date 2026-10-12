@@ -7,14 +7,24 @@ import { useTranslation } from 'react-i18next';
 import { timezoneOptions } from '../lib/format';
 import { MediaPicker } from './MediaPicker';
 import { MediaThumb } from './MediaThumb';
-import { defaultWidget, type EditableWidgetType } from './widgetDefaults';
+import { SensorWidgetEditor } from './SensorWidgetEditor';
+import {
+  SENSOR_WIDGET_TYPES,
+  defaultSensorWidget,
+  defaultWidget,
+  type ChannelChoice,
+  type EditableWidgetType,
+  type SensorWidgetType,
+} from './widgetDefaults';
 
-type ContentChoice = 'empty' | 'media' | 'playlist' | EditableWidgetType;
+type ContentChoice = 'empty' | 'media' | 'playlist' | EditableWidgetType | SensorWidgetType;
 
 function choiceOf(content: ZoneContent): ContentChoice {
-  if (content.kind === 'widget') return content.widget.type as EditableWidgetType;
+  if (content.kind === 'widget') return content.widget.type as EditableWidgetType | SensorWidgetType;
   return content.kind;
 }
+
+const isSensorChoice = (c: string): c is SensorWidgetType => (SENSOR_WIDGET_TYPES as string[]).includes(c);
 
 const pct = (v: number) => Math.round(v * 1000) / 10;
 
@@ -25,6 +35,7 @@ export function ZoneInspector({
   playlists,
   timezone,
   readOnly,
+  sensors,
   autoPickMedia = false,
   onChange,
   onRemove,
@@ -36,6 +47,8 @@ export function ZoneInspector({
   playlists: PlaylistDoc[];
   timezone: string;
   readOnly: boolean;
+  /** Sensor channels to bind; null when the plan has no sensors (widgets are not offered). */
+  sensors: ChannelChoice[] | null;
   /** Open the media picker immediately (zone was just added as a media zone). */
   autoPickMedia?: boolean;
   onChange: (zone: Zone) => void;
@@ -56,7 +69,13 @@ export function ZoneInspector({
     if (next === 'empty') setContent({ kind: 'empty' });
     else if (next === 'media') setPicking(true);
     else if (next === 'playlist') setContent({ kind: 'playlist', playlistId: zonePlaylists[0]?.id ?? '' });
-    else setWidget(defaultWidget(next, timezone));
+    else if (isSensorChoice(next)) {
+      // Keep the bound channel when switching between sensor widget types.
+      const w = zone.content.kind === 'widget' ? zone.content.widget : null;
+      const current = w && 'binding' in w ? w.binding : w?.type === 'chart' ? w.bindings[0] : null;
+      const channel = sensors?.find((s) => current && s.sensorDeviceId === current.sourceId && s.channelId === current.field) ?? sensors?.[0];
+      if (channel) setWidget(defaultSensorWidget(next, channel));
+    } else setWidget(defaultWidget(next, timezone));
   }
 
   function geometry(key: 'x' | 'y' | 'w' | 'h', value: string) {
@@ -68,7 +87,13 @@ export function ZoneInspector({
     onChange(next);
   }
 
-  const styleEditor = (style: TextStyle | undefined, update: (s: TextStyle) => void, defaultScale: number) => (
+  // `mode`: full text styling, colours + size (sensor values), or colours only (gauges, charts).
+  const styleEditor = (
+    style: TextStyle | undefined,
+    update: (s: TextStyle) => void,
+    defaultScale: number,
+    mode: 'full' | 'size' | 'colors' = 'full',
+  ) => (
     <>
       <div className="vx-form__row">
         <label className="vx-field">
@@ -93,6 +118,7 @@ export function ZoneInspector({
           </span>
         </label>
       </div>
+      {mode !== 'colors' ? (
       <label className="vx-field">
         <span className="vx-field__label">
           {t('studio.textSize')} <span className="vx-muted">{Math.round((style?.fontScale ?? defaultScale) * 100)}%</span>
@@ -106,6 +132,8 @@ export function ZoneInspector({
           onChange={(e) => update({ ...style, fontScale: Number(e.target.value) / 100 })}
         />
       </label>
+      ) : null}
+      {mode === 'full' ? (
       <div className="vx-form__row">
         <SelectField
           label={t('studio.align')}
@@ -119,6 +147,7 @@ export function ZoneInspector({
           {t('studio.bold')}
         </label>
       </div>
+      ) : null}
     </>
   );
 
@@ -162,13 +191,25 @@ export function ZoneInspector({
       <SelectField
         label={t('studio.content')}
         disabled={readOnly}
-        options={(['empty', 'media', 'playlist', 'text', 'clock', 'qr', 'table', 'web'] as ContentChoice[]).map((v) => ({
+        options={(['empty', 'media', 'playlist', 'text', 'clock', 'qr', 'table', 'web', ...(sensors ? SENSOR_WIDGET_TYPES : [])] as ContentChoice[]).map((v) => ({
           value: v,
           label: t(`studio.contentTypes.${v}`),
+          disabled: isSensorChoice(v) && !sensors?.length,
         }))}
+        hint={sensors && !sensors.length ? t('sensorWidgets.noChannels') : undefined}
         value={choice}
         onChange={(e) => changeChoice(e.target.value as ContentChoice)}
       />
+
+      {c.kind === 'widget' && isSensorChoice(c.widget.type) ? (
+        <SensorWidgetEditor
+          widget={c.widget as Parameters<typeof SensorWidgetEditor>[0]['widget']}
+          channels={sensors ?? []}
+          readOnly={readOnly}
+          onChange={setWidget}
+          styleEditor={styleEditor}
+        />
+      ) : null}
 
       {c.kind === 'media' ? (
         <>

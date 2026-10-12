@@ -86,3 +86,124 @@
     animation: none;
   }
 }
+
+/* ---- sensor widgets (sizes relative to the zone, like the Android player) ---- */
+.r-sensor {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2cqh;
+  padding: 4cqh 4cqw;
+  box-sizing: border-box;
+  text-align: center;
+  overflow: hidden;
+}
+.r-sensor__label {
+  font-size: min(12cqh, 9cqw);
+  font-weight: 600;
+  opacity: 0.8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.r-sensor__body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2cqh;
+  min-height: 0;
+  flex: 1;
+  width: 100%;
+}
+.r-sensor__body--dim {
+  opacity: 0.5;
+}
+.r-sensor__value {
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+.r-sensor__unit {
+  font-size: 0.45em;
+  font-weight: 500;
+  margin-left: 0.15em;
+}
+.r-sensor__band {
+  font-size: min(9cqh, 7cqw);
+  font-weight: 700;
+  padding: 0.2em 0.7em;
+  border-radius: 999px;
+}
+.r-sensor__note {
+  font-size: min(8cqh, 6cqw);
+  font-weight: 600;
+  padding: 0.15em 0.6em;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fde68a;
+}
+.r-sensor__nodata {
+  font-size: min(12cqh, 8cqw);
+  opacity: 0.7;
+}
+.r-sensor__status {
+  font-weight: 700;
+  line-height: 1.1;
+}
+.r-gauge {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+.r-sensor--chart {
+  align-items: stretch;
+}
+.r-sensor__chart {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+.series-chart text {
+  font-family: inherit;
+}
+.series-chart__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+.series-chart__tip {
+  position: absolute;
+  min-width: 120px;
+  max-width: 170px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.12);
+  font-size: 12px;
+  pointer-events: none;
+  z-index: 2;
+}
+.series-chart__tip-time {
+  color: var(--color-ink-muted);
+  margin-bottom: 2px;
+}
+.series-chart__tip-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.series-chart__key {
+  display: inline-block;
+  width: 12px;
+  height: 2px;
+  border-radius: 1px;
+}
+.r-sensor--chart .r-sensor__label {
+  font-size: min(8cqh, 6cqw);
+}
