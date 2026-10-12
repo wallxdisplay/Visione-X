@@ -149,6 +149,46 @@ describe('phase 1 collections', () => {
   });
 });
 
+describe('sensors (phase 5)', () => {
+  beforeEach(async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await setDoc(doc(db, 'orgs/org1/members/viewer'), { role: 'viewer', status: 'active', permissions: ['sensor.view'] });
+      await setDoc(doc(db, 'orgs/org1/members/nosensor'), { role: 'custom', status: 'active', permissions: ['screen.view'] });
+      await setDoc(doc(db, 'orgs/org1/sensorDevices/d1'), { name: 'Cold room' });
+      await setDoc(doc(db, 'orgs/org1/sensorDevices/d1/channels/temp'), { name: 'Temperature' });
+      await setDoc(doc(db, 'orgs/org1/sensorDevices/d1/channels/temp/readings/2026100109'), { points: [] });
+      await setDoc(doc(db, 'orgs/org1/alerts/a1'), { status: 'open' });
+      await setDoc(doc(db, 'sensorKeys/hash'), { orgId: 'org1', sensorDeviceId: 'd1' });
+    });
+  });
+
+  it('members with sensor.view read devices, channels, readings and alerts', async () => {
+    const db = env.authenticatedContext('viewer').firestore();
+    for (const path of [
+      'orgs/org1/sensorDevices/d1',
+      'orgs/org1/sensorDevices/d1/channels/temp',
+      'orgs/org1/sensorDevices/d1/channels/temp/readings/2026100109',
+      'orgs/org1/alerts/a1',
+    ]) {
+      await assertSucceeds(getDoc(doc(db, path)));
+    }
+  });
+
+  it('members without sensor.view and outsiders cannot', async () => {
+    await assertFails(getDoc(doc(env.authenticatedContext('nosensor').firestore(), 'orgs/org1/sensorDevices/d1')));
+    await assertFails(getDoc(doc(env.authenticatedContext('mallory').firestore(), 'orgs/org1/alerts/a1')));
+  });
+
+  it('nothing is client-writable and API key hashes are never readable', async () => {
+    const db = env.authenticatedContext('viewer').firestore();
+    await assertFails(setDoc(doc(db, 'orgs/org1/sensorDevices/d1/channels/temp'), { latest: { value: 1, ts: 1 } }, { merge: true }));
+    await assertFails(setDoc(doc(db, 'orgs/org1/alerts/a1'), { status: 'resolved' }, { merge: true }));
+    const root = env.authenticatedContext('root', { platformRole: 'superadmin' }).firestore();
+    await assertFails(getDoc(doc(root, 'sensorKeys/hash')));
+  });
+});
+
 describe('platform data', () => {
   it('active plans are public, inactive ones are not', async () => {
     const db = env.unauthenticatedContext().firestore();

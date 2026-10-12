@@ -79,6 +79,8 @@ interface ContentMeta {
   mediaIds: string[];
   playlistIds: string[];
   layoutIds: string[];
+  /** Sensor devices bound by widgets (absent on content saved before phase 5). */
+  sensorDeviceIds?: string[];
   createdBy: string;
   createdAt: number;
   updatedBy: string;

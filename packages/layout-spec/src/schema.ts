@@ -36,21 +36,34 @@ export const TextStyle = z
   .default({});
 export type TextStyle = z.infer<typeof TextStyle>;
 
-/** Binds a widget field to a live value, e.g. a sensor channel (phase 5). */
+const BindingId = z.string().min(1).max(128).regex(/^[A-Za-z0-9_-]+$/);
+
+/**
+ * Binds a widget to a live value. For `sensor`, `sourceId` is the sensor device and `field`
+ * the channel key. Values are not in the manifest: players fetch them from /devices/live.
+ */
 export const DataBinding = z.object({
   source: z.enum(['sensor', 'dataSource']),
-  sourceId: z.string(),
-  field: z.string(),
-  format: z.string().optional(),
+  sourceId: BindingId,
+  field: BindingId,
+  /** Digits after the decimal point; absent = up to 1. */
+  decimals: z.number().int().min(0).max(4).optional(),
+  /** Overrides the channel's own stale-after time. */
   staleAfterSec: z.number().int().positive().optional(),
 });
+export type DataBinding = z.infer<typeof DataBinding>;
 
-const Threshold = z.object({
-  label: z.string(),
+/** Display colour bands (alert rules are separate: they live on the sensor channel). */
+export const Threshold = z.object({
+  label: z.string().max(40).default(''),
   operator: z.enum(['>', '>=', '<', '<=']),
   value: z.number(),
   color: Color,
 });
+export type Threshold = z.infer<typeof Threshold>;
+
+/** Longest history a chart widget can show. */
+export const MAX_CHART_WINDOW_MINUTES = 24 * 60;
 
 const HttpsUrl = z
   .string()
@@ -85,35 +98,64 @@ export const Widget = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('sensorValue'),
     binding: DataBinding,
-    unit: z.string(),
-    thresholds: z.array(Threshold).default([]),
+    /** Caption above the value, e.g. "Cold room". */
+    label: z.string().max(60).default(''),
+    unit: z.string().max(16),
+    thresholds: z.array(Threshold).max(5).default([]),
     style: TextStyle,
   }),
   z.object({
     type: z.literal('gauge'),
     binding: DataBinding,
-    unit: z.string(),
+    label: z.string().max(60).default(''),
+    unit: z.string().max(16),
     min: z.number(),
     max: z.number(),
-    thresholds: z.array(Threshold).default([]),
+    thresholds: z.array(Threshold).max(5).default([]),
+    style: TextStyle,
   }),
   z.object({
     type: z.literal('chart'),
-    bindings: z.array(DataBinding).min(1),
+    bindings: z.array(DataBinding).min(1).max(3),
+    label: z.string().max(60).default(''),
     kind: z.enum(['line', 'bar']),
-    windowMinutes: z.number().int().positive(),
+    windowMinutes: z.number().int().min(5).max(MAX_CHART_WINDOW_MINUTES),
+    style: TextStyle,
   }),
   z.object({
     type: z.literal('status'),
     binding: DataBinding,
-    states: z.array(z.object({ match: z.string(), label: z.string(), color: Color })),
+    label: z.string().max(60).default(''),
+    /** First matching state wins; `match` is a number ("2") or true / false / on / off. */
+    states: z
+      .array(z.object({ match: z.string().trim().min(1).max(20), label: z.string().max(40), color: Color }))
+      .min(1)
+      .max(8),
+    style: TextStyle,
   }),
-]);
+]).superRefine((w, ctx) => {
+  if (w.type === 'gauge' && !(w.max > w.min)) {
+    ctx.addIssue({ code: 'custom', path: ['max'], message: 'Maximum must be above minimum' });
+  }
+});
 export type Widget = z.infer<typeof Widget>;
 export type WidgetType = Widget['type'];
 
 /** Widgets usable today. Others are part of the contract but ship in later phases. */
-export const AVAILABLE_WIDGETS = ['text', 'clock', 'qr', 'table', 'web'] as const satisfies readonly WidgetType[];
+export const AVAILABLE_WIDGETS = [
+  'text',
+  'clock',
+  'qr',
+  'table',
+  'web',
+  'sensorValue',
+  'gauge',
+  'chart',
+  'status',
+] as const satisfies readonly WidgetType[];
+
+/** Widgets that show live sensor values (need the sensor feature in the plan). */
+export const SENSOR_WIDGETS = ['sensorValue', 'gauge', 'chart', 'status'] as const satisfies readonly WidgetType[];
 
 export const ZoneContent = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('empty') }),
@@ -219,6 +261,14 @@ export const ScheduleRule = z.object({
 });
 export type ScheduleRule = z.infer<typeof ScheduleRule>;
 
+/** A bound sensor channel; `historyMinutes` is set when a chart needs past readings. */
+export const LiveChannel = z.object({
+  sourceId: z.string(),
+  field: z.string(),
+  historyMinutes: z.number().int().positive().nullable(),
+});
+export type LiveChannel = z.infer<typeof LiveChannel>;
+
 export const Manifest = z.object({
   specVersion: z.literal(SPEC_VERSION),
   orgId: z.string(),
@@ -234,5 +284,7 @@ export const Manifest = z.object({
     .object({ id: z.string(), playlistId: z.string(), expiresAt: z.number().int().nullable() })
     .nullable(),
   assets: z.array(ManifestAsset),
+  /** Live values the player polls from /devices/live (empty when nothing is bound). */
+  liveChannels: z.array(LiveChannel).default([]),
 });
 export type Manifest = z.infer<typeof Manifest>;

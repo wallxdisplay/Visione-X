@@ -104,6 +104,11 @@ export const NOTIFICATION_TYPES = [
   'emergency_ended',
   'approval_requested',
   'approval_decided',
+  'sensor_alert',
+  'sensor_recovered',
+  'sensor_stale',
+  'sensor_offline',
+  'sensor_online',
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 

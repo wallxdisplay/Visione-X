@@ -3,6 +3,11 @@ import { logger } from 'firebase-functions/v2';
 import { z } from 'zod';
 import {
   AcceptInviteInput,
+  AcknowledgeAlertInput,
+  DeleteSensorChannelInput,
+  SaveSensorChannelInput,
+  SaveSensorDeviceInput,
+  SensorDeviceRefInput,
   ClaimDeviceInput,
   EndEmergencyInput,
   MarkNotificationsReadInput,
@@ -53,6 +58,7 @@ import * as signup from './orgs/signup';
 import * as screens from './screens/screens';
 import * as commands from './ops/commands';
 import * as emergency from './ops/emergency';
+import * as sensors from './sensors/sensors';
 import { BASE_OPTIONS } from './options';
 
 export function actorFrom(request: CallableRequest): Actor {
@@ -131,3 +137,11 @@ export const triggerEmergency = callable(TriggerEmergencyInput, emergency.trigge
 export const endEmergency = callable(EndEmergencyInput, emergency.endEmergency);
 export const sendScreenCommand = callable(SendScreenCommandInput, commands.sendScreenCommand);
 export const markNotificationsRead = callable(MarkNotificationsReadInput, commands.markNotificationsRead);
+
+// Sensors (phase 5)
+export const saveSensorDevice = callable(SaveSensorDeviceInput, sensors.saveSensorDevice);
+export const rotateSensorKey = callable(SensorDeviceRefInput, sensors.rotateSensorKey);
+export const deleteSensorDevice = callable(SensorDeviceRefInput, sensors.deleteSensorDevice);
+export const saveSensorChannel = callable(SaveSensorChannelInput, sensors.saveSensorChannel);
+export const deleteSensorChannel = callable(DeleteSensorChannelInput, sensors.deleteSensorChannel);
+export const acknowledgeAlert = callable(AcknowledgeAlertInput, sensors.acknowledgeAlert);

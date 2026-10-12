@@ -3,9 +3,12 @@ import { HttpsError } from 'firebase-functions/v2/https';
 import type { z } from 'zod';
 import {
   AVAILABLE_WIDGETS,
+  SENSOR_WIDGETS,
+  widgetBindings,
   layoutRefs,
   playlistRefs,
   type ContentRefs,
+  type Widget,
 } from '@visione-x/layout-spec';
 import {
   paths,
@@ -33,7 +36,26 @@ function checkWidgets(refs: ContentRefs, entitlements: EntitlementsDoc) {
     }
   }
   if (refs.widgetTypes.length > 0) requireFeature(entitlements, 'widget.core', 'Widgets');
+  if (refs.widgetTypes.some((t) => (SENSOR_WIDGETS as readonly string[]).includes(t))) {
+    requireFeature(entitlements, 'sensor.esp32', 'Sensor widgets');
+  }
 }
+
+/** Sensor widgets must point at channels that exist in this org (reads only). */
+async function checkSensors(tx: Transaction, db: Firestore, orgId: string, content: Array<{ widget: Widget }>, refs: ContentRefs) {
+  const bindings = content.flatMap(({ widget }) => widgetBindings(widget).map((b) => b.binding));
+  if (bindings.some((b) => b.source !== 'sensor')) {
+    throw new HttpsError('invalid-argument', 'Data source bindings are not available yet.');
+  }
+  const snaps = await Promise.all(refs.sensors.map((r) => tx.get(db.doc(paths.sensorChannel(orgId, r.sourceId, r.field)))));
+  if (snaps.some((s) => !s.exists)) {
+    throw new HttpsError('invalid-argument', 'A sensor widget points at a sensor channel that no longer exists.');
+  }
+}
+
+const widgetsOf = <T extends { content: { kind: string } }>(xs: T[]) =>
+  xs.flatMap((x) => (x.content.kind === 'widget' ? [x.content as unknown as { widget: Widget }] : []));
+const sensorDeviceIds = (refs: ContentRefs) => [...new Set(refs.sensors.map((r) => r.sourceId))];
 
 /** Every referenced media item must exist in this org and not have failed processing. */
 async function checkMedia(tx: Transaction, db: Firestore, orgId: string, mediaIds: string[]) {
@@ -75,6 +97,7 @@ export async function saveLayout(
     const existing = input.layoutId ? await tx.get(ref) : null;
     if (existing && !existing.exists) throw new HttpsError('not-found', 'Layout not found.');
     await checkMedia(tx, db, input.orgId, refs.mediaIds);
+    await checkSensors(tx, db, input.orgId, widgetsOf(input.layout.zones), refs);
 
     // A playlist shown inside a zone may not itself contain layouts (no nesting/cycles).
     const playlists = await Promise.all(refs.playlistIds.map((id) => tx.get(db.doc(paths.playlist(input.orgId, id)))));
@@ -98,6 +121,7 @@ export async function saveLayout(
       mediaIds: refs.mediaIds,
       playlistIds: refs.playlistIds,
       layoutIds: [],
+      sensorDeviceIds: sensorDeviceIds(refs),
       ...meta(actor, at, existing?.data() as LayoutDoc | undefined),
     };
     tx.set(ref, doc);
@@ -165,6 +189,7 @@ export async function savePlaylist(
     const existing = input.playlistId ? await tx.get(ref) : null;
     if (existing && !existing.exists) throw new HttpsError('not-found', 'Playlist not found.');
     await checkMedia(tx, db, input.orgId, refs.mediaIds);
+    await checkSensors(tx, db, input.orgId, widgetsOf(input.items), refs);
 
     const layouts = await Promise.all(refs.layoutIds.map((id) => tx.get(db.doc(paths.layout(input.orgId, id)))));
     if (layouts.some((s) => !s.exists)) throw new HttpsError('invalid-argument', 'A selected layout no longer exists.');
@@ -188,6 +213,7 @@ export async function savePlaylist(
       mediaIds: refs.mediaIds,
       playlistIds: [],
       layoutIds: refs.layoutIds,
+      sensorDeviceIds: sensorDeviceIds(refs),
       ...meta(actor, at, existing?.data() as PlaylistDoc | undefined),
     };
     tx.set(ref, doc);

@@ -118,6 +118,27 @@ service cloud.firestore {
         allow write: if false;
       }
 
+      // Sensors (phase 5). API keys live in the server-only sensorKeys collection, never here.
+      match /sensorDevices/{sensorId} {
+        allow read: if hasPerm(orgId, 'sensor.view') || isPlatformStaff();
+        allow write: if false;
+
+        match /channels/{channelId} {
+          allow read: if hasPerm(orgId, 'sensor.view') || isPlatformStaff();
+          allow write: if false;
+
+          match /readings/{bucketId} {
+            allow read: if hasPerm(orgId, 'sensor.view') || isPlatformStaff();
+            allow write: if false;
+          }
+        }
+      }
+
+      match /alerts/{alertId} {
+        allow read: if hasPerm(orgId, 'sensor.view') || isPlatformStaff();
+        allow write: if false;
+      }
+
       match /billing/{docId} {
         allow read: if hasPerm(orgId, 'billing.view') || isPlatformStaff();
         allow write: if false;

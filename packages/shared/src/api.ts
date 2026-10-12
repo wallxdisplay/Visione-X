@@ -141,4 +141,10 @@ export const CALLABLES = {
   sendScreenCommand: 'sendScreenCommand',
   markNotificationsRead: 'markNotificationsRead',
   reviewPublish: 'reviewPublish',
+  saveSensorDevice: 'saveSensorDevice',
+  rotateSensorKey: 'rotateSensorKey',
+  deleteSensorDevice: 'deleteSensorDevice',
+  saveSensorChannel: 'saveSensorChannel',
+  deleteSensorChannel: 'deleteSensorChannel',
+  acknowledgeAlert: 'acknowledgeAlert',
 } as const;

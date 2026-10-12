@@ -5,15 +5,19 @@ import { getDeps } from '../lib/admin';
 import type { Deps } from '../lib/context';
 import { notify } from '../lib/notify';
 import { endEmergency } from './emergency';
+import { runSensorMonitor } from '../sensors/monitor';
 
 /**
  * Periodic housekeeping across all orgs:
  *  - screens silent for longer than OFFLINE_AFTER_MS get one "offline" alert (cleared by the
  *    next heartbeat, which raises "back online"),
  *  - emergency overrides past their end time are ended and normal content republished,
- *  - commands never picked up are marked expired.
+ *  - commands never picked up are marked expired,
+ *  - sensor devices and channels that stopped reporting raise alerts (sensors/monitor.ts).
  */
-export async function runMonitor(deps: Deps): Promise<{ offline: number; emergencies: number; commands: number }> {
+export async function runMonitor(
+  deps: Deps,
+): Promise<{ offline: number; emergencies: number; commands: number; sensorsOffline: number; channelsStale: number }> {
   const { db, now } = deps;
   const at = now();
 
@@ -57,13 +61,14 @@ export async function runMonitor(deps: Deps): Promise<{ offline: number; emergen
     await batch.commit();
   }
 
-  return { offline: offline.size, emergencies: expired.size, commands: stale.size };
+  const sensors = await runSensorMonitor(deps);
+  return { offline: offline.size, emergencies: expired.size, commands: stale.size, sensorsOffline: sensors.offline, channelsStale: sensors.stale };
 }
 
 export const monitorScreens = onSchedule(
   { schedule: 'every 5 minutes', region: REGION, timeZone: 'Asia/Kolkata', memory: '256MiB', maxInstances: 1, retryCount: 0 },
   async () => {
     const result = await runMonitor(getDeps());
-    if (result.offline || result.emergencies || result.commands) logger.info('Monitor run', result);
+    if (Object.values(result).some(Boolean)) logger.info('Monitor run', result);
   },
 );

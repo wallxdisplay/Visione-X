@@ -44,6 +44,18 @@ export const paths = {
   notifications: (orgId: string) => `orgs/${orgId}/notifications`,
   approvals: (orgId: string) => `orgs/${orgId}/approvals`,
   approval: (orgId: string, id: string) => `orgs/${orgId}/approvals/${id}`,
+  sensorDevices: (orgId: string) => `orgs/${orgId}/sensorDevices`,
+  sensorDevice: (orgId: string, id: string) => `orgs/${orgId}/sensorDevices/${id}`,
+  sensorChannels: (orgId: string, deviceId: string) => `orgs/${orgId}/sensorDevices/${deviceId}/channels`,
+  sensorChannel: (orgId: string, deviceId: string, channelId: string) =>
+    `orgs/${orgId}/sensorDevices/${deviceId}/channels/${channelId}`,
+  sensorReading: (orgId: string, deviceId: string, channelId: string, bucketId: string) =>
+    `orgs/${orgId}/sensorDevices/${deviceId}/channels/${channelId}/readings/${bucketId}`,
+  /** Global lookup from API key hash → sensor device (server-only). */
+  sensorKey: (keyHash: string) => `sensorKeys/${keyHash}`,
+  sensorKeys: () => 'sensorKeys',
+  alerts: (orgId: string) => `orgs/${orgId}/alerts`,
+  alert: (orgId: string, id: string) => `orgs/${orgId}/alerts/${id}`,
   signupRequests: () => 'signupRequests',
   signupRequest: (id: string) => `signupRequests/${id}`,
   auditLogs: () => 'auditLogs',

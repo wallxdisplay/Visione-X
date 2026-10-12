@@ -10,6 +10,8 @@ import {
   type ApiRequest,
   type ApiResult,
 } from '../devices/deviceApi';
+import { ingest } from '../sensors/ingest';
+import { deviceLive, deviceLiveHistory } from '../sensors/live';
 
 export type RouteResult = ApiResult;
 
@@ -29,6 +31,9 @@ const ROUTES: Record<string, Handler> = {
   'POST /v1/devices/heartbeat': deviceHeartbeat,
   'GET /v1/devices/commands': deviceCommands,
   'POST /v1/devices/commands/result': deviceCommandResult,
+  'GET /v1/devices/live': deviceLive,
+  'GET /v1/devices/live/history': deviceLiveHistory,
+  'POST /v1/ingest': ingest,
 };
 
 export function findRoute(method: string, rawPath: string): Handler | null {

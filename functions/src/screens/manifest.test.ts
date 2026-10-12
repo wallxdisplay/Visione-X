@@ -86,6 +86,7 @@ describe('assembleManifest', () => {
     expect(manifest.schedules.map((s) => s.id)).toEqual(['sch']);
     expect(manifest.defaultPlaylistId).toBeNull();
     expect(manifest.version).toBe(3);
+    expect(manifest.liveChannels).toEqual([]);
   });
 
   it('never references media that is not downloadable', () => {

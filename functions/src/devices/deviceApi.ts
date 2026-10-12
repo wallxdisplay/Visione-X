@@ -86,7 +86,7 @@ async function rateLimited({ db, now }: Deps, key: string, max: number): Promise
   });
 }
 
-async function authenticate(deps: Deps, req: ApiRequest): Promise<DeviceDoc | ApiResult> {
+export async function authenticate(deps: Deps, req: ApiRequest): Promise<DeviceDoc | ApiResult> {
   const header = String(req.headers.authorization ?? '');
   const m = /^Device ([A-Za-z0-9_-]{10,64}):([A-Za-z0-9_-]{32,128})$/.exec(header);
   if (!m) return fail(401, 'unauthenticated', 'Missing or malformed device credentials.');

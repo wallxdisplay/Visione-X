@@ -2,6 +2,7 @@ import type { Firestore } from 'firebase-admin/firestore';
 import {
   Manifest,
   SPEC_VERSION,
+  liveChannelsOf,
   type Layout,
   type PlaylistItem,
   type ScheduleRule,
@@ -152,6 +153,7 @@ export function assembleManifest(src: ManifestSources): Manifest {
     fallbackMediaId: null,
     emergency,
     assets,
+    liveChannels: liveChannelsOf(layouts, playlists),
   });
 }
 

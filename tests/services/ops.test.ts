@@ -104,6 +104,7 @@ describe('emergency override', () => {
     const msg = during.playlists.find((p) => p.id === during.emergency!.playlistId)!;
     expect(JSON.stringify(msg.items[0]!.content)).toContain('Please evacuate');
 
+    advance(1_000); // distinct timestamps, so the notifications sort deterministically
     await emergency.endEmergency(deps, alice, { orgId, emergencyId });
     const after = await manifest();
     expect(after.emergency).toBeNull();

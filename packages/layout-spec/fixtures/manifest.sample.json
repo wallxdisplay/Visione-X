@@ -37,5 +37,6 @@
   "assets": [
     { "mediaId": "m1", "url": "https://firebasestorage.googleapis.com/v0/b/b/o/m1?alt=media&token=t", "sha256": "1111111111111111111111111111111111111111111111111111111111111111", "bytes": 43805, "mimeType": "image/png" },
     { "mediaId": "m2", "url": "https://firebasestorage.googleapis.com/v0/b/b/o/m2?alt=media&token=t", "sha256": "2222222222222222222222222222222222222222222222222222222222222222", "bytes": 117597, "mimeType": "video/mp4" }
-  ]
+  ],
+  "liveChannels": [{ "sourceId": "sensor1", "field": "temp", "historyMinutes": 60 }]
 }
