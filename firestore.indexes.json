@@ -100,5 +100,18 @@
       ]
     }
   ],
-  "fieldOverrides": []
+  "fieldOverrides": [
+    {
+      "collectionGroup": "readings",
+      "fieldPath": "expiresAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "rateLimits",
+      "fieldPath": "expiresAt",
+      "ttl": true,
+      "indexes": []
+    }
+  ]
 }
