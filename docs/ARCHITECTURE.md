@@ -202,6 +202,15 @@ Rules: deny-by-default; anything money-, limit-, status- or audit-related is Fun
 - Super Admin: plans, prices, limits, features, trials, coupons, custom enterprise/dealer pricing, manual invoices, mark paid, activate/suspend — all audited with reason.
 - Entitlements recomputed by Function on any change and enforced in Rules + Functions (e.g. device authorization blocked at screen limit).
 
+**As built (phase 6, billing round, manual payments only):**
+- **No invoicing here.** Tax invoices are issued by a separate invoicing app. This app records payments and can store the external invoice number. Razorpay and the gateway adapters are deferred, and the `PaymentGateway` interface stays unused for now.
+- **Subscription** is stored at `orgs/{org}/billing/subscription`. It holds the plan, monthly or annual interval, screens purchased (`quantity`), an optional custom per-screen price, an extra discount, the computed price per period before GST, trial end, the paid period, `cancelAtPeriodEnd`, `nextTransitionAt` and the reminders already sent. Status is derived from dates by `billingState()` (`packages/shared/src/billing.ts`) and never set by hand. The statuses are `active` (paid period running), `trialing`, `past_due` (7-day grace after the period ends), `cancelled` (cancelled at period end, no grace) and `restricted` (trial over unpaid, or grace over).
+- **Summary on the org doc.** `orgs/{org}.billing` carries `{status, restricted, planId, trialEndsAt, currentPeriodEnd}`, so every member sees banners. While restricted or cancelled, `requireActiveOrgPermission` refuses `BILLING_LOCKED_PERMISSIONS` (content edits, publishing, screen/device management, sensor management). Players keep playing, and emergency, commands, members, settings and deletes still work.
+- **Billing staff** are platform roles with `billing.override`. They change plan, interval, screens and pricing, record payments (`orgs/{org}/payments`, amount incl. GST, method, reference, external invoice no.), void payments, adjust trial and paid-through dates, and cancel or undo at period end. Each change carries an audited reason. A payment extends the period from the current end while it is running or in grace, so a late payment keeps the billing date. Otherwise the period starts today. Paid plans without a fixed screen limit get `limits.screens = quantity`.
+- **Monitor.** The 5-minute monitor re-derives subscriptions whose `nextTransitionAt` has passed. It sends reminders (trial ends in 3 days, renewal due in 7) and status notifications (`billing_past_due`, `billing_restricted`), and audits status changes as `billing-monitor`.
+- **Customers** (`billing.manage`, i.e. owners) see `/billing`: plan, usage, price, paid period and payments. They can send requests (`orgs/{org}/billingRequests`: add screens, change plan, renew, cancel). Billing staff resolve requests from `/admin/billing`, and the customer is notified.
+- **Plans and release status.** Super Admin (`plan.manage`) edits plans and feature release status at `/admin/features`. `org.limits.edit` sets per-org entitlement overrides. Each of these recomputes the affected organizations' entitlements.
+
 ## 11. Super Admin (`/admin`)
 Platform overview · Organization approvals (approve/reject/request info) · Organizations · Users & roles · Screens & players · Features & limits · Plans & billing · Integrations & API · Support access (time-boxed, scoped, customer-visible, no secrets) · Tickets · Notifications · Security alerts · Backup & recovery (scheduled Firestore exports) · Platform analytics · Audit logs · Platform settings.
 
@@ -255,7 +264,7 @@ Feature catalogue stores `releaseStatus` (what WallX has built) separately from 
 | 3 ✅ (real-box test pending) | Android player | Pairing/authorization, boot-start, kiosk, HDMI playback, offline cache, rendering |
 | 4 ✅ | Publish & monitor | Manifest compiler, sync, bulk publish, emergency override, heartbeats, remote commands, diagnostics |
 | 5 ✅ (real ESP32 test pending) | Sensors | Ingest API, ESP32 firmware sample, channels, thresholds, data widgets, alerts |
-| 6 | Billing & beyond | Razorpay, invoices/GST, admin billing tools, integrations, Hindi/Marathi, reseller groundwork |
+| 6 (billing round ✅) | Billing & beyond | Manual billing (subscriptions, payments, restricted mode, admin billing tools) ✅; next: integrations, Hindi/Marathi, reseller groundwork; Razorpay later. Invoices: external app |
 
 ## 18. Still to confirm
 1. Real Firebase **project ID** and **Hosting site ID** (display name "Visione-X" is not the ID), and whether Firestore already exists (region).
