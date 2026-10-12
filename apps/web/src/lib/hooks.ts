@@ -14,7 +14,8 @@ export interface Live<T> {
   error: FirestoreError | null;
 }
 
-export type WithId<T> = T & { _id: string };
+/** Query result row: the document data plus its id and full path. */
+export type WithId<T> = T & { _id: string; _path: string };
 
 interface Snapshot<T> {
   /** The path/key this result belongs to; anything else is stale. */
@@ -63,7 +64,7 @@ export function useQueryData<T>(
       (s) =>
         setSnap({
           key,
-          data: s.docs.map((d) => ({ ...(d.data() as T), _id: d.id }) as WithId<T>),
+          data: s.docs.map((d) => ({ ...(d.data() as T), _id: d.id, _path: d.ref.path }) as WithId<T>),
           error: null,
         }),
       (error) => setSnap({ key, data: [], error }),

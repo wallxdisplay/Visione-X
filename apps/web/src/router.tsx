@@ -3,7 +3,11 @@ import { createBrowserRouter, Outlet, type RouteObject } from 'react-router';
 import { AuthProvider } from './auth/AuthProvider';
 import { CustomerGate, RedirectIfSignedIn, RequirePlatformStaff, RequireUser } from './auth/guards';
 import { AcceptInvite } from './pages/AcceptInvite';
+import { AdminBilling } from './pages/admin/AdminBilling';
+import { AdminFeatures } from './pages/admin/AdminFeatures';
 import { AdminOverview } from './pages/admin/AdminOverview';
+import { OrgBilling } from './pages/admin/OrgBilling';
+import { Billing } from './pages/billing/Billing';
 import { ApprovalReview } from './pages/admin/ApprovalReview';
 import { Approvals } from './pages/admin/Approvals';
 import { AuditLogs } from './pages/admin/AuditLogs';
@@ -44,6 +48,7 @@ const PAGES: Record<string, ReactNode> = {
   '/schedules': <Schedules />,
   '/sensors': <Sensors />,
   '/alerts': <Alerts />,
+  '/billing': <Billing />,
   '/team': <Team />,
   '/sites': <Sites />,
   '/settings': <OrgSettings />,
@@ -52,6 +57,8 @@ const PAGES: Record<string, ReactNode> = {
   '/admin/orgs': <Orgs />,
   '/admin/users': <PlatformUsers />,
   '/admin/audit': <AuditLogs />,
+  '/admin/billing': <AdminBilling />,
+  '/admin/features': <AdminFeatures />,
 };
 
 function navRoutes(nav: NavGroup[], base: string): RouteObject[] {
@@ -95,6 +102,7 @@ export const router = createBrowserRouter([
                 children: [
                   ...navRoutes(adminNav, '/admin'),
                   { path: '/admin/approvals/:requestId', element: <ApprovalReview /> },
+                  { path: '/admin/billing/:orgId', element: <OrgBilling /> },
                 ],
               },
             ],

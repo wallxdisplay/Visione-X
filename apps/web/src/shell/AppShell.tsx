@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, NavLink, Outlet } from 'react-router';
 import { useAuth } from '../auth/AuthProvider';
 import { useOrg } from '../org/OrgProvider';
+import { BillingBanner } from './BillingBanner';
 import { EmergencyBanner } from './EmergencyBanner';
 import type { NavGroup } from './nav';
 import { NotificationBell } from './NotificationBell';
@@ -110,6 +111,7 @@ export function AppShell({ nav, variant }: { nav: NavGroup[]; variant: 'customer
           </div>
         </header>
         {variant === 'customer' ? <EmergencyBanner /> : null}
+        {variant === 'customer' ? <BillingBanner /> : null}
         <main className="shell__content">
           <Outlet />
         </main>

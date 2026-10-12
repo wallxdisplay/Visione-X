@@ -250,7 +250,13 @@
       "sensor_recovered": "{{sensor}} · {{channel}} is back to normal",
       "sensor_stale": "{{sensor}} · {{channel}} stopped sending new data",
       "sensor_offline": "Sensor {{sensor}} is offline",
-      "sensor_online": "Sensor {{sensor}} is back online"
+      "sensor_online": "Sensor {{sensor}} is back online",
+      "billing_trial_ending": "Your free trial ends on {{until, date}}",
+      "billing_due_soon": "Your subscription renews on {{until, date}}: payment is due",
+      "billing_past_due": "Payment is overdue: renew within the grace period to avoid interruption",
+      "billing_restricted": "Subscription lapsed: editing and publishing are paused",
+      "billing_payment_recorded": "Payment received; paid through {{until, date}}",
+      "billing_request_resolved": "WallX handled your billing request ({{status}})"
     }
   },
   "emergency": {

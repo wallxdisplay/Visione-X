@@ -1005,3 +1005,31 @@
 .sensor-editor__chan > :first-child {
   flex: 1;
 }
+
+/* Billing notice (phase 6) */
+.billing-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-8);
+  font-size: 14px;
+}
+.billing-banner span {
+  flex: 1;
+}
+.billing-banner a {
+  color: inherit;
+  font-weight: 600;
+}
+.billing-banner--danger {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+.billing-banner--warning {
+  background: var(--color-warning-soft);
+  color: var(--color-warning);
+}
+.billing-banner--info {
+  background: var(--color-info-soft);
+  color: var(--color-info);
+}
