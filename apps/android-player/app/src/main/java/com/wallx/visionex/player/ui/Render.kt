@@ -57,6 +57,7 @@ import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
 import coil.decode.GifDecoder
 import coil.ImageLoader
+import com.wallx.visionex.player.core.LiveStore
 import com.wallx.visionex.player.core.MediaLibrary
 import com.wallx.visionex.player.data.Layout
 import com.wallx.visionex.player.data.Manifest
@@ -80,7 +81,14 @@ import java.util.Locale
  * Same rules: zone geometry in canvas fractions; font size = fontScale × zone height, and
  * single-line widgets are also capped at zone width / (0.62 × characters).
  */
-class RenderContext(val manifest: Manifest, val library: MediaLibrary) {
+class RenderContext(
+    val manifest: Manifest,
+    val library: MediaLibrary,
+    /** Live sensor values for sensor widgets. */
+    val live: LiveStore = LiveStore(),
+    /** Current time (server-corrected on a real player). */
+    val now: () -> Long = System::currentTimeMillis,
+) {
     val layouts = manifest.layouts.associateBy { it.id }
     val playlists = manifest.playlists.associateBy { it.id }
 }
@@ -130,7 +138,7 @@ fun PlaylistPlayer(
             when (c.kind()) {
                 "media" -> MediaView(c.str("mediaId") ?: "", "contain", ctx.library)
                 "layout" -> ctx.layouts[c.str("layoutId")]?.let { LayoutView(it, ctx) }
-                "widget" -> c["widget"]?.jsonObject?.let { WidgetView(it) }
+                "widget" -> c["widget"]?.jsonObject?.let { WidgetView(it, ctx) }
             }
         }
     }
@@ -164,7 +172,7 @@ fun LayoutView(layout: Layout, ctx: RenderContext) {
 private fun ZoneContent(content: JsonObject, ctx: RenderContext) {
     when (content.kind()) {
         "media" -> MediaView(content.str("mediaId") ?: "", content.str("fit") ?: "cover", ctx.library)
-        "widget" -> content["widget"]?.jsonObject?.let { WidgetView(it) }
+        "widget" -> content["widget"]?.jsonObject?.let { WidgetView(it, ctx) }
         "playlist" -> ctx.playlists[content.str("playlistId")]?.let { PlaylistPlayer(it.items, ctx) }
         else -> Unit // empty zone
     }
@@ -240,7 +248,7 @@ private fun fontSize(scale: Double, height: Dp, width: Dp, singleLineChars: Int?
 }
 
 @Composable
-fun WidgetView(widget: JsonObject) {
+fun WidgetView(widget: JsonObject, ctx: RenderContext? = null) {
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val h = maxHeight
         val w = maxWidth
@@ -266,6 +274,10 @@ fun WidgetView(widget: JsonObject) {
                 }
             }
             "table" -> TableWidget(widget, h)
+            "sensorValue" -> ctx?.let { SensorValueWidget(widget, it) }
+            "gauge" -> ctx?.let { GaugeWidget(widget, it) }
+            "chart" -> ctx?.let { ChartWidget(widget, it) }
+            "status" -> ctx?.let { StatusWidget(widget, it) }
             "web" -> WebWidget(widget.str("url") ?: "", (widget["refreshSec"] as? JsonPrimitive)?.doubleOrNull?.toLong())
             else -> Box(Modifier.fillMaxSize().background(Color(0xFF111827)))
         }

@@ -79,6 +79,9 @@ class PlayerEngine internal constructor(
     private val _status = MutableStateFlow(Status())
     val status: StateFlow<Status> = _status.asStateFlow()
 
+    /** Live sensor values for the widgets of the playing manifest. */
+    val live = LiveStore()
+
     /** Set by the renderer so heartbeats can report what is on screen. */
     @Volatile var nowPlaying: Playing? = null
 
@@ -112,6 +115,7 @@ class PlayerEngine internal constructor(
         manifests.load()?.let { show(it) }
         loop = scope.launch { pollLoop() }
         scope.launch { heartbeatLoop() }
+        scope.launch { liveLoop() }
     }
 
     private suspend fun pollLoop() {
@@ -262,6 +266,45 @@ class PlayerEngine internal constructor(
             .filter { cache.has(it) }
             .associate { a: Asset -> a.mediaId to (cache.fileFor(a) to a.mimeType) }
         _ui.value = UiState.Playing(manifest, MediaLibrary(files))
+    }
+
+    /** Server time as best known (device clock corrected by the skew seen on /me). */
+    fun serverNow(): Long = System.currentTimeMillis() - (serverSkewMs ?: 0L)
+
+    /**
+     * Polls live sensor values while the playing manifest binds sensor channels; chart
+     * history is refreshed less often (and on any change of the bound channels).
+     */
+    private suspend fun liveLoop() {
+        delay(2_000)
+        var lastHistoryAt = 0L
+        var lastKeys = emptyList<String>()
+        while (currentCoroutineContextActive()) {
+            val channels = (_ui.value as? UiState.Playing)?.manifest?.liveChannels.orEmpty()
+            val auth = device.auth
+            if (channels.isNotEmpty() && auth != null) {
+                val keys = channels.map { it.key }
+                if (keys != lastKeys) {
+                    live.retain(channels)
+                    lastKeys = keys
+                    lastHistoryAt = 0L
+                }
+                try {
+                    live.applyLive(api.live(auth), channels)
+                    val now = System.currentTimeMillis()
+                    if (channels.any { it.historyMinutes != null } && now - lastHistoryAt >= LiveStore.HISTORY_POLL_SEC * 1000) {
+                        live.applyHistory(api.liveHistory(auth))
+                        lastHistoryAt = now
+                    }
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    // Keep showing the last values; widgets turn them stale over time.
+                    Log.w(TAG, "Live data failed: ${e.message}")
+                }
+            }
+            delay(LiveStore.LIVE_POLL_SEC * 1000)
+        }
     }
 
     private suspend fun heartbeatLoop() {

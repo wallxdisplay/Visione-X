@@ -13,4 +13,7 @@
     <string name="offline_note">Offline · playing saved content</string>
     <string name="cannot_connect">Cannot reach Visione-X. Check the network cable or Wi-Fi.</string>
     <string name="syncing">Downloading new content… %1$d%%</string>
+    <string name="sensor_nodata">No data</string>
+    <string name="sensor_stale">Stale</string>
+    <string name="sensor_offline">Sensor offline</string>
 </resources>

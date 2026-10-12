@@ -184,6 +184,15 @@ Rules: deny-by-default; anything money-, limit-, status- or audit-related is Fun
 - ESP32 reference firmware (Arduino) with HTTPS + key provisioning provided later.
 - MQTT bridge later reuses the same validation/ingestion core.
 
+**As built (phase 5):**
+- **Devices and keys.** A sensor device lives in `orgs/{org}/sensorDevices/{id}`. Its API key (`vxs_…`, 192 bits) is shown once. Only the key's SHA-256 is stored, in the server-only `sensorKeys/{hash}` lookup. The key can be rotated, and the old key stops working at once. Creating a device needs `sensor.manage`, the `sensor.esp32` feature and room under the plan's `sensorDevices` limit.
+- **Channels** live in `sensorDevices/{id}/channels/{key}`, with at most 16 per device. Each channel has a key the firmware sends (`temp`, `door`), a type (number, or on/off stored as 1/0), an optional valid range, `staleAfterSec` and up to 5 alert rules. A rule is an operator, a limit, a severity and an optional hysteresis.
+- **Ingest** is at `POST /api/v1/ingest`. The body is `{ts?, fw?, deviceId?, readings[]}`, where `ts` is Unix seconds or ms and is optional. The checks are: key, device active, org active, plan entitlement, token bucket (burst 6, then 1 per 10 s), clock skew within ±10 min, and per-reading channel, type and range. Accepted readings update `channel.latest`. They are appended to the UTC hour bucket `channels/{key}/readings/{YYYYMMDDHH}`, whose `expiresAt` comes from the plan's `retentionDays`. Alert rules are evaluated in the same transaction. A late reading only goes into history.
+- **Alerts** are stored at `orgs/{org}/alerts/{id}` with type `threshold`, `stale` or `offline`, and status `open` or `resolved`. They can be acknowledged. Opening one raises a notification (`sensor_alert`, `sensor_stale`, `sensor_offline`); recovery raises `sensor_recovered` or `sensor_online`. The 5-minute monitor raises offline alerts after `offlineAfterMin` and stale alerts when a channel stops while its device still reports. A dead device gets a single offline alert: its channels are parked rather than each raising a stale alert.
+- **Widgets.** `sensorValue`, `gauge`, `chart` (up to 3 series, 5 min–24 h) and `status` bind `{source:"sensor", sourceId: device, field: channel}`. Saving checks the feature and that the channel exists. The manifest lists `liveChannels`. The player polls `GET /devices/live` every 15 s and `GET /devices/live/history` every 5 min, and appends live values to chart series in between. A screen only receives channels its manifest binds. Display rules (No data / Stale / Sensor offline, colour bands, status matching) are in `packages/layout-spec/src/live.ts`, mirrored in the player's `core/Live.kt`.
+- **Firmware.** The Arduino reference sketch is in `firmware/esp32-sensor` (DHT22 + door switch, NTP, TLS with a pinned root CA).
+- **Retention.** Reading buckets carry `expiresAt`. A Firestore TTL policy on the `readings` collection group deletes them (see DEVELOPMENT.md).
+
 ## 10. Billing (modular)
 - `PaymentGateway` interface (createCustomer, createSubscription, changeQuantity, changePlan, cancel, createOrder, verifyWebhookSignature, parseEvent). Adapters: **razorpay**, **manual** (bank transfer / admin invoice); others later.
 - Keys only in Secret Manager; client receives only `subscription_id`/`order_id` + public key id.
@@ -245,7 +254,7 @@ Feature catalogue stores `releaseStatus` (what WallX has built) separately from 
 | 2 ✅ | Content | Media library + transcoding, layout studio, widgets (core), playlists, schedules, preview |
 | 3 ✅ (real-box test pending) | Android player | Pairing/authorization, boot-start, kiosk, HDMI playback, offline cache, rendering |
 | 4 ✅ | Publish & monitor | Manifest compiler, sync, bulk publish, emergency override, heartbeats, remote commands, diagnostics |
-| 5 | Sensors | Ingest API, ESP32 firmware sample, channels, thresholds, data widgets, alerts |
+| 5 ✅ (real ESP32 test pending) | Sensors | Ingest API, ESP32 firmware sample, channels, thresholds, data widgets, alerts |
 | 6 | Billing & beyond | Razorpay, invoices/GST, admin billing tools, integrations, Hindi/Marathi, reseller groundwork |
 
 ## 18. Still to confirm

@@ -27,6 +27,12 @@ class Api(private val base: String, val http: OkHttpClient = defaultClient()) {
 
     suspend fun commands(auth: String): CommandList = get("/devices/commands", auth)
 
+    /** Latest values of the sensor channels bound by the published content. */
+    suspend fun live(auth: String): LiveResponse = get("/devices/live", auth)
+
+    /** Recent readings for chart widgets ([epoch ms, value] points). */
+    suspend fun liveHistory(auth: String): HistoryResponse = get("/devices/live/history", auth)
+
     suspend fun commandResult(auth: String, body: CommandResult) {
         request(
             Request.Builder().url("$base/devices/commands/result").post(json.encodeToString(body).toRequestBody(jsonType)),

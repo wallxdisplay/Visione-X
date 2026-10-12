@@ -13,6 +13,7 @@ player and ESP32 sensor integration, on Firebase (asia-south1).
 |---|---|
 | `apps/web` | React + TypeScript SPA: customer app (`/`), Studio (`/studio`), Super Admin (`/admin`), player registration (`/player`) |
 | `apps/android-player` | Native Kotlin player (phase 3) |
+| `firmware/esp32-sensor` | Reference ESP32 (Arduino) firmware for sensor devices (phase 5) |
 | `functions` | Cloud Functions 2nd gen (HTTPS API at `/api/**`) |
 | `packages/shared` | Types, zod schemas, permissions, feature entitlements, Firestore paths |
 | `packages/layout-spec` | Layout/manifest contract shared by web preview and Android player |

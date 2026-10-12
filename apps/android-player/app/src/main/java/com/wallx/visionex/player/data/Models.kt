@@ -32,6 +32,8 @@ data class Manifest(
     val fallbackMediaId: String? = null,
     val emergency: Emergency? = null,
     val assets: List<Asset>,
+    /** Sensor channels the content shows; values come from /devices/live (phase 5). */
+    val liveChannels: List<LiveChannel> = emptyList(),
 )
 
 @Serializable
@@ -73,6 +75,11 @@ data class ScheduleRule(
 
 @Serializable
 data class Emergency(val id: String, val playlistId: String, val expiresAt: Long? = null)
+
+@Serializable
+data class LiveChannel(val sourceId: String, val field: String, val historyMinutes: Int? = null) {
+    val key get() = "$sourceId/$field"
+}
 
 @Serializable
 data class Asset(val mediaId: String, val url: String, val sha256: String, val bytes: Long, val mimeType: String)
@@ -162,3 +169,27 @@ data class Heartbeat(
     val manifestVersion: Int?,
     val errors: List<String>,
 )
+
+// ---------------------------------------------------------------- live sensor data (phase 5)
+
+@Serializable
+data class LiveValueDto(
+    val sourceId: String,
+    val field: String,
+    val name: String = "",
+    val value: Double? = null,
+    val ts: Long? = null,
+    val staleAfterSec: Int = 600,
+    val deviceOnline: Boolean = false,
+    val unit: String = "",
+    val valueType: String = "number",
+)
+
+@Serializable
+data class LiveResponse(val serverTime: Long = 0, val values: List<LiveValueDto> = emptyList())
+
+@Serializable
+data class HistorySeries(val sourceId: String, val field: String, val points: List<List<Double>> = emptyList())
+
+@Serializable
+data class HistoryResponse(val serverTime: Long = 0, val series: List<HistorySeries> = emptyList())

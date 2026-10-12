@@ -93,7 +93,7 @@ private fun Playback(state: UiState.Playing, engine: PlayerEngine) {
     }
     val m = state.manifest
     val resolution = Schedule.resolvePlaylist(m.schedules, m.defaultPlaylistId, m.emergency, now)
-    val ctx = remember(m, state.library) { RenderContext(m, state.library) }
+    val ctx = remember(m, state.library) { RenderContext(m, state.library, engine.live, engine::serverNow) }
     val playlist = resolution.playlistId?.let { ctx.playlists[it] }
     if (playlist == null) {
         engine.nowPlaying = Playing(null, null, resolution.source)

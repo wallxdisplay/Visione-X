@@ -2,7 +2,8 @@
 
 ## Prerequisites
 - Node.js 22+ (`.nvmrc`)
-- Java 21 (Temurin) — required by the Firestore/Auth emulators.
+- Java 21 (Temurin) — required by the Firestore/Auth emulators. The Firebase CLI runs the `java`
+  on PATH (it ignores JAVA_HOME), so put Java 21 first on PATH if an older Java is installed.
 - Firebase CLI is a dev dependency; use `npx firebase …`.
 - Android SDK for the player (`apps/android-player`, Gradle wrapper; Java 21 works). Build output
   goes to `%LOCALAPPDATA%\visione-x-player-build` because OneDrive locks build files. Tests run on
@@ -72,6 +73,13 @@ fixes were needed and may be needed again for future projects:
   is not needed.)
 - **Scheduled functions** — the first deploy of `monitorScreens` enabled the Cloud Scheduler API
   automatically. Its job is `firebase-schedule-monitorScreens-asia-south1` (every 5 minutes).
+  Since phase 5 it also raises sensor offline/stale alerts.
+- **Sensor reading retention (phase 5, to do once)** — reading buckets carry `expiresAt`; enable
+  a TTL policy so Firestore deletes them after the plan's retention period (rate-limit windows
+  use the same mechanism):
+  `gcloud firestore fields ttls update expiresAt --collection-group=readings --enable-ttl --project visione-x`
+  and likewise `--collection-group=rateLimits`. Also deploy the new composite indexes
+  (`npx firebase deploy --only firestore:indexes --project prod`) before the functions.
 - **Storage rules → Firestore** — `storage.rules` reads membership from Firestore, which needs
   `service-281302718007@gcp-sa-firebasestorage.iam.gserviceaccount.com` to hold
   *Firebase Rules Firestore Service Agent* (`roles/firebaserules.firestoreServiceAgent`).

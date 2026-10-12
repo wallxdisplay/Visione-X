@@ -26,5 +26,7 @@ class ManifestFixtureTest {
         assertEquals(listOf(1, 2, 3, 4, 5), m.schedules[0].daysOfWeek)
         assertEquals("video/mp4", m.assets[1].mimeType)
         assertEquals(null, m.emergency)
+        assertEquals(listOf("sensor1/temp"), m.liveChannels.map { it.key })
+        assertEquals(60, m.liveChannels[0].historyMinutes)
     }
 }

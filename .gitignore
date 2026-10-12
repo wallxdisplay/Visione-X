@@ -29,3 +29,6 @@ apps/android-player/local.properties
 *.aab
 *.jks
 *.keystore
+
+# ESP32 firmware secrets
+firmware/**/config.h
