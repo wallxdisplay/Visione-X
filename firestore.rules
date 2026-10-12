@@ -25,6 +25,11 @@ service cloud.firestore {
       return platformRole() in ['superadmin', 'support', 'billing', 'ops', 'auditor'];
     }
 
+    // Platform roles holding billing.view (see PLATFORM_ROLE_PERMISSIONS).
+    function isBillingStaff() {
+      return platformRole() in ['superadmin', 'billing', 'auditor'];
+    }
+
     function memberPath(orgId) {
       return /databases/$(database)/documents/orgs/$(orgId)/members/$(request.auth.uid);
     }
@@ -140,7 +145,18 @@ service cloud.firestore {
       }
 
       match /billing/{docId} {
-        allow read: if hasPerm(orgId, 'billing.view') || isPlatformStaff();
+        allow read: if hasPerm(orgId, 'billing.view') || isBillingStaff();
+        allow write: if false;
+      }
+
+      // Manual payments and customer billing requests (phase 6).
+      match /payments/{paymentId} {
+        allow read: if hasPerm(orgId, 'billing.view') || isBillingStaff();
+        allow write: if false;
+      }
+
+      match /billingRequests/{requestId} {
+        allow read: if hasPerm(orgId, 'billing.view') || isBillingStaff();
         allow write: if false;
       }
 
@@ -148,6 +164,15 @@ service cloud.firestore {
       match /{document=**} {
         allow read, write: if false;
       }
+    }
+
+    // ---------- billing staff: lists across organizations ----------
+    match /{path=**}/billing/{docId} {
+      allow read: if isBillingStaff();
+    }
+
+    match /{path=**}/billingRequests/{requestId} {
+      allow read: if isBillingStaff();
     }
 
     // ---------- fallback ----------

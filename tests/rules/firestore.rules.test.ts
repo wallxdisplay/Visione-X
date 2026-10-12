@@ -4,7 +4,7 @@ import {
   initializeTestEnvironment,
   type RulesTestEnvironment,
 } from '@firebase/rules-unit-testing';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { collectionGroup, doc, getDoc, getDocs, query, setDoc, where } from 'firebase/firestore';
 import { readFileSync } from 'node:fs';
 import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
 
@@ -186,6 +186,36 @@ describe('sensors (phase 5)', () => {
     await assertFails(setDoc(doc(db, 'orgs/org1/alerts/a1'), { status: 'resolved' }, { merge: true }));
     const root = env.authenticatedContext('root', { platformRole: 'superadmin' }).firestore();
     await assertFails(getDoc(doc(root, 'sensorKeys/hash')));
+  });
+});
+
+describe('billing (phase 6)', () => {
+  beforeEach(async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await setDoc(doc(db, 'orgs/org1/members/own'), { role: 'owner', status: 'active', permissions: ['billing.view', 'billing.manage'] });
+      await setDoc(doc(db, 'orgs/org1/members/ed'), { role: 'editor', status: 'active', permissions: ['screen.view'] });
+      await setDoc(doc(db, 'orgs/org1/billing/subscription'), { planId: 'trial' });
+      await setDoc(doc(db, 'orgs/org1/payments/p1'), { amountMinor: 100 });
+      await setDoc(doc(db, 'orgs/org1/billingRequests/r1'), { status: 'open' });
+    });
+  });
+
+  it('owners with billing.view read payments and requests; editors do not', async () => {
+    const own = env.authenticatedContext('own').firestore();
+    await assertSucceeds(getDoc(doc(own, 'orgs/org1/payments/p1')));
+    await assertSucceeds(getDoc(doc(own, 'orgs/org1/billingRequests/r1')));
+    await assertFails(getDoc(doc(env.authenticatedContext('ed').firestore(), 'orgs/org1/payments/p1')));
+    await assertFails(setDoc(doc(own, 'orgs/org1/payments/p2'), { amountMinor: 1 }));
+  });
+
+  it('billing staff list across orgs; support staff cannot see billing', async () => {
+    const bill = env.authenticatedContext('b', { platformRole: 'billing' }).firestore();
+    await assertSucceeds(getDocs(query(collectionGroup(bill, 'billing'))));
+    await assertSucceeds(getDocs(query(collectionGroup(bill, 'billingRequests'), where('status', '==', 'open'))));
+    const sup = env.authenticatedContext('s', { platformRole: 'support' }).firestore();
+    await assertFails(getDoc(doc(sup, 'orgs/org1/billing/subscription')));
+    await assertFails(getDocs(query(collectionGroup(sup, 'billing'))));
   });
 });
 

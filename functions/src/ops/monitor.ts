@@ -6,6 +6,7 @@ import type { Deps } from '../lib/context';
 import { notify } from '../lib/notify';
 import { endEmergency } from './emergency';
 import { runSensorMonitor } from '../sensors/monitor';
+import { runBillingMonitor } from '../billing/monitor';
 
 /**
  * Periodic housekeeping across all orgs:
@@ -13,11 +14,20 @@ import { runSensorMonitor } from '../sensors/monitor';
  *    next heartbeat, which raises "back online"),
  *  - emergency overrides past their end time are ended and normal content republished,
  *  - commands never picked up are marked expired,
- *  - sensor devices and channels that stopped reporting raise alerts (sensors/monitor.ts).
+ *  - sensor devices and channels that stopped reporting raise alerts (sensors/monitor.ts),
+ *  - subscriptions move between trial / active / past due / restricted (billing/monitor.ts).
  */
 export async function runMonitor(
   deps: Deps,
-): Promise<{ offline: number; emergencies: number; commands: number; sensorsOffline: number; channelsStale: number }> {
+): Promise<{
+  offline: number;
+  emergencies: number;
+  commands: number;
+  sensorsOffline: number;
+  channelsStale: number;
+  billingTransitions: number;
+  billingReminders: number;
+}> {
   const { db, now } = deps;
   const at = now();
 
@@ -62,7 +72,16 @@ export async function runMonitor(
   }
 
   const sensors = await runSensorMonitor(deps);
-  return { offline: offline.size, emergencies: expired.size, commands: stale.size, sensorsOffline: sensors.offline, channelsStale: sensors.stale };
+  const billing = await runBillingMonitor(deps);
+  return {
+    offline: offline.size,
+    emergencies: expired.size,
+    commands: stale.size,
+    sensorsOffline: sensors.offline,
+    channelsStale: sensors.stale,
+    billingTransitions: billing.transitions,
+    billingReminders: billing.reminders,
+  };
 }
 
 export const monitorScreens = onSchedule(

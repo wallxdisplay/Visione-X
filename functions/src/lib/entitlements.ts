@@ -15,13 +15,17 @@ interface CatalogDoc {
   features: Partial<Record<FeatureKey, ReleaseStatus>>;
 }
 
-/** Reads plan, catalog and overrides (reads only — safe before transaction writes). */
+/**
+ * Reads plan, catalog and overrides (reads only — safe before transaction writes).
+ * Plans without a fixed screen limit (paid plans) allow the number of screens purchased.
+ */
 export async function computeEntitlements(
   tx: Transaction,
   db: Firestore,
   orgId: string,
   planId: string,
   now: number,
+  screensPurchased?: number,
 ): Promise<EntitlementsDoc> {
   const [planSnap, catalogSnap, overridesSnap] = await Promise.all([
     tx.get(db.doc(paths.plan(planId))),
@@ -37,7 +41,10 @@ export async function computeEntitlements(
 
   const resolved = resolveEntitlements({
     planFeatures: plan.featureKeys,
-    planLimits: plan.limits as Limits,
+    planLimits: {
+      ...(plan.limits as Limits),
+      ...(plan.limits.screens === null && screensPurchased !== undefined ? { screens: screensPurchased } : {}),
+    },
     catalog,
     ...(overrides ? { overrides } : {}),
   });

@@ -109,6 +109,12 @@ export const NOTIFICATION_TYPES = [
   'sensor_stale',
   'sensor_offline',
   'sensor_online',
+  'billing_trial_ending',
+  'billing_due_soon',
+  'billing_past_due',
+  'billing_restricted',
+  'billing_payment_recorded',
+  'billing_request_resolved',
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 

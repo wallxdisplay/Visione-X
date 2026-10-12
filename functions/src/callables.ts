@@ -4,6 +4,16 @@ import { z } from 'zod';
 import {
   AcceptInviteInput,
   AcknowledgeAlertInput,
+  AdjustBillingDatesInput,
+  RecordPaymentInput,
+  RequestBillingChangeInput,
+  ResolveBillingRequestInput,
+  SavePlanInput,
+  SetCancellationInput,
+  SetEntitlementOverridesInput,
+  SetFeatureReleaseInput,
+  UpdateSubscriptionInput,
+  VoidPaymentInput,
   DeleteSensorChannelInput,
   SaveSensorChannelInput,
   SaveSensorDeviceInput,
@@ -59,6 +69,8 @@ import * as screens from './screens/screens';
 import * as commands from './ops/commands';
 import * as emergency from './ops/emergency';
 import * as sensors from './sensors/sensors';
+import * as billing from './billing/billing';
+import * as plans from './billing/plans';
 import { BASE_OPTIONS } from './options';
 
 export function actorFrom(request: CallableRequest): Actor {
@@ -145,3 +157,16 @@ export const deleteSensorDevice = callable(SensorDeviceRefInput, sensors.deleteS
 export const saveSensorChannel = callable(SaveSensorChannelInput, sensors.saveSensorChannel);
 export const deleteSensorChannel = callable(DeleteSensorChannelInput, sensors.deleteSensorChannel);
 export const acknowledgeAlert = callable(AcknowledgeAlertInput, sensors.acknowledgeAlert);
+
+// Billing (phase 6) — manual payments; invoices come from a separate app.
+export const updateSubscription = callable(UpdateSubscriptionInput, billing.updateSubscription);
+export const recordPayment = callable(RecordPaymentInput, billing.recordPayment);
+export const voidPayment = callable(VoidPaymentInput, billing.voidPayment);
+export const adjustBillingDates = callable(AdjustBillingDatesInput, billing.adjustBillingDates);
+export const setCancellation = callable(SetCancellationInput, billing.setCancellation);
+export const requestBillingChange = callable(RequestBillingChangeInput, billing.requestBillingChange);
+export const resolveBillingRequest = callable(ResolveBillingRequestInput, billing.resolveBillingRequest);
+export const savePlan = callable(SavePlanInput, plans.savePlan);
+export const setFeatureRelease = callable(SetFeatureReleaseInput, plans.setFeatureRelease);
+export const setEntitlementOverrides = callable(SetEntitlementOverridesInput, plans.setEntitlementOverrides);
+export const migrateSubscriptions = callable(z.object({}), billing.migrateSubscriptions);

@@ -10,3 +10,4 @@ export * from './content';
 export * from './devices';
 export * from './ops';
 export * from './sensors';
+export * from './billing';

@@ -3,6 +3,7 @@
  * Times are epoch millis so the same types work in Functions, web and Android.
  */
 import type { OrgSignupDetails } from './api';
+import type { OrgBillingSummary } from './billing';
 import type { Entitlements, FeatureOverrides } from './features';
 import type { OrgPermission, PlatformRole, SystemOrgRole } from './permissions';
 import type { OrgStatus } from './schemas';
@@ -35,6 +36,8 @@ export interface OrgDoc {
   updatedAt: number;
   statusReason?: string;
   settings?: OrgSettings;
+  /** Subscription summary (written by Functions; absent before approval). */
+  billing?: OrgBillingSummary;
 }
 
 export interface OrgSettings {
@@ -98,13 +101,7 @@ export interface SiteDoc {
   updatedAt: number;
 }
 
-/** orgs/{orgId}/billing/subscription */
-export interface SubscriptionDoc {
-  planId: string;
-  status: 'trialing' | 'active' | 'past_due' | 'restricted' | 'cancelled';
-  trialEndsAt: number | null;
-  updatedAt: number;
-}
+// orgs/{orgId}/billing/subscription: SubscriptionDoc in billing.ts.
 
 /** orgs/{orgId}/entitlements/current (computed) and /overrides (admin-set). */
 export interface EntitlementsDoc extends Entitlements {

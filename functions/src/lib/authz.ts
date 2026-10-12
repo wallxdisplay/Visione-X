@@ -1,6 +1,7 @@
 import type { Firestore, Transaction } from 'firebase-admin/firestore';
 import { HttpsError } from 'firebase-functions/v2/https';
 import {
+  BILLING_LOCKED_PERMISSIONS,
   hasPlatformPermission,
   paths,
   type MemberDoc,
@@ -47,7 +48,10 @@ export async function getMember(
   return snap.exists ? (snap.data() as MemberDoc) : null;
 }
 
-/** Permission + active org in one call (reads only; safe before transaction writes). */
+/**
+ * Permission + active org in one call (reads only; safe before transaction writes).
+ * While billing is restricted, editing and publishing permissions are refused.
+ */
 export async function requireActiveOrgPermission(
   tx: Transaction,
   db: Firestore,
@@ -58,6 +62,12 @@ export async function requireActiveOrgPermission(
   const member = await requireOrgPermission(tx, db, actor, orgId, permission);
   const org = await getOrg(tx, db, orgId);
   requireOrgActive(org);
+  if (org.billing?.restricted && BILLING_LOCKED_PERMISSIONS.includes(permission)) {
+    throw new HttpsError(
+      'failed-precondition',
+      'Your subscription has lapsed, so editing and publishing are paused. Screens keep playing their current content. Contact WallX billing to renew.',
+    );
+  }
   return { member, org };
 }
 

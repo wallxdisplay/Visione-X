@@ -4,6 +4,7 @@ import {
   paths,
   TRIAL_DAYS,
   TRIAL_PLAN_ID,
+  billingState,
   type OrgDoc,
   type OrgStatus,
   type ReviewOrgSignupInput,
@@ -15,9 +16,9 @@ import { auditedTransaction } from '../lib/audit';
 import { getOrg, requirePlatform } from '../lib/authz';
 import type { Actor, Deps } from '../lib/context';
 import { computeEntitlements } from '../lib/entitlements';
+import { summaryOf, trialSubscription } from '../billing/billing';
 import { fanOutOrgToProfiles, readMembers } from '../lib/profiles';
 
-const DAY_MS = 86_400_000;
 
 /** Super Admin decision on a pending organization: approve, reject or request information. */
 export async function reviewOrgSignup(
@@ -57,6 +58,14 @@ export async function reviewOrgSignup(
     };
     const status = next[input.decision];
 
+    // Trial on the trial plan; the screen limit comes from the plan.
+    let subscription: SubscriptionDoc | null = null;
+    if (entitlements) {
+      const sub = trialSubscription(TRIAL_PLAN_ID, TRIAL_DAYS, entitlements.limits.screens ?? 1, at, actor.uid);
+      const state = billingState(sub, at);
+      subscription = { ...sub, status: state.status, nextTransitionAt: state.nextTransitionAt };
+    }
+
     const messages = input.message
       ? [...request.messages, { at, from: 'admin' as const, authorId: actor.uid, text: input.message }]
       : request.messages;
@@ -70,15 +79,10 @@ export async function reviewOrgSignup(
       status: status.org,
       updatedAt: at,
       statusReason: input.message ?? null,
+      ...(subscription ? { billing: summaryOf(subscription) } : {}),
     });
 
-    if (entitlements) {
-      const subscription: SubscriptionDoc = {
-        planId: TRIAL_PLAN_ID,
-        status: 'trialing',
-        trialEndsAt: at + TRIAL_DAYS * DAY_MS,
-        updatedAt: at,
-      };
+    if (entitlements && subscription) {
       tx.set(db.doc(paths.orgSubscription(orgId)), subscription);
       tx.set(db.doc(paths.orgEntitlements(orgId)), entitlements);
       tx.set(db.doc(paths.orgUsage(orgId)), { screens: 0, users: members.length, storageBytes: 0, updatedAt: at });

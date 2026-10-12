@@ -178,7 +178,7 @@ describe('monitoring and notifications', () => {
     await api('POST', '/api/v1/devices/heartbeat', hb);
     expect((await screenDoc()).offlineAlertedAt).toBeNull();
     // (The two runs use different clocks here, so compare as a set.)
-    const types = (await notifications()).map((n) => n.type).sort();
+    const types = (await notifications()).map((n) => n.type).filter((t) => t.startsWith('screen_')).sort();
     expect(types).toEqual(['screen_offline', 'screen_online']);
 
     const ids = (await notifications()).map((n) => n.id);
