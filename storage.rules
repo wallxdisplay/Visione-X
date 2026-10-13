@@ -35,6 +35,24 @@ service firebase.storage {
       allow write: if false;
     }
 
+    // Player release APKs: uploaded by the staff member who reserved the slot (createPlayerReleaseUpload),
+    // read by players through download-token URLs only.
+    match /playerReleases/{releaseId}/player.apk {
+      allow create: if request.auth != null
+        && request.auth.token.get('platformRole', null) in ['superadmin', 'ops']
+        && request.resource.size > 0
+        && request.resource.contentType == 'application/vnd.android.package-archive'
+        && releaseAllows(releaseId);
+      allow read, update, delete: if false;
+    }
+
+    function releaseAllows(releaseId) {
+      let release = firestore.get(/databases/(default)/documents/playerReleases/$(releaseId)).data;
+      return release.status == 'uploading'
+        && release.createdBy == request.auth.uid
+        && request.resource.size <= release.bytes;
+    }
+
     function reservationAllows(orgId, mediaId) {
       let media = firestore.get(/databases/(default)/documents/orgs/$(orgId)/media/$(mediaId)).data;
       return media.status == 'uploading'

@@ -188,4 +188,7 @@ export const CALLABLES = {
   setMemberSites: 'setMemberSites',
   saveRole: 'saveRole',
   deleteRole: 'deleteRole',
+  createPlayerReleaseUpload: 'createPlayerReleaseUpload',
+  registerPlayerRelease: 'registerPlayerRelease',
+  setPlayerRollout: 'setPlayerRollout',
 } as const;

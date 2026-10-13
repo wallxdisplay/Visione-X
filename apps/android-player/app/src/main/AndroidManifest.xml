@@ -5,6 +5,8 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- In-app player updates (PackageInstaller). Android asks the box to allow this app as an install source. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <!-- Android TV / boxes without touch screens. -->
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
@@ -50,6 +52,11 @@
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
+
+        <!-- Install results of player updates (core/Updater.kt). -->
+        <receiver
+            android:name=".UpdateReceiver"
+            android:exported="false" />
 
         <!-- Optional kiosk: when provisioned as device owner (adb dpm set-device-owner), the
              player pins itself with lock task mode. -->

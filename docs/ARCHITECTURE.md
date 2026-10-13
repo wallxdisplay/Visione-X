@@ -171,7 +171,7 @@ Rules: deny-by-default; anything money-, limit-, status- or audit-related is Fun
 | Resolution / orientation | Reads HDMI mode; layout scaled to canvas with letterbox; rotation in software for portrait walls |
 | Telemetry | Heartbeat every 5 min (configurable), playback counters batched, error logs with ring buffer upload |
 | Remote | refresh, restart app, screenshot, diagnostics; reboot only where device permissions allow |
-| Updates | v1: manual/sideload APK + in-app update check; later: MDM or managed update channel |
+| Updates | Super Admin uploads a signed APK (server reads package, version, signer; signer must match the first release) and rolls it out: draft → pilot orgs → all → withdrawn. Players get the offer on `GET /devices/me`, download + verify in the background, install via PackageInstaller (silent on device owner / Android 12+, otherwise prompt shown only on a key press or the `install_update` command) and report progress in heartbeats. First install is by hand (sideload); MDM later |
 
 **Hardware risk:** boot-start, kiosk, decoding limits, HDMI modes and power-loss recovery vary by box. **We need the target Android box model early** and will build a hardware test checklist.
 

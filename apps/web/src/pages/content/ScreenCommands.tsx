@@ -52,7 +52,8 @@ export function CommandPanel({ orgId, screen, canSend, entitled }: { orgId: stri
       {!entitled ? <Alert tone="info">{t('commands.notInPlan')}</Alert> : null}
       {allowed && entitled ? (
         <div className="wxp-toolbar" style={{ margin: 0 }}>
-          {SCREEN_COMMANDS.map((type) => (
+          {/* "Install player update" only matters while a downloaded update waits for a tap. */}
+          {SCREEN_COMMANDS.filter((type) => type !== 'install_update' || screen.health?.update?.state === 'waiting_user').map((type) => (
             <Button
               key={type}
               size="sm"

@@ -74,6 +74,7 @@ export const PLATFORM_PERMISSIONS = [
   'billing.override',
   'device.view',
   'device.command',
+  'player.release',
   'support.access.request',
   'support.access.grant',
   'ticket.manage',
@@ -87,7 +88,7 @@ export const PLATFORM_ROLE_PERMISSIONS: Record<PlatformRole, readonly PlatformPe
   superadmin: PLATFORM_PERMISSIONS,
   support: ['org.view', 'device.view', 'support.access.request', 'ticket.manage'],
   billing: ['org.view', 'plan.manage', 'billing.view', 'billing.override'],
-  ops: ['org.view', 'device.view', 'device.command', 'ticket.manage'],
+  ops: ['org.view', 'device.view', 'device.command', 'player.release', 'ticket.manage'],
   auditor: ['org.view', 'billing.view', 'device.view', 'audit.view'],
 };
 

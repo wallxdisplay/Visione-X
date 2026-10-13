@@ -303,4 +303,12 @@ describe('platform data', () => {
     await assertFails(setDoc(doc(admin, 'auditLogs/a1'), { action: 'tampered' }));
     await assertFails(setDoc(doc(admin, 'auditLogs/a2'), { action: 'forged' }));
   });
+
+  it('player releases are visible to device staff only and never client-writable', async () => {
+    const ops = env.authenticatedContext('ops', { platformRole: 'ops' }).firestore();
+    await assertSucceeds(getDoc(doc(ops, 'playerReleases/r1')));
+    await assertFails(getDoc(doc(env.authenticatedContext('bill', { platformRole: 'billing' }).firestore(), 'playerReleases/r1')));
+    await assertFails(getDoc(doc(env.authenticatedContext('alice').firestore(), 'playerReleases/r1')));
+    await assertFails(setDoc(doc(ops, 'playerReleases/r2'), { status: 'ready', rollout: 'all' }));
+  });
 });

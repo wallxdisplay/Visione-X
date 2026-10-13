@@ -70,6 +70,21 @@ emulators from the Android emulator:
   The player then pins itself (lock task mode) so the remote cannot leave it. To undo, factory-reset
   the box.
 
+## Updates (0.9.0 and later)
+New versions are uploaded in **Super Admin → Player Releases** and rolled out to pilot
+organizations or everyone. Players check every minute, download in the background (playback
+continues) and verify size, SHA-256, package, version and signing key before installing.
+- **Kiosk boxes (device owner) and Android 12+** install by themselves; the player restarts on
+  the new version.
+- **Other boxes** need someone at the screen once per update: the player reports
+  "update waiting", and Android's install prompt appears when a remote key is pressed or when
+  staff send **Install player update** (Screens & Players). The prompt is never opened on its own
+  over the signage. The first time, Android may ask to allow *WallX Play Player* to install
+  unknown apps: allow it.
+- Releases must be signed with the same key (see *Release signing key*) and have a higher
+  `versionCode`. A failed or dismissed update is retried after 6 hours.
+- Boxes on 0.8.0 or earlier have no updater: install 0.9.0 on them by hand once.
+
 ## Hardware checklist (test on the real box early)
 | Check | How |
 |---|---|
@@ -79,11 +94,13 @@ emulators from the Android emulator:
 | Recovers after network loss | Unplug network for 10 min; content keeps playing; sync resumes |
 | Portrait walls | Set the screen's orientation to portrait and use a portrait layout |
 | Long-run stability | Leave running 24 h; check Screens page for errors |
+| In-app update | Roll out a newer release to the box's organization; check it installs (or press a remote key to get the prompt) |
 
 ## Code map
 | Path | What |
 |---|---|
 | `core/PlayerEngine.kt` | Register → poll → sync → heartbeat loop; offline-safe activation |
+| `core/Updater.kt` | In-app updates: download, verify, PackageInstaller session; install prompt only on request |
 | `core/Schedule.kt` | Schedule resolver (port of `layout-spec/src/schedule.ts`, same tests) |
 | `data/AssetCache.kt` | Verified, resumable, content-addressed media cache |
 | `ui/Render.kt` | Layouts, zones, playlists, media and widgets (Compose) |

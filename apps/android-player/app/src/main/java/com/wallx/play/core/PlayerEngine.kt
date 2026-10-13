@@ -85,6 +85,9 @@ class PlayerEngine internal constructor(
     /** Weather / RSS values for the widgets of the playing manifest. */
     val data = DataStore()
 
+    /** In-app updates offered by the server. */
+    val updater = Updater(context, api.http)
+
     /** Set by the renderer so heartbeats can report what is on screen. */
     @Volatile var nowPlaying: Playing? = null
 
@@ -111,9 +114,11 @@ class PlayerEngine internal constructor(
     private var pollSec = 60
     private var heartbeatSec = 300
     private var loop: Job? = null
+    private var scope: CoroutineScope? = null
 
     fun start(scope: CoroutineScope) {
         if (loop?.isActive == true) return
+        this.scope = scope
         // Show saved content immediately — before any network call.
         manifests.load()?.let { show(it) }
         loop = scope.launch { pollLoop() }
@@ -185,6 +190,8 @@ class PlayerEngine internal constructor(
                 if (current == null) _ui.value = UiState.NoContent(org, screen?.name ?: "")
                 else if ((_ui.value as? UiState.Playing)?.manifest?.version != current.version) show(current)
                 if (state.commandsPending > 0) runCommands(org, screen?.name ?: "")
+                // Downloads run beside playback; the next poll sees the progress.
+                scope?.launch { updater.offer(state.update) }
             }
             "revoked" -> resetIdentity("screen removed")
         }
@@ -262,6 +269,9 @@ class PlayerEngine internal constructor(
             Outcome("done", buildJsonObject { put("bytes", bytes.size) }, screenshot = android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP))
         }
         "diagnostics" -> Outcome("done", Diagnostics.collect(context, manifests.load()?.version, File(context.filesDir, "assets"), serverSkewMs))
+        "install_update" ->
+            if (updater.showPrompt()) Outcome("done", buildJsonObject { put("versionCode", updater.status.value?.versionCode ?: 0) })
+            else Outcome("failed", buildJsonObject { put("error", "no player update downloaded") })
         else -> Outcome("failed", buildJsonObject { put("error", "unsupported command $type — update the player app") })
     } }
 
@@ -352,6 +362,7 @@ class PlayerEngine internal constructor(
                             playing = nowPlaying,
                             manifestVersion = manifests.load()?.version,
                             errors = ErrorLog.recent(context),
+                            update = updater.status.value,
                         ),
                     )
                     ErrorLog.clear(context)

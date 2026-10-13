@@ -3,6 +3,7 @@
  * Devices never use Firebase Auth: they hold a random secret issued at registration and call
  * /api/v1/devices/* with `Authorization: Device <deviceId>:<secret>`. Only its hash is stored.
  */
+import { PlayerUpdateStatus, type PlayerUpdate } from './players';
 import { z } from 'zod';
 import { RESOLUTION_PRESETS } from '@wallx-play/layout-spec';
 
@@ -50,6 +51,8 @@ export interface ScreenHealth {
   playing: { playlistId: string | null; itemId: string | null; source: string } | null;
   manifestVersion: number | null;
   errors: string[];
+  /** A player update in progress, as last reported. */
+  update?: PlayerUpdateStatus | null;
   reportedAt: number;
 }
 
@@ -122,15 +125,21 @@ export const DEFAULT_SCREEN_RESOLUTION = { width: RESOLUTION_PRESETS[0]!.width, 
 
 export const RegisterDeviceBody = z.object({ hardware: DeviceHardware });
 
+/**
+ * Players serialize with explicitNulls = false, so a null field is left out of the JSON.
+ * Device payloads therefore accept a missing nullable field as null.
+ */
+export const nullish = <T extends z.ZodTypeAny>(schema: T) => schema.nullable().default(null);
+
 export const HeartbeatBody = z.object({
   appVersion: z.string().max(40),
   display: z.object({ width: z.number().int().min(1).max(16384), height: z.number().int().min(1).max(16384) }),
-  storageFreeMb: z.number().int().min(0).nullable(),
-  playing: z
-    .object({ playlistId: z.string().max(128).nullable(), itemId: z.string().max(128).nullable(), source: z.string().max(20) })
-    .nullable(),
-  manifestVersion: z.number().int().min(0).nullable(),
+  storageFreeMb: nullish(z.number().int().min(0)),
+  playing: nullish(z.object({ playlistId: nullish(z.string().max(128)), itemId: nullish(z.string().max(128)), source: z.string().max(20) })),
+  manifestVersion: nullish(z.number().int().min(0)),
   errors: z.array(z.string().max(300)).max(20),
+  /** A player update in progress (absent from players before 0.9.0). */
+  update: PlayerUpdateStatus.nullable().optional(),
 });
 
 export interface DeviceStateResponse {
@@ -151,6 +160,8 @@ export interface DeviceStateResponse {
   /** Number of remote commands waiting; fetch them from /devices/commands. */
   commandsPending: number;
   config: { pollSec: number; heartbeatSec: number };
+  /** A newer player release rolled out to this screen's organization, if any. */
+  update: PlayerUpdate | null;
   serverTime: number;
 }
 

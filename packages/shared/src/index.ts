@@ -12,3 +12,4 @@ export * from './ops';
 export * from './sensors';
 export * from './billing';
 export * from './dataSources';
+export * from './players';

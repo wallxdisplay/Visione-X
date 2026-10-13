@@ -135,7 +135,29 @@ data class DeviceState(
     val screen: ScreenInfo? = null,
     val commandsPending: Int = 0,
     val config: DeviceConfig = DeviceConfig(),
+    /** A newer player release rolled out to this screen's organization. */
+    val update: PlayerUpdate? = null,
     val serverTime: Long = 0,
+)
+
+@Serializable
+data class PlayerUpdate(
+    val versionCode: Int,
+    val versionName: String,
+    val url: String,
+    val sha256: String,
+    val bytes: Long,
+)
+
+/** Progress of an update, reported in heartbeats (shown to staff in Screens & players). */
+@Serializable
+data class UpdateStatus(
+    val versionCode: Int,
+    val versionName: String,
+    /** downloading | installing | waiting_user | failed */
+    val state: String,
+    val error: String? = null,
+    val at: Long,
 )
 
 @Serializable
@@ -175,6 +197,7 @@ data class Heartbeat(
     val playing: Playing?,
     val manifestVersion: Int?,
     val errors: List<String>,
+    val update: UpdateStatus? = null,
 )
 
 // ---------------------------------------------------------------- live sensor data (phase 5)

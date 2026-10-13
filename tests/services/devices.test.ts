@@ -138,6 +138,21 @@ describe('device API', () => {
     expect(screen.health).toMatchObject({ appVersion: '0.1.1', manifestVersion: 1, storageFreeMb: 4096 });
     expect(screen.lastSeen).toBeTruthy();
 
+    // What the Android player really sends: null fields are left out (explicitNulls = false).
+    const sparse = await api(
+      'POST',
+      '/api/v1/devices/heartbeat',
+      { appVersion: '0.8.0', display: { width: 1920, height: 1080 }, errors: [], update: { versionCode: 9, versionName: '0.9.0', state: 'waiting_user', at: 1 } },
+      d.auth,
+    );
+    expect(sparse.status).toBe(200);
+    expect(((await db.doc(paths.screen(orgId, screenId)).get()).data() as ScreenDoc).health).toMatchObject({
+      appVersion: '0.8.0',
+      playing: null,
+      manifestVersion: null,
+      update: { versionCode: 9, state: 'waiting_user', error: null },
+    });
+
     await screens.removeScreen(deps, alice, { orgId, screenId });
     expect((await api('GET', '/api/v1/devices/me', {}, d.auth)).status).toBe(403);
     expect((await verifyAuditChain(db, orgId)).ok).toBe(true);

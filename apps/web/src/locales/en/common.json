@@ -1,4 +1,41 @@
 {
+  "adminPlayers": {
+    "description": "Upload new versions of the Android player and choose which screens get them.",
+    "upload": "Upload release",
+    "uploadAndCheck": "Upload and check",
+    "apkFile": "Player APK",
+    "apkHint": "The signed release build (./gradlew assembleRelease) with a higher versionCode than the last release.",
+    "notes": "Release notes (for staff)",
+    "tooLarge": "That file is too large for a player APK.",
+    "uploadingPct": "Uploading… {{pct}}%",
+    "checking": "Checking the APK…",
+    "checked": "v{{version}} ({{code}}) is ready",
+    "checkedHint": "It is a draft: no screen gets it until you change its rollout.",
+    "version": "Version",
+    "rollout": "Rollout",
+    "onScreens": "Screens on it",
+    "uploaded": "Uploaded",
+    "size": "Size",
+    "rejected": "Rejected",
+    "changeRollout": "Rollout…",
+    "none": "No releases yet.",
+    "rolloutTitle": "Roll out v{{version}}",
+    "rollouts": { "draft": "Draft", "pilot": "Pilot", "all": "All screens", "withdrawn": "Withdrawn" },
+    "rolloutHints": {
+      "draft": "No screen gets this version.",
+      "pilot": "Only screens of the organizations below get it. Try a new version with a few friendly customers first.",
+      "all": "Every screen gets it within a few minutes (screens on Android older than the APK’s minimum are skipped).",
+      "withdrawn": "No screen gets it any more. Screens that already installed it keep it until a newer version is rolled out."
+    },
+    "pilotOrgs": "Pilot organizations ({{count}} of up to {{max}})",
+    "searchOrgs": "Search organizations",
+    "signer": "Signing key {{sha}}…",
+    "waiting_one": "{{count}} screen has downloaded an update and needs someone to select Install. Press a remote key at the screen, or use “Install player update” in Screens & Players.",
+    "waiting_other": "{{count}} screens have downloaded an update and need someone to select Install. Press a remote key at the screen, or use “Install player update” in Screens & Players.",
+    "failing_one": "{{count}} screen reported a failed update. See its errors in Screens & Players; it tries again after 6 hours.",
+    "failing_other": "{{count}} screens reported a failed update. See their errors in Screens & Players; they try again after 6 hours.",
+    "howItWorks": "Players check for a newer version every minute and download it in the background while playing. Boxes set up as a kiosk (device owner) and Android 12+ boxes install by themselves; others need someone at the screen to select Install once."
+  },
   "adminDevices": {
     "description": "Every screen and player across all organizations: status, app version and health.",
     "stats": { "all": "Screens", "online": "Online", "offline": "Offline", "pending": "Awaiting authorization" },
@@ -18,7 +55,14 @@
     "storage": "Free storage",
     "content": "Content",
     "manifest": "Published version {{published}}, playing {{playing}}",
-    "recentErrors": "Recent errors reported by the player"
+    "recentErrors": "Recent errors reported by the player",
+    "update": "Player update",
+    "updateStates": {
+      "downloading": "Downloading v{{version}}",
+      "installing": "Installing v{{version}}",
+      "waiting_user": "v{{version}} downloaded; someone at the screen must select Install",
+      "failed": "v{{version}} failed (tries again after 6 hours)"
+    }
   },
   "product": {
     "name": "WallX Play",
@@ -84,6 +128,7 @@
       "orgs": "Organizations",
       "users": "Users & Roles",
       "devices": "Screens & Players",
+      "players": "Player Releases",
       "features": "Features & Limits",
       "billing": "Plans & Billing",
       "integrations": "Integrations & API",

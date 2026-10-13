@@ -153,6 +153,11 @@ describe('remote commands', () => {
     await api('POST', '/api/v1/devices/commands/result', { id: commandId, status: 'done', result: null, screenshotJpegBase64: Buffer.from('<svg/>').toString('base64') });
     expect(((await db.doc(paths.command(orgId, screenId, commandId)).get()).data() as ScreenCommandDoc).screenshotPath).toBeNull();
 
+    // The player leaves out null fields (restart_app has no result and no screenshot).
+    const { commandId: restart } = await commands.sendScreenCommand(deps, alice, { orgId, screenId, type: 'restart_app' });
+    expect((await api('POST', '/api/v1/devices/commands/result', { id: restart, status: 'done' })).status).toBe(200);
+    expect(((await db.doc(paths.command(orgId, screenId, restart)).get()).data() as ScreenCommandDoc).status).toBe('done');
+
     const { commandId: stale } = await commands.sendScreenCommand(deps, alice, { orgId, screenId, type: 'refresh' });
     advance(31 * 60_000);
     await runMonitor(deps);

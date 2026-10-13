@@ -16,6 +16,7 @@ import {
   ListVideo,
   MapPin,
   Monitor,
+  PackageOpen,
   Plug,
   Radio,
   Settings,
@@ -101,6 +102,7 @@ export const adminNav: NavGroup[] = [
     labelKey: 'nav.groups.operations',
     items: [
       { labelKey: 'nav.admin.devices', path: '/admin/devices', icon: Activity, phase: 4 },
+      { labelKey: 'nav.admin.players', path: '/admin/players', icon: PackageOpen, phase: 4 },
       { labelKey: 'nav.admin.features', path: '/admin/features', icon: SlidersHorizontal, phase: 6 },
       { labelKey: 'nav.admin.billing', path: '/admin/billing', icon: CreditCard, phase: 6 },
       { labelKey: 'nav.admin.integrations', path: '/admin/integrations', icon: KeyRound, phase: 'v1.1' },

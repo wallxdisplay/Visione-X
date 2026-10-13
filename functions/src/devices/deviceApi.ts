@@ -6,6 +6,7 @@
 import { createHash, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
 import { notify } from '../lib/notify';
 import { completeCommand, takePendingCommands } from '../ops/commands';
+import { updateFor } from '../players/releases';
 import {
   CommandResultBody,
   DEVICE_HEARTBEAT_SEC,
@@ -148,6 +149,9 @@ export async function deviceState(deps: Deps, req: ApiRequest): Promise<ApiResul
     orgName = (o?.data() as OrgDoc | undefined)?.name ?? null;
   }
 
+  // Only authorized players update (a box waiting for pairing keeps whatever was installed).
+  const update = device.status === 'authorized' && device.orgId ? await updateFor(deps, device.orgId, device.hardware?.sdkInt ?? null) : null;
+
   const body: DeviceStateResponse = {
     deviceId: device.id,
     status: device.status,
@@ -166,6 +170,7 @@ export async function deviceState(deps: Deps, req: ApiRequest): Promise<ApiResul
       : null,
     commandsPending: device.status === 'authorized' ? (screen?.pendingCommands ?? 0) : 0,
     config: { pollSec: DEVICE_POLL_SEC, heartbeatSec: DEVICE_HEARTBEAT_SEC },
+    update,
     serverTime: now(),
   };
   return { status: 200, body };

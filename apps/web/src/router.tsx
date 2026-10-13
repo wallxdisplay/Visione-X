@@ -5,6 +5,7 @@ import { CustomerGate, RedirectIfSignedIn, RequirePlatformStaff, RequireUser } f
 import { AcceptInvite } from './pages/AcceptInvite';
 import { AdminBilling } from './pages/admin/AdminBilling';
 import { AdminDevices } from './pages/admin/AdminDevices';
+import { AdminPlayers } from './pages/admin/AdminPlayers';
 import { AdminFeatures } from './pages/admin/AdminFeatures';
 import { AdminOverview } from './pages/admin/AdminOverview';
 import { OrgBilling } from './pages/admin/OrgBilling';
@@ -62,6 +63,7 @@ const PAGES: Record<string, ReactNode> = {
   '/admin/audit': <AuditLogs />,
   '/admin/billing': <AdminBilling />,
   '/admin/devices': <AdminDevices />,
+  '/admin/players': <AdminPlayers />,
   '/admin/features': <AdminFeatures />,
 };
 

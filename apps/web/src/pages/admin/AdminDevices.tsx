@@ -156,6 +156,15 @@ export function AdminDevices() {
             </dd>
             <dt>{t('adminDevices.lastSeen')}</dt>
             <dd>{formatDateTime(open.lastSeen)}</dd>
+            {open.health?.update ? (
+              <>
+                <dt>{t('adminDevices.update')}</dt>
+                <dd>
+                  {t(`adminDevices.updateStates.${open.health.update.state}`, { version: open.health.update.versionName })}
+                  {open.health.update.error ? <span className="wxp-muted"> — {open.health.update.error}</span> : null}
+                </dd>
+              </>
+            ) : null}
           </dl>
           {open.health?.errors.length ? (
             <>

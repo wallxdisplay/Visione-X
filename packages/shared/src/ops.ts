@@ -64,10 +64,11 @@ export const emergencyPlaylistId = (emergencyId: string) => `emergency-${emergen
 
 // ---------------------------------------------------------------- remote commands
 
-export const SCREEN_COMMANDS = ['refresh', 'restart_app', 'reboot', 'clear_cache', 'screenshot', 'diagnostics'] as const;
+/** install_update: shows Android's install prompt for a downloaded player update (someone must tap Install). */
+export const SCREEN_COMMANDS = ['refresh', 'restart_app', 'reboot', 'clear_cache', 'screenshot', 'diagnostics', 'install_update'] as const;
 export type ScreenCommandType = (typeof SCREEN_COMMANDS)[number];
 /** Commands that interrupt playback and need an explicit confirmation in the UI. */
-export const DISRUPTIVE_COMMANDS: readonly ScreenCommandType[] = ['restart_app', 'reboot', 'clear_cache'];
+export const DISRUPTIVE_COMMANDS: readonly ScreenCommandType[] = ['restart_app', 'reboot', 'clear_cache', 'install_update'];
 
 export const SendScreenCommandInput = z.object({ orgId: id, screenId: id, type: z.enum(SCREEN_COMMANDS) });
 
@@ -89,8 +90,9 @@ export interface ScreenCommandDoc {
 export const CommandResultBody = z.object({
   id,
   status: z.enum(['done', 'failed']),
-  result: z.record(z.unknown()).nullable(),
-  screenshotJpegBase64: z.string().max(2_000_000).nullable(),
+  // Missing = null: players leave out null fields (see nullish in devices.ts).
+  result: z.record(z.unknown()).nullable().default(null),
+  screenshotJpegBase64: z.string().max(2_000_000).nullable().default(null),
 });
 
 export const COMMAND_EXPIRY_MS = 30 * 60_000;

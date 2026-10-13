@@ -324,14 +324,16 @@
       "reboot": "Reboot box",
       "clear_cache": "Clear cache",
       "screenshot": "Screenshot",
-      "diagnostics": "Diagnostics"
+      "diagnostics": "Diagnostics",
+      "install_update": "Install player update"
     },
     "status": { "pending": "Waiting", "delivered": "Sent to player", "done": "Done", "failed": "Failed", "expired": "Expired" },
     "confirmTitle": "{{command}}?",
     "confirmBody": {
       "restart_app": "The screen goes black for a few seconds while the player restarts.",
       "reboot": "The box restarts (only on boxes set up as a kiosk; otherwise the player restarts). The screen is blank for up to a minute.",
-      "clear_cache": "All downloaded media is deleted and downloaded again. The screen may be blank until the download finishes."
+      "clear_cache": "All downloaded media is deleted and downloaded again. The screen may be blank until the download finishes.",
+      "install_update": "Android’s install prompt appears on the screen. Someone at the screen must select Install; the player then restarts with the new version."
     },
     "details": "Details",
     "hide": "Hide",

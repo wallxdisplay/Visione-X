@@ -3,6 +3,10 @@ export const paths = {
   platformSettings: () => 'platform/settings',
   featureCatalog: () => 'platform/featureCatalog',
   platformUser: (uid: string) => `platformUsers/${uid}`,
+  playerReleases: () => 'playerReleases',
+  playerRelease: (id: string) => `playerReleases/${id}`,
+  /** The release APK in Storage. */
+  playerApk: (id: string) => `playerReleases/${id}/player.apk`,
   plan: (planId: string) => `plans/${planId}`,
   userProfile: (uid: string) => `users/${uid}`,
   org: (orgId: string) => `orgs/${orgId}`,

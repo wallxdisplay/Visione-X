@@ -68,6 +68,12 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Player app releases (device.view roles); written only by Cloud Functions.
+    match /playerReleases/{releaseId} {
+      allow read: if platformRole() in ['superadmin', 'support', 'ops', 'auditor'];
+      allow write: if false;
+    }
+
     match /platform/featureCatalog {
       allow read: if signedIn();
       allow write: if false;

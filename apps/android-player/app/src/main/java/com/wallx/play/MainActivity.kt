@@ -7,6 +7,7 @@ import android.os.Handler
 import android.os.Looper
 import android.view.PixelCopy
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
@@ -15,6 +16,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.os.Build
 import android.os.Bundle
+import android.view.KeyEvent
 import android.view.View
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
@@ -48,6 +50,15 @@ class MainActivity : ComponentActivity() {
     override fun onDestroy() {
         engine.screenshotter = null
         super.onDestroy()
+    }
+
+    /** Someone is at the box: a player update waiting for a tap shows Android's install prompt. */
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (event.action == KeyEvent.ACTION_UP && engine.updater.status.value?.state == "waiting_user") {
+            lifecycleScope.launch { engine.updater.showPrompt() }
+            return true
+        }
+        return super.dispatchKeyEvent(event)
     }
 
     /**

@@ -16,6 +16,9 @@ import {
   SetCancellationInput,
   SetEntitlementOverridesInput,
   SaveRoleInput,
+  CreatePlayerReleaseInput,
+  RegisterPlayerReleaseInput,
+  SetPlayerRolloutInput,
   DeleteRoleInput,
   SetMemberSitesInput,
   SetFeatureReleaseInput,
@@ -70,6 +73,7 @@ import { getDeps } from './lib/admin';
 import type { Actor, Deps } from './lib/context';
 import * as members from './members/members';
 import * as roles from './members/roles';
+import * as playerReleases from './players/releases';
 import { reviewOrgSignup as reviewSvc, setOrgStatus as setOrgStatusSvc } from './orgs/review';
 import * as settings from './orgs/settings';
 import * as signup from './orgs/signup';
@@ -99,8 +103,9 @@ export function actorFrom(request: CallableRequest): Actor {
 function callable<S extends z.ZodTypeAny, R>(
   schema: S,
   handler: (deps: Deps, actor: Actor, input: z.infer<S>) => Promise<R>,
+  options: { memory?: '256MiB' | '512MiB' | '1GiB'; timeoutSeconds?: number } = {},
 ) {
-  return onCall({ ...BASE_OPTIONS, memory: '256MiB', enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
+  return onCall({ ...BASE_OPTIONS, memory: '256MiB', enforceAppCheck: ENFORCE_APP_CHECK, ...options }, async (request) => {
     // Monitor mode: count calls that would be refused once App Check is enforced.
     if (!request.app && !ENFORCE_APP_CHECK && process.env.FUNCTIONS_EMULATOR !== 'true') {
       logger.info('appCheck.missing', { function: process.env.FUNCTION_TARGET });
@@ -135,6 +140,11 @@ export const removeMember = callable(RemoveMemberInput, members.removeMember);
 export const setMemberSites = callable(SetMemberSitesInput, members.setMemberSites);
 export const saveRole = callable(SaveRoleInput, roles.saveRole);
 export const deleteRole = callable(DeleteRoleInput, roles.deleteRole);
+
+// Player app releases (in-app updates)
+export const createPlayerReleaseUpload = callable(CreatePlayerReleaseInput, playerReleases.createPlayerReleaseUpload);
+export const registerPlayerRelease = callable(RegisterPlayerReleaseInput, playerReleases.registerPlayerRelease, { memory: '512MiB', timeoutSeconds: 120 });
+export const setPlayerRollout = callable(SetPlayerRolloutInput, playerReleases.setPlayerRollout);
 export const setPlatformRole = callable(SetPlatformRoleInput, setPlatformRoleSvc);
 
 // Content (phase 2)
