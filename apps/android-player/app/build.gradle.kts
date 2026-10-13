@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -8,6 +10,13 @@ plugins {
 // Device API base. Production by default; override for local testing, e.g.
 //   ./gradlew assembleDebug -PapiBase=http://10.0.2.2:5001/demo-wallx-play/asia-south1/api/v1
 val apiBase: String = (project.findProperty("apiBase") as String?) ?: "https://wallx-play.web.app/api/v1"
+
+// Release signing key, read from keystore.properties next to settings.gradle.kts (never committed;
+// see keystore.properties.example and the README). Release builds fail without it.
+val keystoreProps = Properties().apply {
+    rootProject.file("keystore.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+}
+val hasReleaseKey = listOf("storeFile", "storePassword", "keyAlias", "keyPassword").all { !keystoreProps.getProperty(it).isNullOrBlank() }
 
 android {
     namespace = "com.wallx.play"
@@ -22,12 +31,22 @@ android {
         buildConfigField("String", "API_BASE", "\"$apiBase\"")
     }
 
+    signingConfigs {
+        if (hasReleaseKey) {
+            create("release") {
+                storeFile = file(keystoreProps.getProperty("storeFile"))
+                storePassword = keystoreProps.getProperty("storePassword")
+                keyAlias = keystoreProps.getProperty("keyAlias")
+                keyPassword = keystoreProps.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            // Signed with the debug key until a release keystore is set up (see README).
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.findByName("release")
         }
     }
 
@@ -47,6 +66,15 @@ android {
         unitTests.isIncludeAndroidResources = true // Robolectric needs merged resources
     }
     packaging { resources.excludes += "/META-INF/{AL2.0,LGPL2.1}" }
+}
+
+// An unsigned release APK cannot be installed; stop early with instructions instead.
+tasks.matching { it.name == "packageRelease" }.configureEach {
+    doFirst {
+        if (!hasReleaseKey) {
+            throw GradleException("Release signing key missing: create apps/android-player/keystore.properties (see keystore.properties.example and the README).")
+        }
+    }
 }
 
 dependencies {

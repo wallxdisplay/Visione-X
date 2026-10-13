@@ -25,6 +25,7 @@ apps/android-player/.kotlin/
 apps/android-player/build/
 apps/android-player/app/build/
 apps/android-player/local.properties
+apps/android-player/keystore.properties
 *.apk
 *.aab
 *.jks

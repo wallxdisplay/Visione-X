@@ -31,8 +31,22 @@ a OneDrive folder on Windows, to `%LOCALAPPDATA%\wallx-play-player-build\app\out
 Tests: `ScheduleTest` (same cases as the TypeScript resolver), `ManifestFixtureTest` (shared
 fixture), and `PlayerEngineTest` (Robolectric + mock server: pairing → authorization → verified
 download → corrupted update refused → reset on removal; renders the pairing screen).
-Release build: `./gradlew assembleRelease` (currently signed with the debug key — create a release
-keystore before distributing to customers).
+Release build: `./gradlew assembleRelease` → `app/build/outputs/apk/release/app-release.apk`,
+signed with the WallX Play release key. The build stops if the key is not set up.
+
+### Release signing key (one time)
+1. Create the key outside the repo (keytool asks for a password — use the same one for both prompts):
+   ```powershell
+   New-Item -ItemType Directory -Force D:\wallx-keys
+   & "C:\Program Files\Eclipse Adoptium\jdk-21.0.12.101-hotspot\bin\keytool.exe" -genkeypair -v -keystore D:\wallx-keys\wallx-play-release.jks -alias wallx-play -keyalg RSA -keysize 4096 -validity 10000 -dname "CN=WallX Play, O=WallX, C=IN"
+   ```
+2. Copy `keystore.properties.example` to `keystore.properties` (git-ignored) and fill in the passwords.
+3. Back up the `.jks` file and its password somewhere safe (password manager + offline copy). Every
+   future player update must be signed with this same key; without it, boxes can only get updates
+   by uninstalling (which clears the pairing) and installing again.
+
+Boxes running a debug-signed build (0.7.0 or earlier) cannot be upgraded in place to a release-signed
+one: uninstall the old app, install the new one, then remove the old screen in Screens and pair again.
 
 The player talks to `https://wallx-play.web.app/api/v1` by default. To test against the local
 emulators from the Android emulator:
