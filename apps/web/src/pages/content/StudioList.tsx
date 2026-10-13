@@ -1,6 +1,6 @@
-import { Alert, Button, Dialog, EmptyState, PageHeader, SelectField, TextField } from '@visione-x/ui';
-import { BUILT_IN_TEMPLATES, RESOLUTION_PRESETS, layoutFromTemplate, type LayoutBody } from '@visione-x/layout-spec';
-import type { LayoutDoc } from '@visione-x/shared';
+import { Alert, Button, Dialog, EmptyState, PageHeader, SelectField, TextField } from '@wallx-play/ui';
+import { BUILT_IN_TEMPLATES, RESOLUTION_PRESETS, layoutFromTemplate, type LayoutBody } from '@wallx-play/layout-spec';
+import type { LayoutDoc } from '@wallx-play/shared';
 import { Copy, LayoutTemplate, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -66,7 +66,7 @@ export function StudioList() {
       {error && !deleting ? <Alert tone="danger">{error}</Alert> : null}
 
       {layouts.data.length === 0 && !layouts.loading ? (
-        <div className="vx-card">
+        <div className="wxp-card">
           <EmptyState
             icon={<LayoutTemplate size={24} aria-hidden />}
             title={t('studio.emptyTitle')}
@@ -94,7 +94,7 @@ export function StudioList() {
                   <Link to={`/studio/${l.id}`} className="layout-card__name">
                     {l.name}
                   </Link>
-                  <span className="vx-muted">
+                  <span className="wxp-muted">
                     {l.canvas.width}×{l.canvas.height} · {t('studio.zoneCount', { count: l.zones.length })} ·{' '}
                     {formatDateTime(l.updatedAt)}
                   </span>
@@ -184,7 +184,7 @@ function NewLayoutDialog({ onClose, onCreate }: { onClose: () => void; onCreate:
       {error ? <Alert tone="danger">{error}</Alert> : null}
       <TextField label={t('studio.name')} value={name} placeholder={t(`templates.${template.key}`)} onChange={(e) => setName(e.target.value)} />
       <fieldset className="template-picker">
-        <legend className="vx-field__label">{t('studio.template')}</legend>
+        <legend className="wxp-field__label">{t('studio.template')}</legend>
         {BUILT_IN_TEMPLATES.map((tpl) => (
           <label key={tpl.id} className={`template-option${tpl.id === templateId ? ' template-option--selected' : ''}`}>
             <input type="radio" name="template" value={tpl.id} checked={tpl.id === templateId} onChange={() => setTemplateId(tpl.id)} />

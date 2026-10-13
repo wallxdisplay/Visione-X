@@ -7,7 +7,7 @@
 import { HttpsError } from 'firebase-functions/v2/https';
 import type { Firestore, Transaction } from 'firebase-admin/firestore';
 import type { z } from 'zod';
-import { subscriptionAmountMinor } from '@visione-x/billing-core';
+import { subscriptionAmountMinor } from '@wallx-play/billing-core';
 import {
   billingState,
   isLegacySubscription,
@@ -28,7 +28,7 @@ import {
   type SubscriptionDoc,
   type UpdateSubscriptionInput,
   type VoidPaymentInput,
-} from '@visione-x/shared';
+} from '@wallx-play/shared';
 import { userAudit } from '../content/media';
 import { auditedTransaction, type RecordAudit } from '../lib/audit';
 import { getOrg, requireOrgPermission, requirePlatform } from '../lib/authz';

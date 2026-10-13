@@ -24,18 +24,18 @@ function Shell({
   children,
 }: FieldShell & { id: string; children: ReactNode }) {
   return (
-    <div className="vx-field">
-      <label htmlFor={id} className="vx-field__label">
+    <div className="wxp-field">
+      <label htmlFor={id} className="wxp-field__label">
         {label}
-        {required ? <span className="vx-field__req" aria-hidden> *</span> : null}
+        {required ? <span className="wxp-field__req" aria-hidden> *</span> : null}
       </label>
       {children}
       {error ? (
-        <p id={`${id}-err`} className="vx-field__error" role="alert">
+        <p id={`${id}-err`} className="wxp-field__error" role="alert">
           {error}
         </p>
       ) : hint ? (
-        <p id={`${id}-hint`} className="vx-field__hint">
+        <p id={`${id}-hint`} className="wxp-field__hint">
           {hint}
         </p>
       ) : null}
@@ -59,7 +59,7 @@ export function TextField({
     <Shell id={id} label={label} hint={hint} error={error} required={required}>
       <input
         id={id}
-        className="vx-input"
+        className="wxp-input"
         required={required}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy(id, error, hint)}
@@ -81,7 +81,7 @@ export function TextAreaField({
     <Shell id={id} label={label} hint={hint} error={error} required={required}>
       <textarea
         id={id}
-        className="vx-input vx-input--area"
+        className="wxp-input wxp-input--area"
         required={required}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy(id, error, hint)}
@@ -105,7 +105,7 @@ export function SelectField({
     <Shell id={id} label={label} hint={hint} error={error} required={required}>
       <select
         id={id}
-        className="vx-input"
+        className="wxp-input"
         required={required}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy(id, error, hint)}
@@ -131,7 +131,7 @@ export function Alert({
   children?: ReactNode;
 }) {
   return (
-    <div className={`vx-alert vx-alert--${tone}`} role={tone === 'danger' ? 'alert' : 'status'}>
+    <div className={`wxp-alert wxp-alert--${tone}`} role={tone === 'danger' ? 'alert' : 'status'}>
       {title ? <strong>{title}</strong> : null}
       {children ? <div>{children}</div> : null}
     </div>
@@ -140,8 +140,8 @@ export function Alert({
 
 export function Spinner({ label }: { label: string }) {
   return (
-    <div className="vx-spinner" role="status" aria-live="polite">
-      <span className="vx-spinner__dot" aria-hidden />
+    <div className="wxp-spinner" role="status" aria-live="polite">
+      <span className="wxp-spinner__dot" aria-hidden />
       <span>{label}</span>
     </div>
   );
@@ -173,12 +173,12 @@ export function Dialog({
   }, [open]);
 
   return (
-    <dialog ref={ref} className={`vx-dialog vx-dialog--${size}`} onClose={onClose} aria-labelledby={titleId}>
-      <header className="vx-dialog__header">
+    <dialog ref={ref} className={`wxp-dialog wxp-dialog--${size}`} onClose={onClose} aria-labelledby={titleId}>
+      <header className="wxp-dialog__header">
         <h2 id={titleId}>{title}</h2>
       </header>
-      <div className="vx-dialog__body">{children}</div>
-      {footer ? <footer className="vx-dialog__footer">{footer}</footer> : null}
+      <div className="wxp-dialog__body">{children}</div>
+      {footer ? <footer className="wxp-dialog__footer">{footer}</footer> : null}
     </dialog>
   );
 }

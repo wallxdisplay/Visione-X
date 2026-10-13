@@ -6,7 +6,7 @@ import {
   type SiteDoc,
   type UpdateOrgSettingsInput,
   type UpsertSiteInput,
-} from '@visione-x/shared';
+} from '@wallx-play/shared';
 import { auditedTransaction } from '../lib/audit';
 import { getOrg, requireOrgActive, requireOrgPermission } from '../lib/authz';
 import type { Actor, Deps } from '../lib/context';

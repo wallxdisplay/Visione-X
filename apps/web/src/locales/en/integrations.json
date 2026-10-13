@@ -1,6 +1,6 @@
 {
   "integrations": {
-    "description": "Weather places and news feeds that weather and RSS widgets show. Visione-X fetches and caches them for all your screens.",
+    "description": "Weather places and news feeds that weather and RSS widgets show. WallX Play fetches and caches them for all your screens.",
     "notInPlanTitle": "Weather and RSS are not included in your plan",
     "notInPlanBody": "Upgrade to a plan with weather and RSS widgets to show live weather and headlines on screens.",
     "addWeather": "Add weather place",

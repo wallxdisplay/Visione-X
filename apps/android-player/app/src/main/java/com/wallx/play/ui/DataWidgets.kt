@@ -1,4 +1,4 @@
-package com.wallx.visionex.player.ui
+package com.wallx.play.ui
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
@@ -31,9 +31,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.wallx.visionex.player.R
-import com.wallx.visionex.player.core.Weather
-import com.wallx.visionex.player.data.str
+import com.wallx.play.R
+import com.wallx.play.core.Weather
+import com.wallx.play.data.str
 import kotlinx.coroutines.delay
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive

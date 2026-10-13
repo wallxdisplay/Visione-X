@@ -1,11 +1,11 @@
-package com.wallx.visionex.player.data
+package com.wallx.play.data
 
 import android.content.Context
 import java.io.File
 
 /**
  * Device credentials. Stored in the app's private storage, which other apps cannot read; the
- * secret only identifies this box to Visione-X and can be revoked by removing the screen.
+ * secret only identifies this box to WallX Play and can be revoked by removing the screen.
  */
 class DeviceStore(context: Context) {
     private val prefs = context.getSharedPreferences("device", Context.MODE_PRIVATE)

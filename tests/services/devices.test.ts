@@ -1,7 +1,7 @@
 import sharp from 'sharp';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { paths, type DeviceStateResponse, type ScreenDoc } from '@visione-x/shared';
-import { Manifest } from '@visione-x/layout-spec';
+import { paths, type DeviceStateResponse, type ScreenDoc } from '@wallx-play/shared';
+import { Manifest } from '@wallx-play/layout-spec';
 import { handle } from '../../functions/src/api/router';
 import * as content from '../../functions/src/content/media';
 import * as layouts from '../../functions/src/content/layouts';

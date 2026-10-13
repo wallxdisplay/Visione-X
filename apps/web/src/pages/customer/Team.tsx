@@ -1,6 +1,6 @@
 import { collection, orderBy, query, where } from 'firebase/firestore';
-import { Alert, Button, Dialog, PageHeader, SelectField, TextField } from '@visione-x/ui';
-import { paths, SYSTEM_ORG_ROLES, type InviteDoc, type MemberDoc, type SystemOrgRole } from '@visione-x/shared';
+import { Alert, Button, Dialog, PageHeader, SelectField, TextField } from '@wallx-play/ui';
+import { paths, SYSTEM_ORG_ROLES, type InviteDoc, type MemberDoc, type SystemOrgRole } from '@wallx-play/shared';
 import { UserPlus } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -84,8 +84,8 @@ export function Team() {
       />
       {error && !inviteOpen ? <Alert tone="danger">{error}</Alert> : null}
 
-      <div className="vx-table-wrap">
-        <table className="vx-table">
+      <div className="wxp-table-wrap">
+        <table className="wxp-table">
           <thead>
             <tr>
               <th>{t('team.email')}</th>
@@ -101,12 +101,12 @@ export function Team() {
               return (
                 <tr key={m.uid}>
                   <td>
-                    {m.email} {isMe ? <span className="vx-muted">({t('team.you')})</span> : null}
+                    {m.email} {isMe ? <span className="wxp-muted">({t('team.you')})</span> : null}
                   </td>
                   <td>
                     {canEditRole ? (
                       <select
-                        className="vx-input"
+                        className="wxp-input"
                         style={{ width: 160 }}
                         aria-label={t('team.roleFor', { email: m.email })}
                         value={m.role}
@@ -125,8 +125,8 @@ export function Team() {
                       roleLabel(m.role)
                     )}
                   </td>
-                  <td className="vx-tabular">{formatDate(m.joinedAt)}</td>
-                  <td className="vx-actions">
+                  <td className="wxp-tabular">{formatDate(m.joinedAt)}</td>
+                  <td className="wxp-actions">
                     {(manage && !isMe) || isMe ? (
                       <Button size="sm" variant="tertiary" onClick={() => setRemoving(m)}>
                         {isMe ? t('team.leave') : t('team.remove')}
@@ -143,8 +143,8 @@ export function Team() {
       {manage && liveInvites.length > 0 ? (
         <>
           <h2 className="section-title">{t('team.pendingInvites')}</h2>
-          <div className="vx-table-wrap">
-            <table className="vx-table">
+          <div className="wxp-table-wrap">
+            <table className="wxp-table">
               <thead>
                 <tr>
                   <th>{t('team.email')}</th>
@@ -158,8 +158,8 @@ export function Team() {
                   <tr key={i.id}>
                     <td>{i.email}</td>
                     <td>{roleLabel(i.role)}</td>
-                    <td className="vx-tabular">{formatDate(i.expiresAt)}</td>
-                    <td className="vx-actions">
+                    <td className="wxp-tabular">{formatDate(i.expiresAt)}</td>
+                    <td className="wxp-actions">
                       <Button
                         size="sm"
                         variant="tertiary"
@@ -255,7 +255,7 @@ export function Team() {
       </Dialog>
 
       {manage ? (
-        <p className="vx-muted" style={{ marginTop: 16 }}>
+        <p className="wxp-muted" style={{ marginTop: 16 }}>
           {t('team.emailNote')}
         </p>
       ) : null}

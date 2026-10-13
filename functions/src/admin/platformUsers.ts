@@ -6,7 +6,7 @@ import {
   type PlatformRole,
   type PlatformUserDoc,
   type SetPlatformRoleInput,
-} from '@visione-x/shared';
+} from '@wallx-play/shared';
 import { auditedTransaction } from '../lib/audit';
 import { requirePlatform } from '../lib/authz';
 import type { Actor, Deps } from '../lib/context';

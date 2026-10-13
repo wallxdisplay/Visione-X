@@ -58,7 +58,7 @@ import {
   UpdateOrgSettingsInput,
   UpsertSiteInput,
   type PlatformRole,
-} from '@visione-x/shared';
+} from '@wallx-play/shared';
 import { setPlatformRole as setPlatformRoleSvc } from './admin/platformUsers';
 import * as layouts from './content/layouts';
 import * as media from './content/media';

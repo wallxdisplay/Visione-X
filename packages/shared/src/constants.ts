@@ -1,5 +1,5 @@
-export const PRODUCT_NAME = 'Visione-X';
-export const PRODUCT_FULL_NAME = 'Visione-X by WallX';
+export const PRODUCT_NAME = 'WallX Play';
+export const PRODUCT_FULL_NAME = 'WallX Play';
 
 /** All server resources (Firestore, Functions, Cloud Run, Storage) live here. */
 export const REGION = 'asia-south1';

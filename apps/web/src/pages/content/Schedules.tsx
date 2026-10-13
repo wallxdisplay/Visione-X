@@ -1,6 +1,6 @@
-import { Alert, Button, Card, Dialog, EmptyState, PageHeader, SelectField, StatusChip, TextField } from '@visione-x/ui';
-import { findConflicts, localParts, resolvePlaylist, ruleActiveAt, type ScheduleRule } from '@visione-x/layout-spec';
-import { SaveScheduleInput, type ScheduleDoc, type ScheduleTarget } from '@visione-x/shared';
+import { Alert, Button, Card, Dialog, EmptyState, PageHeader, SelectField, StatusChip, TextField } from '@wallx-play/ui';
+import { findConflicts, localParts, resolvePlaylist, ruleActiveAt, type ScheduleRule } from '@wallx-play/layout-spec';
+import { SaveScheduleInput, type ScheduleDoc, type ScheduleTarget } from '@wallx-play/shared';
 import { CalendarClock, Plus, TriangleAlert } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -89,13 +89,13 @@ export function Schedules() {
       {!playlists.data.length && !playlists.loading ? <Alert tone="info">{t('schedules.needPlaylist')}</Alert> : null}
 
       {schedules.data.length === 0 && !schedules.loading ? (
-        <div className="vx-card">
+        <div className="wxp-card">
           <EmptyState icon={<CalendarClock size={24} aria-hidden />} title={t('schedules.emptyTitle')} description={t('schedules.emptyBody')} />
         </div>
       ) : (
-        <div className="vx-stack">
-          <div className="vx-table-wrap">
-            <table className="vx-table">
+        <div className="wxp-stack">
+          <div className="wxp-table-wrap">
+            <table className="wxp-table">
               <thead>
                 <tr>
                   <th>{t('schedules.name')}</th>
@@ -123,12 +123,12 @@ export function Schedules() {
                     <td>{targetLabel(s.target)}</td>
                     <td>
                       {whenLabel(s)}
-                      <div className="vx-muted">{s.timezone}</div>
+                      <div className="wxp-muted">{s.timezone}</div>
                     </td>
-                    <td className="vx-tabular">
+                    <td className="wxp-tabular">
                       {s.startDate || s.endDate ? `${s.startDate ?? '…'} → ${s.endDate ?? '…'}` : t('schedules.noEnd')}
                     </td>
-                    <td className="vx-tabular">{s.priority}</td>
+                    <td className="wxp-tabular">{s.priority}</td>
                     <td>
                       <StatusChip tone={s.enabled ? 'success' : 'neutral'}>{s.enabled ? t('schedules.enabled') : t('schedules.disabled')}</StatusChip>
                     </td>
@@ -138,9 +138,9 @@ export function Schedules() {
             </table>
           </div>
 
-          <div className="vx-toolbar" style={{ alignItems: 'center' }}>
-            <span className="vx-field__label">{t('schedules.showFor')}</span>
-            <select className="vx-input" style={{ width: 'auto' }} aria-label={t('schedules.showFor')} value={targetFilter} onChange={(e) => setTargetFilter(e.target.value)}>
+          <div className="wxp-toolbar" style={{ alignItems: 'center' }}>
+            <span className="wxp-field__label">{t('schedules.showFor')}</span>
+            <select className="wxp-input" style={{ width: 'auto' }} aria-label={t('schedules.showFor')} value={targetFilter} onChange={(e) => setTargetFilter(e.target.value)}>
               {filterOptions.map((o) => (
                 <option key={o.value} value={o.value}>
                   {o.label}
@@ -167,23 +167,23 @@ export function Schedules() {
           </Card>
 
           <Card title={t('schedules.testTitle')}>
-            <div className="vx-form__row">
+            <div className="wxp-form__row">
               <TextField label={t('schedules.testAt')} type="datetime-local" value={testAt} onChange={(e) => setTestAt(e.target.value)} />
-              <div className="vx-field">
-                <span className="vx-field__label">{t('schedules.result')}</span>
+              <div className="wxp-field">
+                <span className="wxp-field__label">{t('schedules.result')}</span>
                 <div className="test-result" aria-live="polite">
                   {resolution.playlistId ? (
                     <>
                       <strong>{playlistById.get(resolution.playlistId)?.name ?? '—'}</strong>
-                      <span className="vx-muted">{t('schedules.byRule', { name: scheduleName(resolution.ruleId ?? '') })}</span>
+                      <span className="wxp-muted">{t('schedules.byRule', { name: scheduleName(resolution.ruleId ?? '') })}</span>
                     </>
                   ) : (
-                    <span className="vx-muted">{t('schedules.nothing')}</span>
+                    <span className="wxp-muted">{t('schedules.nothing')}</span>
                   )}
                 </div>
               </div>
             </div>
-            <p className="vx-muted" style={{ marginBottom: 0 }}>{t('schedules.testHint')}</p>
+            <p className="wxp-muted" style={{ marginBottom: 0 }}>{t('schedules.testHint')}</p>
           </Card>
         </div>
       )}
@@ -237,7 +237,7 @@ function WeekView({ weekStart, schedules, playlistName }: { weekStart: number; s
         return (
           <div key={d} className="week__day">
             <div className="week__head">
-              {t(`schedules.days.${DAYS[i]}`)} <span className="vx-muted">{parts.date.slice(8)}</span>
+              {t(`schedules.days.${DAYS[i]}`)} <span className="wxp-muted">{parts.date.slice(8)}</span>
             </div>
             <div className="week__col">
               {blocks[i]!.map((b, k) => (
@@ -392,8 +392,8 @@ function ScheduleDialog({
       />
       {form.targetKind !== 'all' ? (
         <fieldset className="check-group">
-          <legend className="vx-field__label">{form.targetKind === 'sites' ? t('schedules.chooseSites') : t('schedules.chooseGroups')}</legend>
-          {targetChoices.length === 0 ? <span className="vx-muted">{t('schedules.noTargets')}</span> : null}
+          <legend className="wxp-field__label">{form.targetKind === 'sites' ? t('schedules.chooseSites') : t('schedules.chooseGroups')}</legend>
+          {targetChoices.length === 0 ? <span className="wxp-muted">{t('schedules.noTargets')}</span> : null}
           {targetChoices.map((c) => (
             <label key={c.id} className="checkbox-row">
               <input
@@ -404,11 +404,11 @@ function ScheduleDialog({
               {c.name}
             </label>
           ))}
-          {errors['target.ids'] ? <p className="vx-field__error">{t('schedules.pickTarget')}</p> : null}
+          {errors['target.ids'] ? <p className="wxp-field__error">{t('schedules.pickTarget')}</p> : null}
         </fieldset>
       ) : null}
       <fieldset className="check-group check-group--row">
-        <legend className="vx-field__label">{t('schedules.daysLabel')}</legend>
+        <legend className="wxp-field__label">{t('schedules.daysLabel')}</legend>
         {DAYS.map((d) => (
           <label key={d} className="day-chip">
             <input
@@ -419,23 +419,23 @@ function ScheduleDialog({
             <span>{t(`schedules.days.${d}`)}</span>
           </label>
         ))}
-        <span className="vx-field__hint">{t('schedules.daysHint')}</span>
+        <span className="wxp-field__hint">{t('schedules.daysHint')}</span>
       </fieldset>
       <label className="checkbox-row">
         <input type="checkbox" checked={form.allDay} onChange={(e) => set('allDay', e.target.checked)} />
         {t('schedules.allDay')}
       </label>
       {!form.allDay ? (
-        <div className="vx-form__row">
+        <div className="wxp-form__row">
           <TextField label={t('schedules.from')} type="time" value={form.windowStart} error={errors.windowStart} onChange={(e) => set('windowStart', e.target.value)} />
           <TextField label={t('schedules.to')} type="time" value={form.windowEnd} error={errors.windowEnd} hint={t('schedules.overnightHint')} onChange={(e) => set('windowEnd', e.target.value)} />
         </div>
       ) : null}
-      <div className="vx-form__row">
+      <div className="wxp-form__row">
         <TextField label={t('schedules.startDate')} type="date" value={form.startDate} error={errors.startDate} onChange={(e) => set('startDate', e.target.value)} />
         <TextField label={t('schedules.endDate')} type="date" value={form.endDate} error={errors.endDate} onChange={(e) => set('endDate', e.target.value)} />
       </div>
-      <div className="vx-form__row">
+      <div className="wxp-form__row">
         <TextField
           label={t('schedules.priority')}
           type="number"

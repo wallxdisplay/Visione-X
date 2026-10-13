@@ -1,6 +1,6 @@
 import { onObjectFinalized } from 'firebase-functions/v2/storage';
 import { getDeps } from '../lib/admin';
-import { REGION } from '@visione-x/shared';
+import { REGION } from '@wallx-play/shared';
 import { processUploadedMedia } from './process';
 
 /**

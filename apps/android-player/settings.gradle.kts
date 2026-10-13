@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "visione-x-player"
+rootProject.name = "wallx-play-player"
 include(":app")

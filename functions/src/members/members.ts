@@ -14,7 +14,7 @@ import {
   type RemoveMemberInput,
   type RevokeInviteInput,
   type UpdateMemberRoleInput,
-} from '@visione-x/shared';
+} from '@wallx-play/shared';
 import { auditedTransaction } from '../lib/audit';
 import {
   getMember,

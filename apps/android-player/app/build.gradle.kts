@@ -6,15 +6,15 @@ plugins {
 }
 
 // Device API base. Production by default; override for local testing, e.g.
-//   ./gradlew assembleDebug -PapiBase=http://10.0.2.2:5001/demo-visione-x/asia-south1/api/v1
-val apiBase: String = (project.findProperty("apiBase") as String?) ?: "https://visione-x.web.app/api/v1"
+//   ./gradlew assembleDebug -PapiBase=http://10.0.2.2:5001/demo-wallx-play/asia-south1/api/v1
+val apiBase: String = (project.findProperty("apiBase") as String?) ?: "https://wallx-play.web.app/api/v1"
 
 android {
-    namespace = "com.wallx.visionex.player"
+    namespace = "com.wallx.play"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.wallx.visionex.player"
+        applicationId = "com.wallx.play"
         minSdk = 24
         targetSdk = 35
         versionCode = 6

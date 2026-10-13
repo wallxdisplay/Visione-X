@@ -1,8 +1,8 @@
-package com.wallx.visionex.player.core
+package com.wallx.play.core
 
-import com.wallx.visionex.player.data.HistoryResponse
-import com.wallx.visionex.player.data.LiveChannel
-import com.wallx.visionex.player.data.LiveResponse
+import com.wallx.play.data.HistoryResponse
+import com.wallx.play.data.LiveChannel
+import com.wallx.play.data.LiveResponse
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

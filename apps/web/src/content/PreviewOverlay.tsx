@@ -1,4 +1,4 @@
-import type { LayoutBody, PlaylistItem } from '@visione-x/layout-spec';
+import type { LayoutBody, PlaylistItem } from '@wallx-play/layout-spec';
 import { X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';

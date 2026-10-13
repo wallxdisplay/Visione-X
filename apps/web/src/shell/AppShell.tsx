@@ -15,7 +15,7 @@ function OrgSwitcher() {
   if (activeOrgs.length <= 1) return <span className="shell__org-name">{org?.name ?? '…'}</span>;
   return (
     <select
-      className="vx-input shell__org-select"
+      className="wxp-input shell__org-select"
       aria-label={t('shell.switchOrg')}
       value={orgId}
       onChange={(e) => switchOrg(e.target.value)}
@@ -83,12 +83,12 @@ export function AppShell({ nav, variant }: { nav: NavGroup[]; variant: 'customer
           </div>
           <div className="shell__actions">
             {variant === 'customer' && platformRole ? (
-              <Link to="/admin" className="vx-btn vx-btn--tertiary vx-btn--sm">
+              <Link to="/admin" className="wxp-btn wxp-btn--tertiary wxp-btn--sm">
                 <ShieldCheck size={16} aria-hidden /> {t('shell.adminBadge')}
               </Link>
             ) : null}
             {variant === 'admin' ? (
-              <Link to="/" className="vx-btn vx-btn--tertiary vx-btn--sm">
+              <Link to="/" className="wxp-btn wxp-btn--tertiary wxp-btn--sm">
                 {t('shell.backToApp')}
               </Link>
             ) : null}
@@ -96,7 +96,7 @@ export function AppShell({ nav, variant }: { nav: NavGroup[]; variant: 'customer
             <button type="button" className="shell__icon-btn" aria-label={t('shell.help')}>
               <HelpCircle size={18} />
             </button>
-            <span className="shell__user vx-muted" title={user?.email ?? ''}>
+            <span className="shell__user wxp-muted" title={user?.email ?? ''}>
               {user?.email}
             </span>
             <button

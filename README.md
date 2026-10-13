@@ -1,4 +1,4 @@
-# Visione-X by WallX
+# WallX Play
 
 Multi-tenant digital signage SaaS: customer app, Layout Studio, Super Admin, native Android
 player and ESP32 sensor integration, on Firebase (asia-south1).

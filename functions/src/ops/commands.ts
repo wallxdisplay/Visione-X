@@ -9,7 +9,7 @@ import {
   type ScreenCommandDoc,
   type ScreenDoc,
   type SendScreenCommandInput,
-} from '@visione-x/shared';
+} from '@wallx-play/shared';
 import { userAudit } from '../content/media';
 import { auditedTransaction } from '../lib/audit';
 import { requireActiveOrgPermission, requireOrgPermission } from '../lib/authz';

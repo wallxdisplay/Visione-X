@@ -1,6 +1,6 @@
 import { collection, orderBy, query } from 'firebase/firestore';
-import { Alert, Button, Card, PageHeader, SelectField, StatusChip, TextField } from '@visione-x/ui';
-import { PLATFORM_ROLES, hasPlatformPermission, type PlatformUserDoc } from '@visione-x/shared';
+import { Alert, Button, Card, PageHeader, SelectField, StatusChip, TextField } from '@wallx-play/ui';
+import { PLATFORM_ROLES, hasPlatformPermission, type PlatformUserDoc } from '@wallx-play/shared';
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../auth/AuthProvider';
@@ -52,11 +52,11 @@ export function PlatformUsers() {
   return (
     <>
       <PageHeader title={t('nav.admin.users')} description={t('admin.users.description')} />
-      <div className="vx-stack">
+      <div className="wxp-stack">
         <Card title={t('admin.users.grant')}>
-          <form className="vx-form" onSubmit={onSubmit}>
+          <form className="wxp-form" onSubmit={onSubmit}>
             {status ? <Alert tone={status.tone}>{status.text}</Alert> : null}
-            <div className="vx-form__row">
+            <div className="wxp-form__row">
               <TextField
                 label={t('auth.email')}
                 type="email"
@@ -72,7 +72,7 @@ export function PlatformUsers() {
                 onChange={(e) => setRole(e.target.value)}
               />
             </div>
-            <div className="vx-form__actions">
+            <div className="wxp-form__actions">
               <Button type="submit" variant="primary" disabled={busy || !email}>
                 {t('admin.users.grantAction')}
               </Button>
@@ -80,8 +80,8 @@ export function PlatformUsers() {
           </form>
         </Card>
 
-        <div className="vx-table-wrap">
-          <table className="vx-table">
+        <div className="wxp-table-wrap">
+          <table className="wxp-table">
             <thead>
               <tr>
                 <th>{t('auth.email')}</th>
@@ -101,8 +101,8 @@ export function PlatformUsers() {
                       {s.active ? t('status.active') : t('admin.users.revoked')}
                     </StatusChip>
                   </td>
-                  <td className="vx-tabular">{formatDateTime(s.updatedAt)}</td>
-                  <td className="vx-actions">
+                  <td className="wxp-tabular">{formatDateTime(s.updatedAt)}</td>
+                  <td className="wxp-actions">
                     {s.active && s.uid !== user?.uid ? (
                       <Button size="sm" variant="tertiary" disabled={busy} onClick={() => void apply(s.email, null)}>
                         {t('admin.users.revoke')}

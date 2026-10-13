@@ -1,4 +1,4 @@
-import { EmptyState, PageHeader } from '@visione-x/ui';
+import { EmptyState, PageHeader } from '@wallx-play/ui';
 import { Construction } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { NavItem } from '../shell/nav';
@@ -9,7 +9,7 @@ export function Placeholder({ item }: { item: NavItem }) {
   return (
     <>
       <PageHeader title={t(item.labelKey)} />
-      <div className="vx-card">
+      <div className="wxp-card">
         <EmptyState
           icon={<Construction size={24} aria-hidden />}
           title={t('placeholder.title', { phase: item.phase })}

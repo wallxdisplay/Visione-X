@@ -1,5 +1,5 @@
 import { sendPasswordResetEmail } from 'firebase/auth';
-import { Alert, Button, TextField } from '@visione-x/ui';
+import { Alert, Button, TextField } from '@wallx-play/ui';
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
@@ -30,7 +30,7 @@ export function ForgotPassword() {
       {sent ? (
         <Alert tone="success">{t('auth.forgot.sent')}</Alert>
       ) : (
-        <form className="vx-form" onSubmit={onSubmit} noValidate>
+        <form className="wxp-form" onSubmit={onSubmit} noValidate>
           <TextField
             label={t('auth.email')}
             type="email"

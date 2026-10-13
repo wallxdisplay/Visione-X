@@ -1,6 +1,6 @@
 // Bundles Cloud Functions into lib/index.js. `--watch` rebuilds on change (the Functions
 // emulator reloads lib/ automatically).
-// Workspace packages (@visione-x/*) are inlined because they are not published to npm, so the
+// Workspace packages (@wallx-play/*) are inlined because they are not published to npm, so the
 // deploy-time `npm install` only needs the real dependencies listed in package.json.
 import { build, context } from 'esbuild';
 import { readFileSync } from 'node:fs';

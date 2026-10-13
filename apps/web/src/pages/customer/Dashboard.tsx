@@ -1,6 +1,6 @@
 import { collection, orderBy, query } from 'firebase/firestore';
-import { Card, PageHeader, StatusChip } from '@visione-x/ui';
-import { isScreenOnline, paths, type MemberDoc, type ScreenDoc, type SubscriptionDoc } from '@visione-x/shared';
+import { Card, PageHeader, StatusChip } from '@wallx-play/ui';
+import { isScreenOnline, paths, type MemberDoc, type ScreenDoc, type SubscriptionDoc } from '@wallx-play/shared';
 import { CheckCircle2, Circle, TriangleAlert } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
@@ -62,33 +62,33 @@ export function Dashboard() {
   return (
     <>
       <PageHeader title={t('dashboard.title')} description={org?.name} />
-      <div className="vx-stat-row">
-        <div className="vx-stat">
-          <div className="vx-stat__label">{t('dashboard.totalScreens')}</div>
-          <div className="vx-stat__value">{screens.data.length}</div>
-          <div className="vx-muted">{t('dashboard.ofLimit', { limit: screenLimit ?? '∞' })}</div>
+      <div className="wxp-stat-row">
+        <div className="wxp-stat">
+          <div className="wxp-stat__label">{t('dashboard.totalScreens')}</div>
+          <div className="wxp-stat__value">{screens.data.length}</div>
+          <div className="wxp-muted">{t('dashboard.ofLimit', { limit: screenLimit ?? '∞' })}</div>
         </div>
-        <div className="vx-stat">
-          <div className="vx-stat__label">{t('dashboard.online')}</div>
-          <div className="vx-stat__value">{online.length}</div>
+        <div className="wxp-stat">
+          <div className="wxp-stat__label">{t('dashboard.online')}</div>
+          <div className="wxp-stat__value">{online.length}</div>
         </div>
-        <div className={`vx-stat${offline.length ? ' vx-stat--alert' : ''}`}>
-          <div className="vx-stat__label">{t('dashboard.offline')}</div>
-          <div className="vx-stat__value">{offline.length}</div>
+        <div className={`wxp-stat${offline.length ? ' wxp-stat--alert' : ''}`}>
+          <div className="wxp-stat__label">{t('dashboard.offline')}</div>
+          <div className="wxp-stat__value">{offline.length}</div>
         </div>
-        <div className="vx-stat">
-          <div className="vx-stat__label">{t('dashboard.plan')}</div>
-          <div className="vx-stat__value" style={{ fontSize: 22 }}>
+        <div className="wxp-stat">
+          <div className="wxp-stat__label">{t('dashboard.plan')}</div>
+          <div className="wxp-stat__value" style={{ fontSize: 22 }}>
             {t(`plans.${entitlements?.planId ?? 'trial'}`, { defaultValue: entitlements?.planId })}
           </div>
-          {trialEnds ? <div className="vx-muted">{t('dashboard.trialEnds', { days: daysLeft(trialEnds), date: formatDate(trialEnds) })}</div> : null}
+          {trialEnds ? <div className="wxp-muted">{t('dashboard.trialEnds', { days: daysLeft(trialEnds), date: formatDate(trialEnds) })}</div> : null}
         </div>
       </div>
 
-      <div className="vx-stack">
+      <div className="wxp-stack">
         <Card title={t('dashboard.attention')}>
           {issues.length === 0 ? (
-            <p className="vx-muted" style={{ margin: 0 }}>
+            <p className="wxp-muted" style={{ margin: 0 }}>
               {screens.data.length ? t('dashboard.allGood') : t('dashboard.noScreensYet')}
             </p>
           ) : (
@@ -97,7 +97,7 @@ export function Dashboard() {
                 <li key={i.key}>
                   <TriangleAlert size={16} className={`attention__icon attention__icon--${i.tone}`} aria-hidden />
                   <Link to="/screens">{i.text}</Link>
-                  {i.when ? <span className="vx-muted">{formatDateTime(i.when)}</span> : null}
+                  {i.when ? <span className="wxp-muted">{formatDateTime(i.when)}</span> : null}
                 </li>
               ))}
             </ul>

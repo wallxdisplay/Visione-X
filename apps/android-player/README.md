@@ -1,4 +1,4 @@
-# Visione-X Player (Android)
+# WallX Play Player (Android)
 
 Native Kotlin player for Android boxes connected over HDMI to an LED video wall controller.
 
@@ -7,7 +7,7 @@ Android box HDMI OUT → LED controller HDMI IN → LED video wall
 ```
 
 ## What it does
-- **Pairing:** first start registers the box and shows a 6-character code + QR code. In Visione-X:
+- **Pairing:** first start registers the box and shows a 6-character code + QR code. In WallX Play:
   *Screens → Add screen* (or scan the QR with a phone, which opens that form pre-filled).
 - **Playback:** plays what is published to the screen — schedules (time-zone aware, priorities),
   layouts with zones, playlists, images, videos (hardware decoding via Media3/ExoPlayer), text,
@@ -25,7 +25,7 @@ Requires the Android SDK (platform 35) and JDK 17+ (`JAVA_HOME`). From this fold
 ./gradlew testDebugUnitTest assembleDebug
 ```
 The APK is written to `app/build/outputs/apk/debug/app-debug.apk` — or, when the project sits in
-a OneDrive folder on Windows, to `%LOCALAPPDATA%\visione-x-player-build\app\outputs\apk\debug\`
+a OneDrive folder on Windows, to `%LOCALAPPDATA%\wallx-play-player-build\app\outputs\apk\debug\`
 (OneDrive locks files mid-build, so the build directory is moved outside it).
 
 Tests: `ScheduleTest` (same cases as the TypeScript resolver), `ManifestFixtureTest` (shared
@@ -34,25 +34,25 @@ download → corrupted update refused → reset on removal; renders the pairing 
 Release build: `./gradlew assembleRelease` (currently signed with the debug key — create a release
 keystore before distributing to customers).
 
-The player talks to `https://visione-x.web.app/api/v1` by default. To test against the local
+The player talks to `https://wallx-play.web.app/api/v1` by default. To test against the local
 emulators from the Android emulator:
-`./gradlew assembleDebug -PapiBase=http://10.0.2.2:5001/demo-visione-x/asia-south1/api/v1`
+`./gradlew assembleDebug -PapiBase=http://10.0.2.2:5001/demo-wallx-play/asia-south1/api/v1`
 
 ## Install on a box
 1. On the box: *Settings → About → Build number* (tap 7×) → *Developer options* → enable
    **USB debugging** (or **ADB over network**).
 2. From the PC: `adb connect <box-ip>:5555` (network) or plug in USB, then
    `adb install -r app-debug.apk`. A USB stick + file manager also works.
-3. Open **Visione-X Player** once. It shows the pairing code.
+3. Open **WallX Play Player** once. It shows the pairing code.
 
 ## Start automatically after power-on (choose one)
-- **Recommended — set as Home app:** press the remote's Home button, choose *Visione-X Player*,
+- **Recommended — set as Home app:** press the remote's Home button, choose *WallX Play Player*,
   *Always*. The box then boots straight into the player and returns to it after any crash.
   (Some boxes: *Settings → Apps → Default apps → Home app*.)
 - **Boot receiver:** the app also starts itself on `BOOT_COMPLETED`. This works on most Android
   7–9 boxes; Android 10+ often blocks it unless the app is the Home app or device owner.
 - **Kiosk (device owner):** on a freshly reset box with no accounts added, run
-  `adb shell dpm set-device-owner com.wallx.visionex.player/.KioskAdminReceiver`.
+  `adb shell dpm set-device-owner com.wallx.play/.KioskAdminReceiver`.
   The player then pins itself (lock task mode) so the remote cannot leave it. To undo, factory-reset
   the box.
 

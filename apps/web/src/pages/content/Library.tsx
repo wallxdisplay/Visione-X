@@ -1,6 +1,6 @@
 import { ref, uploadBytesResumable } from 'firebase/storage';
-import { Alert, Button, Dialog, EmptyState, PageHeader, SelectField, StatusChip, TextField } from '@visione-x/ui';
-import { MEDIA_LIMITS, mediaTypeForMime, type MediaDoc } from '@visione-x/shared';
+import { Alert, Button, Dialog, EmptyState, PageHeader, SelectField, StatusChip, TextField } from '@wallx-play/ui';
+import { MEDIA_LIMITS, mediaTypeForMime, type MediaDoc } from '@wallx-play/shared';
 import { FolderPlus, ImagePlus, Images, X } from 'lucide-react';
 import { useMemo, useRef, useState, type DragEvent } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -115,7 +115,7 @@ export function Library() {
         })}
         actions={
           canUpload ? (
-            <div className="vx-toolbar" style={{ margin: 0 }}>
+            <div className="wxp-toolbar" style={{ margin: 0 }}>
               <Button onClick={() => setFolderDialog(true)}>
                 <FolderPlus size={16} aria-hidden /> {t('library.newFolder')}
               </Button>
@@ -150,7 +150,7 @@ export function Library() {
             <div key={task.key} className="upload-queue__row">
               <span className="upload-queue__name">{task.name}</span>
               {task.error ? (
-                <span className="vx-field__error">{task.error}</span>
+                <span className="wxp-field__error">{task.error}</span>
               ) : task.done ? (
                 <StatusChip tone="info">{t('library.uploadedProcessing')}</StatusChip>
               ) : (
@@ -161,22 +161,22 @@ export function Library() {
         </div>
       ) : null}
 
-      <div className="vx-toolbar">
+      <div className="wxp-toolbar">
         <input
-          className="vx-input"
+          className="wxp-input"
           style={{ maxWidth: 260 }}
           placeholder={t('library.search')}
           aria-label={t('library.search')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <select className="vx-input" style={{ width: 'auto' }} aria-label={t('library.type')} value={type} onChange={(e) => setType(e.target.value as typeof type)}>
+        <select className="wxp-input" style={{ width: 'auto' }} aria-label={t('library.type')} value={type} onChange={(e) => setType(e.target.value as typeof type)}>
           <option value="all">{t('library.allTypes')}</option>
           <option value="image">{t('library.types.image')}</option>
           <option value="video">{t('library.types.video')}</option>
           <option value="audio">{t('library.types.audio')}</option>
         </select>
-        <select className="vx-input" style={{ width: 'auto' }} aria-label={t('library.folder')} value={folder} onChange={(e) => setFolder(e.target.value)}>
+        <select className="wxp-input" style={{ width: 'auto' }} aria-label={t('library.folder')} value={folder} onChange={(e) => setFolder(e.target.value)}>
           <option value="all">{t('library.allFolders')}</option>
           <option value="none">{t('library.noFolder')}</option>
           {folders.data.map((f) => (
@@ -188,7 +188,7 @@ export function Library() {
       </div>
 
       {items.length === 0 && !media.loading ? (
-        <div className="vx-card">
+        <div className="wxp-card">
           <EmptyState
             icon={<Images size={24} aria-hidden />}
             title={media.data.length ? t('library.noResults') : t('library.emptyTitle')}
@@ -216,7 +216,7 @@ export function Library() {
                   <span className="media-card__name" title={m.name}>
                     {m.name}
                   </span>
-                  <span className="vx-muted">
+                  <span className="wxp-muted">
                     {t(`library.types.${m.type}`)}
                     {m.width ? ` · ${m.width}×${m.height}` : ''}
                     {m.folderId ? ` · ${folderName(m.folderId) ?? ''}` : ''}
@@ -376,13 +376,13 @@ function MediaDetails({
         {url && media.type === 'audio' ? <audio src={url} controls /> : null}
         {!url ? <MediaThumb media={media} /> : null}
       </div>
-      <dl className="vx-dl">
+      <dl className="wxp-dl">
         <dt>{t('library.type')}</dt>
         <dd>{t(`library.types.${media.type}`)}</dd>
         {media.width ? (
           <>
             <dt>{t('library.dimensions')}</dt>
-            <dd className="vx-tabular">
+            <dd className="wxp-tabular">
               {media.width}×{media.height}
             </dd>
           </>
@@ -390,11 +390,11 @@ function MediaDetails({
         {media.durationSec ? (
           <>
             <dt>{t('library.duration')}</dt>
-            <dd className="vx-tabular">{formatDuration(media.durationSec)}</dd>
+            <dd className="wxp-tabular">{formatDuration(media.durationSec)}</dd>
           </>
         ) : null}
         <dt>{t('library.size')}</dt>
-        <dd className="vx-tabular">{formatBytes(media.storedBytes || media.bytes)}</dd>
+        <dd className="wxp-tabular">{formatBytes(media.storedBytes || media.bytes)}</dd>
         {media.display && media.display.path !== media.originalPath ? (
           <>
             <dt>{t('library.converted')}</dt>

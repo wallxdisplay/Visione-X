@@ -1,5 +1,5 @@
-import { Button, SelectField, TextAreaField, TextField } from '@visione-x/ui';
-import { DEFAULT_TIMEZONE, INDIAN_STATES, OrgSignupDetails } from '@visione-x/shared';
+import { Button, SelectField, TextAreaField, TextField } from '@wallx-play/ui';
+import { DEFAULT_TIMEZONE, INDIAN_STATES, OrgSignupDetails } from '@wallx-play/shared';
 import { useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { fieldErrors, timezoneOptions } from '../../lib/format';
@@ -60,9 +60,9 @@ export function OrgSignupForm({
   }
 
   return (
-    <form className="vx-form" onSubmit={submit} noValidate>
+    <form className="wxp-form" onSubmit={submit} noValidate>
       <TextField label={t('onboarding.orgName')} required value={values.orgName} onChange={set('orgName')} error={errors.orgName} />
-      <div className="vx-form__row">
+      <div className="wxp-form__row">
         <TextField
           label={t('onboarding.contactName')}
           required
@@ -82,7 +82,7 @@ export function OrgSignupForm({
           error={errors.phone}
         />
       </div>
-      <div className="vx-form__row">
+      <div className="wxp-form__row">
         <TextField label={t('onboarding.city')} required value={values.city} onChange={set('city')} error={errors.city} />
         <SelectField
           label={t('onboarding.state')}
@@ -93,7 +93,7 @@ export function OrgSignupForm({
           error={errors.stateCode}
         />
       </div>
-      <div className="vx-form__row">
+      <div className="wxp-form__row">
         <TextField
           label={t('onboarding.expectedScreens')}
           required
@@ -128,7 +128,7 @@ export function OrgSignupForm({
         error={errors.notes}
       />
       {children}
-      <div className="vx-form__actions">
+      <div className="wxp-form__actions">
         <Button type="submit" variant="primary" disabled={busy}>
           {submitLabel}
         </Button>

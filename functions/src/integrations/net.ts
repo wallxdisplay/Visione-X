@@ -50,7 +50,7 @@ async function assertPublic(deps: Deps, url: URL): Promise<void> {
   } catch {
     throw new FetchError('The address could not be found.');
   }
-  if (addresses.length === 0 || addresses.some(isPrivateAddress)) throw new FetchError('This address is not reachable from Visione-X.');
+  if (addresses.length === 0 || addresses.some(isPrivateAddress)) throw new FetchError('This address is not reachable from WallX Play.');
 }
 
 /**
@@ -71,7 +71,7 @@ export async function safeGet(
       res = await fetchImpl(url, {
         redirect: 'manual',
         signal: AbortSignal.timeout(timeoutMs),
-        headers: { 'User-Agent': 'Visione-X/1.0 (+https://visione-x.web.app)', ...(accept ? { Accept: accept } : {}) },
+        headers: { 'User-Agent': 'WallX Play/1.0 (+https://wallx-play.web.app)', ...(accept ? { Accept: accept } : {}) },
       });
     } catch (err) {
       throw new FetchError((err as Error).name === 'TimeoutError' ? 'The server took too long to answer.' : 'The server could not be reached.');

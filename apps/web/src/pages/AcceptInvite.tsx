@@ -1,4 +1,4 @@
-import { Alert, Button } from '@visione-x/ui';
+import { Alert, Button } from '@wallx-play/ui';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
@@ -20,7 +20,7 @@ export function AcceptInvite() {
     try {
       const { orgId } = await call<{ orgId: string }>('acceptInvite', { token });
       try {
-        localStorage.setItem('vx.currentOrg', orgId);
+        localStorage.setItem('wxp.currentOrg', orgId);
       } catch {
         /* ignore */
       }
@@ -33,7 +33,7 @@ export function AcceptInvite() {
 
   return (
     <AuthLayout title={t('invite.title')} description={t('invite.description', { email: user?.email })}>
-      <div className="vx-form">
+      <div className="wxp-form">
         {error ? <Alert tone="danger">{error}</Alert> : null}
         <Button variant="primary" disabled={busy} onClick={() => void accept()}>
           {t('invite.accept')}

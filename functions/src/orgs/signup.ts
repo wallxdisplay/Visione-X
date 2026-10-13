@@ -8,7 +8,7 @@ import {
   type ResubmitOrgSignupInput,
   type SignupRequestDoc,
   type SubmitOrgSignupInput,
-} from '@visione-x/shared';
+} from '@wallx-play/shared';
 import { auditedTransaction } from '../lib/audit';
 import { requireVerifiedEmail } from '../lib/authz';
 import type { Actor, Deps } from '../lib/context';

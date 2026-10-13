@@ -1,5 +1,5 @@
-import { Alert, Button, StatusChip } from '@visione-x/ui';
-import { DISRUPTIVE_COMMANDS, SCREEN_COMMANDS, type ScreenCommandDoc, type ScreenCommandType, type ScreenDoc } from '@visione-x/shared';
+import { Alert, Button, StatusChip } from '@wallx-play/ui';
+import { DISRUPTIVE_COMMANDS, SCREEN_COMMANDS, type ScreenCommandDoc, type ScreenCommandType, type ScreenDoc } from '@wallx-play/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStorageUrl } from '../../content/data';
@@ -40,7 +40,7 @@ export function ScreenCommands({ screen }: { screen: ScreenDoc }) {
       <div className="studio__panel-title">{t('commands.title')}</div>
       {!entitled ? <Alert tone="info">{t('commands.notInPlan')}</Alert> : null}
       {allowed && entitled ? (
-        <div className="vx-toolbar" style={{ margin: 0 }}>
+        <div className="wxp-toolbar" style={{ margin: 0 }}>
           {SCREEN_COMMANDS.map((type) => (
             <Button
               key={type}
@@ -57,7 +57,7 @@ export function ScreenCommands({ screen }: { screen: ScreenDoc }) {
       {confirming ? (
         <Alert tone="warning" title={t('commands.confirmTitle', { command: t(`commands.types.${confirming}`) })}>
           <p style={{ margin: '4px 0 8px' }}>{t(`commands.confirmBody.${confirming}`)}</p>
-          <div className="vx-toolbar" style={{ margin: 0 }}>
+          <div className="wxp-toolbar" style={{ margin: 0 }}>
             <Button size="sm" onClick={() => setConfirming(null)}>{t('common.cancel')}</Button>
             <Button size="sm" variant="danger" disabled={busy} onClick={() => void send(confirming)}>
               {t(`commands.types.${confirming}`)}
@@ -87,7 +87,7 @@ function CommandRow({ command }: { command: ScreenCommandDoc }) {
       <div className="commands__row">
         <span>{t(`commands.types.${command.type}`)}</span>
         <StatusChip tone={TONE[command.status]}>{t(`commands.status.${command.status}`)}</StatusChip>
-        <span className="vx-muted vx-tabular">{formatDateTime(command.completedAt ?? command.createdAt)}</span>
+        <span className="wxp-muted wxp-tabular">{formatDateTime(command.completedAt ?? command.createdAt)}</span>
         {details ? (
           <button type="button" className="link-btn" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
             {open ? t('commands.hide') : t('commands.details')}
@@ -100,7 +100,7 @@ function CommandRow({ command }: { command: ScreenCommandDoc }) {
         </a>
       ) : null}
       {open && command.result ? (
-        <dl className="vx-dl commands__result">
+        <dl className="wxp-dl commands__result">
           {Object.entries(command.result).map(([k, v]) => (
             <div key={k} style={{ display: 'contents' }}>
               <dt>{k}</dt>

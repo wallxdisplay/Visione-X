@@ -8,7 +8,7 @@ export default defineConfig({
     // Mirrors the Hosting rewrite so /api works against the Functions emulator in dev.
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:5001/demo-visione-x/asia-south1/api',
+        target: 'http://127.0.0.1:5001/demo-wallx-play/asia-south1/api',
         changeOrigin: true,
       },
     },

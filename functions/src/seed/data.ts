@@ -4,7 +4,7 @@
  * are DATA: the Super Admin edits them later without a code change.
  * `limits.screens: null` on paid plans means "number of screens purchased".
  */
-import type { FeatureKey, Plan, ReleaseStatus } from '@visione-x/shared';
+import type { FeatureKey, Plan, ReleaseStatus } from '@wallx-play/shared';
 
 const CORE: FeatureKey[] = [
   'media.basic',

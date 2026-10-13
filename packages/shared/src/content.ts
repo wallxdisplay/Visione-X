@@ -3,7 +3,7 @@
  * Stored-document shapes plus the request schemas of their callable functions.
  */
 import { z } from 'zod';
-import { LayoutBody, PlaylistItem, type Canvas, type Zone } from '@visione-x/layout-spec';
+import { LayoutBody, PlaylistItem, type Canvas, type Zone } from '@wallx-play/layout-spec';
 import { Timezone } from './api';
 
 // ---------------------------------------------------------------- media

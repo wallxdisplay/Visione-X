@@ -1,5 +1,5 @@
 import { GoogleAuthProvider, signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
-import { Alert, Button, TextField } from '@visione-x/ui';
+import { Alert, Button, TextField } from '@wallx-play/ui';
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router';
@@ -43,7 +43,7 @@ export function SignIn() {
         </>
       }
     >
-      <form className="vx-form" onSubmit={onSubmit} noValidate>
+      <form className="wxp-form" onSubmit={onSubmit} noValidate>
         {error ? <Alert tone="danger">{error}</Alert> : null}
         <TextField
           label={t('auth.email')}

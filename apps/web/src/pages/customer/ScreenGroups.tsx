@@ -1,5 +1,5 @@
-import { Alert, Button, Dialog, SelectField, TextField } from '@visione-x/ui';
-import type { ScreenGroupDoc } from '@visione-x/shared';
+import { Alert, Button, Dialog, SelectField, TextField } from '@wallx-play/ui';
+import type { ScreenGroupDoc } from '@wallx-play/shared';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -42,12 +42,12 @@ export function ScreenGroups() {
           </Button>
         ) : null}
       </div>
-      <p className="vx-muted">{t('groups.description')}</p>
+      <p className="wxp-muted">{t('groups.description')}</p>
       {groups.data.length === 0 && !groups.loading ? (
-        <p className="vx-muted">{t('groups.empty')}</p>
+        <p className="wxp-muted">{t('groups.empty')}</p>
       ) : (
-        <div className="vx-table-wrap">
-          <table className="vx-table">
+        <div className="wxp-table-wrap">
+          <table className="wxp-table">
             <thead>
               <tr>
                 <th>{t('groups.name')}</th>
@@ -61,8 +61,8 @@ export function ScreenGroups() {
                 <tr key={g.id}>
                   <td>{g.name}</td>
                   <td>{sites.data.find((s) => s.id === g.siteId)?.name ?? t('groups.anySite')}</td>
-                  <td className="vx-muted">{g.description ?? '—'}</td>
-                  <td className="vx-actions">
+                  <td className="wxp-muted">{g.description ?? '—'}</td>
+                  <td className="wxp-actions">
                     {manage ? (
                       <>
                         <Button

@@ -1,4 +1,4 @@
-import { EmptyState } from '@visione-x/ui';
+import { EmptyState } from '@wallx-play/ui';
 import { ShieldAlert } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';

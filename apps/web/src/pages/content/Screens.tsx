@@ -1,13 +1,13 @@
 import { collection, orderBy, query } from 'firebase/firestore';
-import { Alert, Button, Dialog, EmptyState, PageHeader, SelectField, StatusChip, TextField } from '@visione-x/ui';
-import { RESOLUTION_PRESETS } from '@visione-x/layout-spec';
+import { Alert, Button, Dialog, EmptyState, PageHeader, SelectField, StatusChip, TextField } from '@wallx-play/ui';
+import { RESOLUTION_PRESETS } from '@wallx-play/layout-spec';
 import {
   ClaimDeviceInput,
   DEFAULT_SCREEN_RESOLUTION,
   isScreenOnline,
   paths,
   type ScreenDoc,
-} from '@visione-x/shared';
+} from '@wallx-play/shared';
 import { Monitor, Plus, Send, Siren } from 'lucide-react';
 import { ApprovalsPanel } from './ApprovalsPanel';
 import { EmergencyDialog } from './EmergencyDialog';
@@ -99,7 +99,7 @@ export function Screens() {
         title={t('nav.screens')}
         description={t('screens.description')}
         actions={
-          <div className="vx-toolbar" style={{ margin: 0 }}>
+          <div className="wxp-toolbar" style={{ margin: 0 }}>
             {can('emergency.trigger') && screens.data.some((s) => s.status === 'authorized') ? (
               <Button variant="danger" onClick={() => setEmergencyOpen(true)}>
                 <Siren size={15} aria-hidden /> {t('emergency.button')}
@@ -122,7 +122,7 @@ export function Screens() {
       <ApprovalsPanel />
 
       {screens.data.length === 0 && !screens.loading ? (
-        <div className="vx-card">
+        <div className="wxp-card">
           <EmptyState
             icon={<Monitor size={24} aria-hidden />}
             title={t('screens.emptyTitle')}
@@ -131,8 +131,8 @@ export function Screens() {
           />
         </div>
       ) : (
-        <div className="vx-table-wrap">
-          <table className="vx-table">
+        <div className="wxp-table-wrap">
+          <table className="wxp-table">
             <thead>
               <tr>
                 <th>{t('screens.name')}</th>
@@ -152,32 +152,32 @@ export function Screens() {
                       <button type="button" className="link-btn" onClick={() => setEditing(s)}>
                         {s.name}
                       </button>
-                      <div className="vx-muted">
+                      <div className="wxp-muted">
                         {sites.data.find((x) => x.id === s.siteId)?.name ?? t('screens.noSite')} · {s.resolution.width}×{s.resolution.height}
                       </div>
                     </td>
                     <td>
                       <StatusChip tone={state.tone}>{t(`screens.states.${state.key}`)}</StatusChip>
-                      {s.health?.errors.length ? <div className="vx-field__error">{t('screens.errors', { count: s.health.errors.length })}</div> : null}
+                      {s.health?.errors.length ? <div className="wxp-field__error">{t('screens.errors', { count: s.health.errors.length })}</div> : null}
                     </td>
-                    <td className="vx-tabular">{formatDateTime(s.lastSeen)}</td>
+                    <td className="wxp-tabular">{formatDateTime(s.lastSeen)}</td>
                     <td>
                       {s.device ? `${s.device.manufacturer} ${s.device.model}` : '—'}
-                      <div className="vx-muted">
+                      <div className="wxp-muted">
                         {s.device ? `Android ${s.device.androidVersion}` : ''}
                         {s.health ? ` · v${s.health.appVersion}` : ''}
                       </div>
                     </td>
                     <td>
                       {s.publishedAt ? t('screens.version', { v: s.manifestVersion }) : t('screens.notPublished')}
-                      <div className="vx-muted">
+                      <div className="wxp-muted">
                         {s.publishedAt ? formatDateTime(s.publishedAt) : ''}
                         {s.health?.manifestVersion != null && s.publishedAt && s.health.manifestVersion < s.manifestVersion
                           ? ` · ${t('screens.syncing')}`
                           : ''}
                       </div>
                     </td>
-                    <td className="vx-actions">
+                    <td className="wxp-actions">
                       {s.status === 'pending_authorization' && can('device.authorize') ? (
                         <Button size="sm" variant="primary" disabled={busy} onClick={() => void authorize(s)}>
                           {t('screens.authorize')}
@@ -196,7 +196,7 @@ export function Screens() {
           </table>
         </div>
       )}
-      <p className="vx-muted" style={{ marginTop: 16 }}>
+      <p className="wxp-muted" style={{ marginTop: 16 }}>
         {t('screens.publishHint')}
       </p>
 
@@ -315,14 +315,14 @@ function ScreenDialog({ code, screen, onClose }: { code?: string; screen?: Scree
             value={pairingCode}
             error={errors.pairingCode}
             autoComplete="off"
-            className="vx-input pairing-input"
+            className="wxp-input pairing-input"
             maxLength={9}
             onChange={(e) => setPairingCode(e.target.value.toUpperCase())}
           />
         </>
       ) : null}
       <TextField label={t('screens.name')} required value={form.name} maxLength={80} disabled={!editable} onChange={(e) => set('name', e.target.value)} />
-      <div className="vx-form__row">
+      <div className="wxp-form__row">
         <SelectField
           label={t('screens.site')}
           disabled={!editable}
@@ -347,7 +347,7 @@ function ScreenDialog({ code, screen, onClose }: { code?: string; screen?: Scree
       </div>
       {groups.data.length ? (
         <fieldset className="check-group check-group--row">
-          <legend className="vx-field__label">{t('screens.groups')}</legend>
+          <legend className="wxp-field__label">{t('screens.groups')}</legend>
           {groups.data.map((g) => (
             <label key={g.id} className="day-chip">
               <input
@@ -372,7 +372,7 @@ function ScreenDialog({ code, screen, onClose }: { code?: string; screen?: Scree
         />
       ) : null}
       {screen ? (
-        <dl className="vx-dl">
+        <dl className="wxp-dl">
           <dt>{t('screens.lastSeen')}</dt>
           <dd>{formatDateTime(screen.lastSeen)}</dd>
           <dt>{t('screens.player')}</dt>
@@ -380,15 +380,15 @@ function ScreenDialog({ code, screen, onClose }: { code?: string; screen?: Scree
           {h ? (
             <>
               <dt>{t('screens.output')}</dt>
-              <dd className="vx-tabular">
+              <dd className="wxp-tabular">
                 {h.display.width}×{h.display.height} · v{h.appVersion}
               </dd>
               <dt>{t('screens.storageFree')}</dt>
-              <dd className="vx-tabular">{h.storageFreeMb != null ? `${h.storageFreeMb} MB` : '—'}</dd>
+              <dd className="wxp-tabular">{h.storageFreeMb != null ? `${h.storageFreeMb} MB` : '—'}</dd>
               <dt>{t('screens.nowPlaying')}</dt>
               <dd>{h.playing ? `${h.playing.source} · ${h.playing.playlistId ?? '—'}` : '—'}</dd>
               <dt>{t('screens.contentVersion')}</dt>
-              <dd className="vx-tabular">
+              <dd className="wxp-tabular">
                 {h.manifestVersion ?? '—'} / {screen.manifestVersion}
               </dd>
             </>

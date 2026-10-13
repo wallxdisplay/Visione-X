@@ -1,6 +1,6 @@
 import { collection, limit, onSnapshot, orderBy, query, where } from 'firebase/firestore';
 import { useEffect, useMemo, useState } from 'react';
-import type { DataBinding, LiveValue } from '@visione-x/layout-spec';
+import type { DataBinding, LiveValue } from '@wallx-play/layout-spec';
 import {
   isSensorOnline,
   paths,
@@ -8,7 +8,7 @@ import {
   type ReadingBucketDoc,
   type SensorChannelDoc,
   type SensorDeviceDoc,
-} from '@visione-x/shared';
+} from '@wallx-play/shared';
 import { db } from '../lib/firebase';
 import { useDoc, useQueryData, type WithId } from '../lib/hooks';
 

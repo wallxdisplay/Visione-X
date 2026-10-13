@@ -15,7 +15,7 @@ import {
   type PlaylistDoc,
   type UpdateMediaInput,
   type UpsertFolderInput,
-} from '@visione-x/shared';
+} from '@wallx-play/shared';
 import { auditedTransaction } from '../lib/audit';
 import { requireActiveOrgPermission, requireOrgPermission } from '../lib/authz';
 import type { Actor, Deps } from '../lib/context';

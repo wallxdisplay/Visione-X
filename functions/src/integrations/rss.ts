@@ -3,7 +3,7 @@
  * dates. Everything is reduced to plain text (tags stripped, entities decoded, whitespace
  * collapsed, length-capped), so nothing from a feed is ever rendered as HTML on a screen.
  */
-import { RSS_MAX_ITEMS, type RssData, type RssItem } from '@visione-x/shared';
+import { RSS_MAX_ITEMS, type RssData, type RssItem } from '@wallx-play/shared';
 
 const NAMED: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', ndash: '–', mdash: '—', hellip: '…', rsquo: '’', lsquo: '‘', rdquo: '”', ldquo: '“', rupee: '₹' };
 

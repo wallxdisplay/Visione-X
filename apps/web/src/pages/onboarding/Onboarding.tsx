@@ -1,6 +1,6 @@
 import { collection, limit, orderBy, query, where } from 'firebase/firestore';
-import { Alert, Button, Card, StatusChip, Spinner, TextAreaField } from '@visione-x/ui';
-import { paths, type OrgSignupDetails, type SignupRequestDoc } from '@visione-x/shared';
+import { Alert, Button, Card, StatusChip, Spinner, TextAreaField } from '@wallx-play/ui';
+import { paths, type OrgSignupDetails, type SignupRequestDoc } from '@wallx-play/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
@@ -68,17 +68,17 @@ export function Onboarding() {
     body = <Spinner label={t('common.loading')} />;
   } else if (latest && !startNew && latest.status === 'pending') {
     body = (
-      <div className="vx-stack">
+      <div className="wxp-stack">
         <div>
           <StatusChip tone="warning">{t('status.pending')}</StatusChip>
         </div>
         <p>{t('onboarding.pendingBody', { org: latest.details.orgName })}</p>
-        <p className="vx-muted">{t('onboarding.submittedAt', { at: formatDateTime(latest.createdAt) })}</p>
+        <p className="wxp-muted">{t('onboarding.submittedAt', { at: formatDateTime(latest.createdAt) })}</p>
       </div>
     );
   } else if (latest && !startNew && latest.status === 'info_requested') {
     body = (
-      <div className="vx-stack">
+      <div className="wxp-stack">
         <Alert tone="warning" title={t('onboarding.infoRequestedTitle')}>
           {latest.messages.filter((m) => m.from === 'admin').at(-1)?.text}
         </Alert>
@@ -99,7 +99,7 @@ export function Onboarding() {
     );
   } else if (latest && !startNew && latest.status === 'rejected') {
     body = (
-      <div className="vx-stack">
+      <div className="wxp-stack">
         <Alert tone="danger" title={t('onboarding.rejectedTitle')}>
           {latest.messages.filter((m) => m.from === 'admin').at(-1)?.text}
         </Alert>
@@ -128,11 +128,11 @@ export function Onboarding() {
         </div>
         <div className="onboarding__user">
           {platformRole ? (
-            <Link to="/admin" className="vx-btn vx-btn--tertiary vx-btn--sm">
+            <Link to="/admin" className="wxp-btn wxp-btn--tertiary wxp-btn--sm">
               {t('shell.adminBadge')}
             </Link>
           ) : null}
-          <span className="vx-muted">{user?.email}</span>
+          <span className="wxp-muted">{user?.email}</span>
           <Button size="sm" variant="tertiary" onClick={() => void signOut()}>
             {t('shell.signOut')}
           </Button>
@@ -148,7 +148,7 @@ export function Onboarding() {
         ) : null}
         {error ? <Alert tone="danger">{error}</Alert> : null}
         <Card>{body}</Card>
-        <p className="vx-muted">{t('onboarding.inviteHint')}</p>
+        <p className="wxp-muted">{t('onboarding.inviteHint')}</p>
       </main>
     </div>
   );

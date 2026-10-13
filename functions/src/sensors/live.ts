@@ -4,7 +4,7 @@
  * player can never read other sensors of the org.
  */
 import type { Firestore } from 'firebase-admin/firestore';
-import type { LiveChannel } from '@visione-x/layout-spec';
+import type { LiveChannel } from '@wallx-play/layout-spec';
 import {
   HISTORY_MAX_POINTS,
   downsample,
@@ -19,7 +19,7 @@ import {
   type ReadingBucketDoc,
   type SensorChannelDoc,
   type SensorDeviceDoc,
-} from '@visione-x/shared';
+} from '@wallx-play/shared';
 import type { Deps } from '../lib/context';
 import { authenticate, type ApiRequest, type ApiResult } from '../devices/deviceApi';
 

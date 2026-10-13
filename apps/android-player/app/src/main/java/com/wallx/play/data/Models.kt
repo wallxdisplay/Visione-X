@@ -1,4 +1,4 @@
-package com.wallx.visionex.player.data
+package com.wallx.play.data
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json

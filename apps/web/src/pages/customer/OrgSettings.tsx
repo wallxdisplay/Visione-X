@@ -1,4 +1,4 @@
-import { Alert, Button, Card, PageHeader, SelectField, TextField } from '@visione-x/ui';
+import { Alert, Button, Card, PageHeader, SelectField, TextField } from '@wallx-play/ui';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { call, errorMessage } from '../../lib/api';
@@ -49,7 +49,7 @@ export function OrgSettings() {
       <PageHeader title={t('nav.settings')} description={t('settings.description')} />
       <div style={{ maxWidth: 640 }}>
         <Card title={t('settings.general')}>
-          <form className="vx-form" onSubmit={save}>
+          <form className="wxp-form" onSubmit={save}>
             {status ? <Alert tone={status.tone}>{status.text}</Alert> : null}
             {!editable ? <Alert tone="info">{t('settings.readOnly')}</Alert> : null}
             <TextField
@@ -67,7 +67,7 @@ export function OrgSettings() {
               value={timezone}
               onChange={(e) => setTimezone(e.target.value)}
             />
-            <div className="vx-field">
+            <div className="wxp-field">
               <label className="checkbox-row">
                 <input
                   type="checkbox"
@@ -77,12 +77,12 @@ export function OrgSettings() {
                 />
                 {t('settings.requireApproval')}
               </label>
-              <p className="vx-field__hint">
+              <p className="wxp-field__hint">
                 {approvalsInPlan ? t('settings.requireApprovalHint') : t('settings.requireApprovalNotInPlan')}
               </p>
             </div>
             {editable ? (
-              <div className="vx-form__actions">
+              <div className="wxp-form__actions">
                 <Button type="submit" variant="primary" disabled={busy || name.trim().length < 2}>
                   {t('common.save')}
                 </Button>

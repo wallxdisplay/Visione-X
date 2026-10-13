@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { FieldValue } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
-import { mediaStoragePath, paths, type MediaDoc, type MediaVariant } from '@visione-x/shared';
+import { mediaStoragePath, paths, type MediaDoc, type MediaVariant } from '@wallx-play/shared';
 import type { Deps } from '../lib/context';
 import {
   THUMB_SIDE,

@@ -1,4 +1,4 @@
-import { Alert, Button, Card, TextField } from '@visione-x/ui';
+import { Alert, Button, Card, TextField } from '@wallx-play/ui';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { usePendingApprovals } from '../../content/ops';
@@ -41,7 +41,7 @@ export function ApprovalsPanel() {
           <li key={a.id} className="approvals__item">
             <div>
               <strong>{a.requestedByEmail ?? a.requestedBy}</strong>{' '}
-              <span className="vx-muted">
+              <span className="wxp-muted">
                 {t('approvals.requested', {
                   at: formatDateTime(a.requestedAt),
                   screens: a.screenIds.length ? a.screenIds.length : t('approvals.allScreens'),
@@ -56,7 +56,7 @@ export function ApprovalsPanel() {
                 maxLength={500}
                 onChange={(e) => setNotes({ ...notes, [a.id]: e.target.value })}
               />
-              <div className="vx-toolbar" style={{ margin: 0 }}>
+              <div className="wxp-toolbar" style={{ margin: 0 }}>
                 <Button size="sm" variant="tertiary" disabled={busy === a.id} onClick={() => void decide(a.id, 'reject')}>
                   {t('approvals.reject')}
                 </Button>
@@ -68,7 +68,7 @@ export function ApprovalsPanel() {
           </li>
         ))}
       </ul>
-      <p className="vx-muted" style={{ marginBottom: 0 }}>{t('approvals.hint')}</p>
+      <p className="wxp-muted" style={{ marginBottom: 0 }}>{t('approvals.hint')}</p>
     </Card>
   );
 }

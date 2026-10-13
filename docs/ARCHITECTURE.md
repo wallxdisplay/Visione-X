@@ -1,15 +1,15 @@
-# Visione-X by WallX — Architecture & Structure (v0.2)
+# WallX Play — Architecture & Structure (v0.2)
 
-> Companion docs: [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) (visual system — product name there reads "WallX SignageOS"; the product name is **Visione-X by WallX**, tokens unchanged).
+> Companion docs: [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) (visual system — product name there reads "WallX SignageOS"; the product name is **WallX Play**, tokens unchanged).
 > Status: structure approved for build, pending the confirmations in §18.
 
 ## 1. Locked decisions
 | Area | Decision |
 |---|---|
-| Product | **Visione-X by WallX**, Indian market first |
+| Product | **WallX Play**, Indian market first |
 | Tenancy | Organization → Sites → Screen Groups → Screens (reseller-ready via `parentAccountId`) |
 | Web | React + TypeScript (Vite SPA), one Firebase Hosting site, routes `/`, `/studio`, `/admin`, `/player` |
-| Backend | Existing Firebase project **Visione-X** (real project ID to be confirmed): Auth, Firestore, Storage, Cloud Functions 2nd gen, Cloud Run, Scheduler, FCM |
+| Backend | Existing Firebase project **WallX Play** (real project ID to be confirmed): Auth, Firestore, Storage, Cloud Functions 2nd gen, Cloud Run, Scheduler, FCM |
 | Region | Firestore `asia-south1` if not yet created (check first); Functions, Cloud Run, Storage bucket in `asia-south1` |
 | Player | **Native Android app** on Android box → HDMI → LED controller → LED wall. Boot-start, kiosk, offline-first. `/player` web page is only registration/fallback |
 | Sensors | ESP32 → authenticated HTTPS ingest API. MQTT later via same ingestion core |
@@ -46,7 +46,7 @@
 
 ## 3. Repository layout (monorepo, npm workspaces)
 ```
-Visione-X/
+WallX Play/
   apps/
     web/                 React+TS SPA; route modules: customer, studio, admin, player-registration
     android-player/      Kotlin Android app (Gradle), separate toolchain
@@ -185,7 +185,7 @@ Rules: deny-by-default; anything money-, limit-, status- or audit-related is Fun
 - MQTT bridge later reuses the same validation/ingestion core.
 
 **As built (phase 5):**
-- **Devices and keys.** A sensor device lives in `orgs/{org}/sensorDevices/{id}`. Its API key (`vxs_…`, 192 bits) is shown once. Only the key's SHA-256 is stored, in the server-only `sensorKeys/{hash}` lookup. The key can be rotated, and the old key stops working at once. Creating a device needs `sensor.manage`, the `sensor.esp32` feature and room under the plan's `sensorDevices` limit.
+- **Devices and keys.** A sensor device lives in `orgs/{org}/sensorDevices/{id}`. Its API key (`wxp_…`, 192 bits) is shown once. Only the key's SHA-256 is stored, in the server-only `sensorKeys/{hash}` lookup. The key can be rotated, and the old key stops working at once. Creating a device needs `sensor.manage`, the `sensor.esp32` feature and room under the plan's `sensorDevices` limit.
 - **Channels** live in `sensorDevices/{id}/channels/{key}`, with at most 16 per device. Each channel has a key the firmware sends (`temp`, `door`), a type (number, or on/off stored as 1/0), an optional valid range, `staleAfterSec` and up to 5 alert rules. A rule is an operator, a limit, a severity and an optional hysteresis.
 - **Ingest** is at `POST /api/v1/ingest`. The body is `{ts?, fw?, deviceId?, readings[]}`, where `ts` is Unix seconds or ms and is optional. The checks are: key, device active, org active, plan entitlement, token bucket (burst 6, then 1 per 10 s), clock skew within ±10 min, and per-reading channel, type and range. Accepted readings update `channel.latest`. They are appended to the UTC hour bucket `channels/{key}/readings/{YYYYMMDDHH}`, whose `expiresAt` comes from the plan's `retentionDays`. Alert rules are evaluated in the same transaction. A late reading only goes into history.
 - **Alerts** are stored at `orgs/{org}/alerts/{id}` with type `threshold`, `stale` or `offline`, and status `open` or `resolved`. They can be acknowledged. Opening one raises a notification (`sensor_alert`, `sensor_stale`, `sensor_offline`); recovery raises `sensor_recovered` or `sensor_online`. The 5-minute monitor raises offline alerts after `offlineAfterMin` and stale alerts when a channel stops while its device still reports. A dead device gets a single offline alert: its channels are parked rather than each raising a stale alert.
@@ -274,7 +274,7 @@ Feature catalogue stores `releaseStatus` (what WallX has built) separately from 
 | 6 (billing ✅, integrations ✅) | Billing & beyond | Manual billing ✅; weather + RSS integrations ✅ (weather needs a commercial Open-Meteo key in prod); next: Hindi/Marathi, reseller groundwork; Razorpay later. Invoices: external app |
 
 ## 18. Still to confirm
-1. Real Firebase **project ID** and **Hosting site ID** (display name "Visione-X" is not the ID), and whether Firestore already exists (region).
+1. Real Firebase **project ID** and **Hosting site ID** (display name "WallX Play" is not the ID), and whether Firestore already exists (region).
 2. Target **Android box model** (and Android version) for early hardware testing; whether boxes can be provisioned as Device Owner.
 3. Android stack: native Kotlin (recommended above) — confirm.
 4. Plan/feature matrix in §16.

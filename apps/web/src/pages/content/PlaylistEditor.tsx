@@ -1,6 +1,6 @@
-import { Alert, Button, Dialog, SelectField, Spinner, TextAreaField, TextField } from '@visione-x/ui';
-import type { PlaylistItem, Widget } from '@visione-x/layout-spec';
-import { paths, type MediaDoc, type PlaylistDoc } from '@visione-x/shared';
+import { Alert, Button, Dialog, SelectField, Spinner, TextAreaField, TextField } from '@wallx-play/ui';
+import type { PlaylistItem, Widget } from '@wallx-play/layout-spec';
+import { paths, type MediaDoc, type PlaylistDoc } from '@wallx-play/shared';
 import { ArrowDown, ArrowLeft, ArrowUp, Clock, GripVertical, Image as ImageIcon, LayoutTemplate, Play, QrCode, Save, Trash2, Type } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -112,11 +112,11 @@ export function PlaylistEditor() {
   return (
     <div className="playlist-editor">
       <header className="studio__bar">
-        <Link to="/playlists" className="vx-btn vx-btn--tertiary vx-btn--sm">
+        <Link to="/playlists" className="wxp-btn wxp-btn--tertiary wxp-btn--sm">
           <ArrowLeft size={16} aria-hidden /> {t('nav.playlists')}
         </Link>
         <input
-          className="vx-input studio__name"
+          className="wxp-input studio__name"
           aria-label={t('playlists.name')}
           value={name}
           maxLength={120}
@@ -126,7 +126,7 @@ export function PlaylistEditor() {
             setDirty(true);
           }}
         />
-        <span className="vx-muted studio__state">
+        <span className="wxp-muted studio__state">
           {t('playlists.summary', { count: items.length, duration: formatDuration(total) })}
         </span>
         <div className="studio__actions">
@@ -143,7 +143,7 @@ export function PlaylistEditor() {
       {message ? <Alert tone={message.tone}>{message.text}</Alert> : null}
       {blocker.state === 'blocked' ? (
         <Alert tone="warning" title={t('studio.leaveTitle')}>
-          <div className="vx-toolbar" style={{ margin: '8px 0 0' }}>
+          <div className="wxp-toolbar" style={{ margin: '8px 0 0' }}>
             <Button size="sm" onClick={() => blocker.reset()}>{t('studio.stay')}</Button>
             <Button size="sm" variant="danger" onClick={() => blocker.proceed()}>{t('studio.discard')}</Button>
           </div>
@@ -153,7 +153,7 @@ export function PlaylistEditor() {
       <div className="playlist-editor__body">
         <section>
           {!readOnly ? (
-            <div className="vx-toolbar">
+            <div className="wxp-toolbar">
               <Button size="sm" onClick={() => setPicker(true)}>
                 <ImageIcon size={14} aria-hidden /> {t('playlists.addMedia')}
               </Button>
@@ -172,8 +172,8 @@ export function PlaylistEditor() {
             </div>
           ) : null}
           {items.length === 0 ? (
-            <div className="vx-card">
-              <p className="vx-muted" style={{ margin: 0 }}>{t('playlists.noItems')}</p>
+            <div className="wxp-card">
+              <p className="wxp-muted" style={{ margin: 0 }}>{t('playlists.noItems')}</p>
             </div>
           ) : (
             <ol className="playlist-items">
@@ -195,7 +195,7 @@ export function PlaylistEditor() {
                     onDragEnd={() => setDragIndex(null)}
                   >
                     {!readOnly ? <GripVertical size={16} className="playlist-item__grip" aria-hidden /> : null}
-                    <span className="playlist-item__index vx-tabular">{i + 1}</span>
+                    <span className="playlist-item__index wxp-tabular">{i + 1}</span>
                     <div className="playlist-item__thumb">
                       {m ? (
                         <MediaThumb media={m} />
@@ -207,7 +207,7 @@ export function PlaylistEditor() {
                     </div>
                     <div className="playlist-item__main">
                       <span className="playlist-item__name">{label(item)}</span>
-                      <span className="vx-muted">
+                      <span className="wxp-muted">
                         {t(`playlists.kinds.${item.content.kind === 'media' ? (m?.type ?? 'media') : item.content.kind}`)}
                         {m?.status && m.status !== 'ready' ? ` · ${t(`library.status.${m.status}`)}` : ''}
                       </span>
@@ -216,7 +216,7 @@ export function PlaylistEditor() {
                       <span className="sr-only">{t('playlists.seconds')}</span>
                       <input
                         type="number"
-                        className="vx-input"
+                        className="wxp-input"
                         min={1}
                         max={86400}
                         disabled={readOnly}
@@ -226,10 +226,10 @@ export function PlaylistEditor() {
                           update(items.map((x) => (x.id === item.id ? { ...x, durationSec: Math.max(1, Math.min(86400, Math.round(Number(e.target.value) || 1))) } : x)))
                         }
                       />
-                      <span className="vx-muted">s</span>
+                      <span className="wxp-muted">s</span>
                     </label>
                     <select
-                      className="vx-input playlist-item__transition"
+                      className="wxp-input playlist-item__transition"
                       aria-label={t('playlists.transition')}
                       disabled={readOnly}
                       value={item.transition}
@@ -270,7 +270,7 @@ export function PlaylistEditor() {
               <PlaylistPlayer items={items} />
             </div>
           </RenderLibraryProvider>
-          <p className="vx-muted">{t('playlists.previewHint')}</p>
+          <p className="wxp-muted">{t('playlists.previewHint')}</p>
         </aside>
       </div>
 
@@ -278,7 +278,7 @@ export function PlaylistEditor() {
 
       <Dialog open={layoutPicker} title={t('playlists.addLayout')} onClose={() => setLayoutPicker(false)}>
         {layouts.data.length === 0 ? (
-          <p className="vx-muted">{t('playlists.noLayouts')}</p>
+          <p className="wxp-muted">{t('playlists.noLayouts')}</p>
         ) : (
           <ul className="choice-list">
             {layouts.data.map((l) => (
@@ -291,7 +291,7 @@ export function PlaylistEditor() {
                   }}
                 >
                   <strong>{l.name}</strong>
-                  <span className="vx-muted">
+                  <span className="wxp-muted">
                     {l.canvas.width}×{l.canvas.height}
                   </span>
                 </button>
@@ -347,7 +347,7 @@ function WidgetItemDialog({ widget, onClose, onSave }: { widget: Widget; onClose
       {draft.type === 'qr' ? (
         <TextField label={t('studio.qrValue')} value={draft.value} maxLength={1000} onChange={(e) => setDraft({ ...draft, value: e.target.value })} />
       ) : null}
-      <p className="vx-muted">{t('playlists.widgetHint')}</p>
+      <p className="wxp-muted">{t('playlists.widgetHint')}</p>
     </Dialog>
   );
 }

@@ -1,4 +1,4 @@
-package com.wallx.visionex.player.ui
+package com.wallx.play.ui
 
 import android.graphics.Paint
 import android.graphics.Typeface
@@ -43,11 +43,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.wallx.visionex.player.R
-import com.wallx.visionex.player.core.Live
-import com.wallx.visionex.player.core.LiveState
-import com.wallx.visionex.player.core.LiveValue
-import com.wallx.visionex.player.data.str
+import com.wallx.play.R
+import com.wallx.play.core.Live
+import com.wallx.play.core.LiveState
+import com.wallx.play.core.LiveValue
+import com.wallx.play.data.str
 import kotlinx.coroutines.delay
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject

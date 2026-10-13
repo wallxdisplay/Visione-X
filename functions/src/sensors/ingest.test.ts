@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { INGEST_RATE } from '@visione-x/shared';
+import { INGEST_RATE } from '@wallx-play/shared';
 import { acceptValue, refill } from './ingest';
 
 describe('acceptValue', () => {

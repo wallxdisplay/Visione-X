@@ -38,8 +38,9 @@ const auth = getAuth(app);
 const written = await seedPlatformData(db, { overwrite: false });
 console.log(written.length ? `Created: ${written.join(', ')}` : 'Plans and catalog already exist.');
 
-const user = await auth.getUserByEmail(email).catch(() => {
-  console.error(`No account for ${email}. Sign up in the web app first, then rerun.`);
+const user = await auth.getUserByEmail(email).catch((err: { code?: string; message?: string }) => {
+  if (err.code === 'auth/user-not-found') console.error(`No account for ${email}. Sign up in the web app first, then rerun.`);
+  else console.error(`Could not look up ${email}: ${err.code ?? ''} ${err.message ?? err}`);
   process.exit(1);
 });
 await applyPlatformRole(

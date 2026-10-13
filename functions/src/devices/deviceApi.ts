@@ -20,7 +20,7 @@ import {
   type DeviceStateResponse,
   type OrgDoc,
   type ScreenDoc,
-} from '@visione-x/shared';
+} from '@wallx-play/shared';
 import type { Deps } from '../lib/context';
 
 export interface ApiRequest {
@@ -39,7 +39,7 @@ const sha256 = (s: string) => createHash('sha256').update(s).digest('hex');
 const fail = (status: number, error: string, message: string): ApiResult => ({ status, body: { error, message } });
 
 /** Public site that renders the pairing QR target (`/screens?pair=CODE`). */
-export const PAIRING_URL_BASE = process.env.PAIRING_URL_BASE ?? 'https://visione-x.web.app/screens?pair=';
+export const PAIRING_URL_BASE = process.env.PAIRING_URL_BASE ?? 'https://wallx-play.web.app/screens?pair=';
 
 export function newPairingCode(): string {
   let code = '';

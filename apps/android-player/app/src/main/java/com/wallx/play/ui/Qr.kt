@@ -1,4 +1,4 @@
-package com.wallx.visionex.player.ui
+package com.wallx.play.ui
 
 import android.graphics.Bitmap
 import android.graphics.Color

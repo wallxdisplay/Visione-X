@@ -1,6 +1,6 @@
 import { collection, limit, orderBy, query, where } from 'firebase/firestore';
-import { Alert, Button, Dialog, PageHeader, StatusChip, TextAreaField } from '@visione-x/ui';
-import { hasPlatformPermission, type OrgDoc, type OrgStatus } from '@visione-x/shared';
+import { Alert, Button, Dialog, PageHeader, StatusChip, TextAreaField } from '@wallx-play/ui';
+import { hasPlatformPermission, type OrgDoc, type OrgStatus } from '@wallx-play/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../auth/AuthProvider';
@@ -51,21 +51,21 @@ export function Orgs() {
   return (
     <>
       <PageHeader title={t('nav.admin.orgs')} description={t('admin.orgs.description')} />
-      <div className="vx-toolbar">
+      <div className="wxp-toolbar">
         {FILTERS.map((f) => (
           <button
             key={f}
             type="button"
             aria-pressed={filter === f}
-            className={`vx-btn vx-btn--sm ${filter === f ? 'vx-btn--primary' : 'vx-btn--secondary'}`}
+            className={`wxp-btn wxp-btn--sm ${filter === f ? 'wxp-btn--primary' : 'wxp-btn--secondary'}`}
             onClick={() => setFilter(f)}
           >
             {f === 'all' ? t('common.all') : t(`status.${f}`)}
           </button>
         ))}
       </div>
-      <div className="vx-table-wrap">
-        <table className="vx-table">
+      <div className="wxp-table-wrap">
+        <table className="wxp-table">
           <thead>
             <tr>
               <th>{t('admin.orgs.name')}</th>
@@ -80,17 +80,17 @@ export function Orgs() {
               <tr key={o.id}>
                 <td>
                   {o.name}
-                  <div className="vx-muted">{o.id}</div>
+                  <div className="wxp-muted">{o.id}</div>
                 </td>
                 <td>
                   <StatusChip tone={TONE[o.status]}>{t(`status.${o.status}`)}</StatusChip>
                   {o.statusReason && o.status === 'suspended' ? (
-                    <div className="vx-muted">{o.statusReason}</div>
+                    <div className="wxp-muted">{o.statusReason}</div>
                   ) : null}
                 </td>
                 <td>{o.timezone}</td>
-                <td className="vx-tabular">{formatDate(o.createdAt)}</td>
-                <td className="vx-actions">
+                <td className="wxp-tabular">{formatDate(o.createdAt)}</td>
+                <td className="wxp-actions">
                   {canSuspend && o.status === 'active' ? (
                     <Button size="sm" variant="tertiary" onClick={() => setTarget({ org: o, action: 'suspend' })}>
                       {t('admin.orgs.suspend')}

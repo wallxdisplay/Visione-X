@@ -1,6 +1,6 @@
 import { collection, limit, orderBy, query, where } from 'firebase/firestore';
-import { Alert, PageHeader, TextField } from '@visione-x/ui';
-import { hasPlatformPermission, type AuditDoc } from '@visione-x/shared';
+import { Alert, PageHeader, TextField } from '@wallx-play/ui';
+import { hasPlatformPermission, type AuditDoc } from '@wallx-play/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../auth/AuthProvider';
@@ -42,8 +42,8 @@ export function AuditLogs() {
         />
       </div>
       {logs.error ? <Alert tone="danger">{t('errors.generic')}</Alert> : null}
-      <div className="vx-table-wrap">
-        <table className="vx-table">
+      <div className="wxp-table-wrap">
+        <table className="wxp-table">
           <thead>
             <tr>
               <th>{t('admin.audit.when')}</th>
@@ -56,20 +56,20 @@ export function AuditLogs() {
           <tbody>
             {logs.data.map((l) => (
               <tr key={l._id}>
-                <td className="vx-tabular">{formatDateTime(l.at)}</td>
+                <td className="wxp-tabular">{formatDateTime(l.at)}</td>
                 <td>
                   <code>{l.action}</code>
-                  <div className="vx-muted">
+                  <div className="wxp-muted">
                     {l.chainId} #{l.seq}
                   </div>
                 </td>
                 <td>
                   {l.actorEmail ?? l.actorId}
-                  <div className="vx-muted">{t(`admin.audit.actorType.${l.actorType}`)}</div>
+                  <div className="wxp-muted">{t(`admin.audit.actorType.${l.actorType}`)}</div>
                 </td>
                 <td>
                   {l.target.type}
-                  <div className="vx-muted">{l.target.id}</div>
+                  <div className="wxp-muted">{l.target.id}</div>
                 </td>
                 <td>{l.reason ?? '—'}</td>
               </tr>

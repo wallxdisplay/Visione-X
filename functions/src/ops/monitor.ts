@@ -1,6 +1,6 @@
 import { logger } from 'firebase-functions/v2';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
-import { COMMAND_EXPIRY_MS, OFFLINE_AFTER_MS, REGION, type EmergencyDoc, type ScreenDoc } from '@visione-x/shared';
+import { COMMAND_EXPIRY_MS, OFFLINE_AFTER_MS, REGION, type EmergencyDoc, type ScreenDoc } from '@wallx-play/shared';
 import { getDeps } from '../lib/admin';
 import type { Deps } from '../lib/context';
 import { notify } from '../lib/notify';

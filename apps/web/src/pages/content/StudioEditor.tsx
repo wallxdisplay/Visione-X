@@ -1,6 +1,6 @@
-import { Alert, Button, Spinner } from '@visione-x/ui';
-import { LayoutBody, RESOLUTION_PRESETS, type Zone } from '@visione-x/layout-spec';
-import { paths, type LayoutDoc } from '@visione-x/shared';
+import { Alert, Button, Spinner } from '@wallx-play/ui';
+import { LayoutBody, RESOLUTION_PRESETS, type Zone } from '@wallx-play/layout-spec';
+import { paths, type LayoutDoc } from '@wallx-play/shared';
 import { ArrowLeft, Clock, Image as ImageIcon, Play, Plus, QrCode, Radio, Redo2, Save, Type, Undo2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -308,11 +308,11 @@ export function StudioEditor() {
   return (
     <div className="studio">
       <header className="studio__bar">
-        <Link to="/studio" className="vx-btn vx-btn--tertiary vx-btn--sm">
+        <Link to="/studio" className="wxp-btn wxp-btn--tertiary wxp-btn--sm">
           <ArrowLeft size={16} aria-hidden /> {t('nav.studio')}
         </Link>
         <input
-          className="vx-input studio__name"
+          className="wxp-input studio__name"
           aria-label={t('studio.name')}
           value={draft.name}
           maxLength={80}
@@ -322,7 +322,7 @@ export function StudioEditor() {
             commit((d) => ({ ...d, name }), false);
           }}
         />
-        <span className="vx-muted studio__state" aria-live="polite">
+        <span className="wxp-muted studio__state" aria-live="polite">
           {saving ? t('studio.saving') : dirty ? t('studio.unsaved') : t('studio.allSaved')}
         </span>
         <div className="studio__actions">
@@ -345,7 +345,7 @@ export function StudioEditor() {
       {message ? <Alert tone={message.tone}>{message.text}</Alert> : null}
       {blocker.state === 'blocked' ? (
         <Alert tone="warning" title={t('studio.leaveTitle')}>
-          <div className="vx-toolbar" style={{ margin: '8px 0 0' }}>
+          <div className="wxp-toolbar" style={{ margin: '8px 0 0' }}>
             <Button size="sm" onClick={() => blocker.reset()}>
               {t('studio.stay')}
             </Button>
@@ -383,7 +383,7 @@ export function StudioEditor() {
                   </Button>
                 ) : null}
               </div>
-              <p className="vx-muted studio__later">{t('studio.laterWidgets')}</p>
+              <p className="wxp-muted studio__later">{t('studio.laterWidgets')}</p>
             </>
           ) : null}
           <div className="studio__panel-title">{t('studio.layers')}</div>
@@ -392,7 +392,7 @@ export function StudioEditor() {
               <li key={z.id}>
                 <button type="button" className={z.id === selected ? 'is-selected' : ''} onClick={() => setSelected(z.id)}>
                   <span>{z.name || t('studio.untitledZone')}</span>
-                  <span className="vx-muted">{t(`studio.contentTypes.${z.content.kind === 'widget' ? z.content.widget.type : z.content.kind}`)}</span>
+                  <span className="wxp-muted">{t(`studio.contentTypes.${z.content.kind === 'widget' ? z.content.widget.type : z.content.kind}`)}</span>
                 </button>
               </li>
             ))}
@@ -437,7 +437,7 @@ export function StudioEditor() {
               </RenderLibraryProvider>
             </div>
           </div>
-          <p className="vx-muted studio__hint">{t('studio.canvasHint', { w: draft.canvas.width, h: draft.canvas.height })}</p>
+          <p className="wxp-muted studio__hint">{t('studio.canvasHint', { w: draft.canvas.width, h: draft.canvas.height })}</p>
         </div>
 
         <aside className="studio__panel studio__panel--right" aria-label={t('studio.properties')}>
@@ -460,9 +460,9 @@ export function StudioEditor() {
           ) : (
             <div className="inspector">
               <div className="studio__panel-title">{t('studio.canvas')}</div>
-              <dl className="vx-dl">
+              <dl className="wxp-dl">
                 <dt>{t('studio.resolution')}</dt>
-                <dd className="vx-tabular">
+                <dd className="wxp-tabular">
                   {draft.canvas.width}×{draft.canvas.height}
                 </dd>
                 <dt>{t('studio.orientation')}</dt>
@@ -470,8 +470,8 @@ export function StudioEditor() {
               </dl>
               {!readOnly ? (
                 <>
-                  <label className="vx-field">
-                    <span className="vx-field__label">{t('studio.background')}</span>
+                  <label className="wxp-field">
+                    <span className="wxp-field__label">{t('studio.background')}</span>
                     <input
                       type="color"
                       className="color-input"
@@ -482,10 +482,10 @@ export function StudioEditor() {
                       }}
                     />
                   </label>
-                  <label className="vx-field">
-                    <span className="vx-field__label">{t('studio.changeResolution')}</span>
+                  <label className="wxp-field">
+                    <span className="wxp-field__label">{t('studio.changeResolution')}</span>
                     <select
-                      className="vx-input"
+                      className="wxp-input"
                       value=""
                       onChange={(e) => {
                         const p = RESOLUTION_PRESETS.find((x) => x.id === e.target.value);
@@ -509,7 +509,7 @@ export function StudioEditor() {
                   </label>
                 </>
               ) : null}
-              <p className="vx-muted">{t('studio.selectHint')}</p>
+              <p className="wxp-muted">{t('studio.selectHint')}</p>
             </div>
           )}
         </aside>

@@ -1,12 +1,12 @@
-package com.wallx.visionex.player
+package com.wallx.play
 
 import android.content.Context
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.core.app.ApplicationProvider
-import com.wallx.visionex.player.core.PlayerEngine
-import com.wallx.visionex.player.core.UiState
-import com.wallx.visionex.player.ui.PlayerRoot
+import com.wallx.play.core.PlayerEngine
+import com.wallx.play.core.UiState
+import com.wallx.play.ui.PlayerRoot
 import kotlinx.coroutines.runBlocking
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
@@ -26,7 +26,7 @@ import org.robolectric.annotation.Config
 import java.security.MessageDigest
 
 /**
- * Drives the real PlayerEngine against a fake Visione-X server: registration, pairing, waiting
+ * Drives the real PlayerEngine against a fake WallX Play server: registration, pairing, waiting
  * for authorization, downloading and verifying a manifest's media, refusing a corrupted update,
  * and resetting when the screen is removed. Also renders the real pairing screen.
  */

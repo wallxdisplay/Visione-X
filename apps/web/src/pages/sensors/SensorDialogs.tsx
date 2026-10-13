@@ -1,4 +1,4 @@
-import { Alert, Button, Dialog, SelectField, TextField } from '@visione-x/ui';
+import { Alert, Button, Dialog, SelectField, TextField } from '@wallx-play/ui';
 import {
   ALERT_OPERATORS,
   ALERT_SEVERITIES,
@@ -8,7 +8,7 @@ import {
   type AlertRule,
   type SensorChannelDoc,
   type SensorDeviceDoc,
-} from '@visione-x/shared';
+} from '@wallx-play/shared';
 import { Check, Copy, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -157,13 +157,13 @@ export function ApiKeyDialog({ value, onClose }: { value: { name: string; apiKey
         <code className="key-box__value">{value?.apiKey}</code>
         {value ? <CopyButton text={value.apiKey} /> : null}
       </div>
-      <dl className="vx-dl">
+      <dl className="wxp-dl">
         <dt>{t('sensors.endpoint')}</dt>
         <dd>
           <code>{ingestUrl()}</code>
         </dd>
       </dl>
-      <p className="vx-muted">{t('sensors.keyHelp')}</p>
+      <p className="wxp-muted">{t('sensors.keyHelp')}</p>
       <pre className="code-block">{example}</pre>
     </Dialog>
   );
@@ -272,7 +272,7 @@ export function ChannelDialog({
       }
     >
       {error ? <Alert tone="danger">{error}</Alert> : null}
-      <div className="vx-form__row">
+      <div className="wxp-form__row">
         <TextField
           label={t('channels.key')}
           hint={t('channels.keyHint')}
@@ -285,7 +285,7 @@ export function ChannelDialog({
         />
         <TextField label={t('channels.name')} required maxLength={60} value={form.name} error={errors.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
       </div>
-      <div className="vx-form__row">
+      <div className="wxp-form__row">
         <SelectField
           label={t('channels.type')}
           options={['number', 'boolean'].map((v) => ({ value: v, label: t(`channels.types.${v}`) }))}
@@ -295,7 +295,7 @@ export function ChannelDialog({
         <TextField label={t('channels.unit')} maxLength={16} value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })} />
       </div>
       {form.valueType === 'number' ? (
-        <div className="vx-form__row">
+        <div className="wxp-form__row">
           <TextField label={t('channels.min')} hint={t('channels.rangeHint')} type="number" step="any" value={form.min} onChange={(e) => setForm({ ...form, min: e.target.value })} />
           <TextField label={t('channels.max')} type="number" step="any" value={form.max} error={errors.max} onChange={(e) => setForm({ ...form, max: e.target.value })} />
         </div>
@@ -311,9 +311,9 @@ export function ChannelDialog({
       />
 
       <fieldset className="rule-list">
-        <legend className="vx-field__label">{t('channels.rules')}</legend>
-        <p className="vx-muted">{form.valueType === 'boolean' ? t('channels.rulesHintBoolean') : t('channels.rulesHint')}</p>
-        {errors.alertRules ? <p className="vx-field__error">{errors.alertRules}</p> : null}
+        <legend className="wxp-field__label">{t('channels.rules')}</legend>
+        <p className="wxp-muted">{form.valueType === 'boolean' ? t('channels.rulesHintBoolean') : t('channels.rulesHint')}</p>
+        {errors.alertRules ? <p className="wxp-field__error">{errors.alertRules}</p> : null}
         {form.alertRules.length ? (
           <div className="rule-row rule-row--head" aria-hidden>
             <span>{t('channels.ruleName')}</span>
@@ -326,16 +326,16 @@ export function ChannelDialog({
         ) : null}
         {form.alertRules.map((r, i) => (
           <div key={r.id} className="rule-row">
-            <input aria-label={t('channels.ruleLabel')} className="vx-input" placeholder={t('channels.ruleLabel')} maxLength={60} value={r.label} onChange={(e) => setRule(i, { label: e.target.value })} />
-            <select aria-label={t('channels.operator')} className="vx-input rule-row__op" value={r.operator} onChange={(e) => setRule(i, { operator: e.target.value as AlertRule['operator'] })}>
+            <input aria-label={t('channels.ruleLabel')} className="wxp-input" placeholder={t('channels.ruleLabel')} maxLength={60} value={r.label} onChange={(e) => setRule(i, { label: e.target.value })} />
+            <select aria-label={t('channels.operator')} className="wxp-input rule-row__op" value={r.operator} onChange={(e) => setRule(i, { operator: e.target.value as AlertRule['operator'] })}>
               {ALERT_OPERATORS.map((op) => (
                 <option key={op} value={op}>
                   {op}
                 </option>
               ))}
             </select>
-            <input aria-label={t('channels.limit')} className="vx-input rule-row__num" type="number" step="any" value={r.value} onChange={(e) => setRule(i, { value: Number(e.target.value) })} />
-            <select aria-label={t('channels.severity')} className="vx-input" value={r.severity} onChange={(e) => setRule(i, { severity: e.target.value as AlertRule['severity'] })}>
+            <input aria-label={t('channels.limit')} className="wxp-input rule-row__num" type="number" step="any" value={r.value} onChange={(e) => setRule(i, { value: Number(e.target.value) })} />
+            <select aria-label={t('channels.severity')} className="wxp-input" value={r.severity} onChange={(e) => setRule(i, { severity: e.target.value as AlertRule['severity'] })}>
               {ALERT_SEVERITIES.map((s) => (
                 <option key={s} value={s}>
                   {t(`alerts.severity.${s}`)}
@@ -346,7 +346,7 @@ export function ChannelDialog({
               aria-label={t('channels.hysteresis')}
               title={t('channels.hysteresisHint')}
               placeholder={t('channels.hysteresis')}
-              className="vx-input rule-row__num"
+              className="wxp-input rule-row__num"
               type="number"
               min={0}
               step="any"
@@ -374,7 +374,7 @@ export function ChannelDialog({
             <Plus size={14} aria-hidden /> {t('channels.addRule')}
           </Button>
         ) : null}
-        <p className="vx-muted rule-list__legend">{t('channels.hysteresisHint')}</p>
+        <p className="wxp-muted rule-list__legend">{t('channels.hysteresisHint')}</p>
       </fieldset>
     </Dialog>
   );

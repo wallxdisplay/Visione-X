@@ -1,8 +1,8 @@
-package com.wallx.visionex.player
+package com.wallx.play
 
-import com.wallx.visionex.player.core.Schedule
-import com.wallx.visionex.player.data.Emergency
-import com.wallx.visionex.player.data.ScheduleRule
+import com.wallx.play.core.Schedule
+import com.wallx.play.data.Emergency
+import com.wallx.play.data.ScheduleRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

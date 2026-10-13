@@ -1,6 +1,6 @@
 import { FirebaseError } from 'firebase/app';
 import { httpsCallable } from 'firebase/functions';
-import { CALLABLES } from '@visione-x/shared';
+import { CALLABLES } from '@wallx-play/shared';
 import i18n from '../i18n';
 import { functions, useEmulators } from './firebase';
 

@@ -1,5 +1,5 @@
-import { Alert, Button, Dialog, EmptyState, PageHeader, TextField } from '@visione-x/ui';
-import type { PlaylistDoc } from '@visione-x/shared';
+import { Alert, Button, Dialog, EmptyState, PageHeader, TextField } from '@wallx-play/ui';
+import type { PlaylistDoc } from '@wallx-play/shared';
 import { ListVideo, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -62,7 +62,7 @@ export function Playlists() {
       />
       {error && !creating && !deleting ? <Alert tone="danger">{error}</Alert> : null}
       {playlists.data.length === 0 && !playlists.loading ? (
-        <div className="vx-card">
+        <div className="wxp-card">
           <EmptyState
             icon={<ListVideo size={24} aria-hidden />}
             title={t('playlists.emptyTitle')}
@@ -71,8 +71,8 @@ export function Playlists() {
           />
         </div>
       ) : (
-        <div className="vx-table-wrap">
-          <table className="vx-table">
+        <div className="wxp-table-wrap">
+          <table className="wxp-table">
             <thead>
               <tr>
                 <th>{t('playlists.name')}</th>
@@ -87,12 +87,12 @@ export function Playlists() {
                 <tr key={p.id}>
                   <td>
                     <Link to={`/playlists/${p.id}`}>{p.name}</Link>
-                    {p.layoutIds.length ? <div className="vx-muted">{t('playlists.containsLayouts')}</div> : null}
+                    {p.layoutIds.length ? <div className="wxp-muted">{t('playlists.containsLayouts')}</div> : null}
                   </td>
-                  <td className="vx-tabular">{p.items.length}</td>
-                  <td className="vx-tabular">{formatDuration(p.totalDurationSec)}</td>
-                  <td className="vx-tabular">{formatDateTime(p.updatedAt)}</td>
-                  <td className="vx-actions">
+                  <td className="wxp-tabular">{p.items.length}</td>
+                  <td className="wxp-tabular">{formatDuration(p.totalDurationSec)}</td>
+                  <td className="wxp-tabular">{formatDateTime(p.updatedAt)}</td>
+                  <td className="wxp-actions">
                     {editable ? (
                       <Button size="sm" variant="tertiary" aria-label={t('common.delete')} onClick={() => setDeleting(p)}>
                         <Trash2 size={15} />

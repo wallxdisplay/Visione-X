@@ -5,7 +5,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { FieldValue, type Firestore, type Transaction } from 'firebase-admin/firestore';
 import { HttpsError } from 'firebase-functions/v2/https';
 import type { z } from 'zod';
-import { widgetBindings, type Widget } from '@visione-x/layout-spec';
+import { widgetBindings, type Widget } from '@wallx-play/layout-spec';
 import {
   MAX_CHANNELS_PER_DEVICE,
   INGEST_RATE,
@@ -24,7 +24,7 @@ import {
   type SensorDeviceDoc,
   type SensorDeviceRefInput,
   type SensorKeyDoc,
-} from '@visione-x/shared';
+} from '@wallx-play/shared';
 import { userAudit } from '../content/media';
 import { auditedTransaction } from '../lib/audit';
 import { requireActiveOrgPermission, requireOrgPermission } from '../lib/authz';
@@ -34,7 +34,7 @@ import { resolveAlert } from './alerts';
 
 export const sha256 = (s: string) => createHash('sha256').update(s).digest('hex');
 
-/** A new API key: `vxs_` + 32 url-safe characters (192 bits). */
+/** A new API key: `wxp_` + 32 url-safe characters (192 bits). */
 export function newSensorKey(): string {
   return SENSOR_KEY_PREFIX + randomBytes(24).toString('base64url');
 }

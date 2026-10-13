@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { Manifest } from '@visione-x/layout-spec';
+import { Manifest } from '@wallx-play/layout-spec';
 import {
   INGEST_RATE,
   STALE_COVERED_BY_OFFLINE,
@@ -13,7 +13,7 @@ import {
   type ReadingBucketDoc,
   type SensorChannelDoc,
   type SensorDeviceDoc,
-} from '@visione-x/shared';
+} from '@wallx-play/shared';
 import { handle } from '../../functions/src/api/router';
 import * as layouts from '../../functions/src/content/layouts';
 import * as schedules from '../../functions/src/content/schedules';
@@ -87,7 +87,7 @@ beforeEach(async () => {
 
 describe('sensor devices', () => {
   it('issues a key once and stores only its hash', async () => {
-    expect(key).toMatch(/^vxs_[A-Za-z0-9_-]{32}$/);
+    expect(key).toMatch(/^wxp_[A-Za-z0-9_-]{32}$/);
     const d = await device();
     expect(d.keyPrefix).toBe(key.slice(0, 10));
     expect(JSON.stringify(d)).not.toContain(key);
@@ -121,7 +121,7 @@ describe('sensor devices', () => {
 
 describe('ingest', () => {
   it('stores accepted readings and reports rejected ones', async () => {
-    const res = await ingest({ fw: 'vx-esp32 1.0.0', readings: [
+    const res = await ingest({ fw: 'wxp-esp32 1.0.0', readings: [
       { channel: 'temp', value: 4.25 },
       { channel: 'door', value: false },
       { channel: 'humidity', value: 40 },
@@ -138,12 +138,12 @@ describe('ingest', () => {
     expect(bucket.points).toEqual([{ t: now, v: 4.25 }]);
     const d = await device();
     expect(d.lastSeen).toBe(now);
-    expect(d.firmware).toBe('vx-esp32 1.0.0');
+    expect(d.firmware).toBe('wxp-esp32 1.0.0');
   });
 
   it('rejects bad credentials, payloads, ranges and clocks', async () => {
     expect((await ingest({ readings: [{ channel: 'temp', value: 4 }] }, '')).status).toBe(401);
-    expect((await ingest({ readings: [{ channel: 'temp', value: 4 }] }, `Bearer vxs_${'x'.repeat(32)}`)).status).toBe(401);
+    expect((await ingest({ readings: [{ channel: 'temp', value: 4 }] }, `Bearer wxp_${'x'.repeat(32)}`)).status).toBe(401);
     expect((await ingest({ readings: 'nope' })).status).toBe(400);
     expect((await ingest({ deviceId: 'someoneElse', readings: [{ channel: 'temp', value: 4 }] })).status).toBe(400);
     const out = await ingest({ readings: [{ channel: 'temp', value: 500 }, { channel: 'door', value: 3 }] });

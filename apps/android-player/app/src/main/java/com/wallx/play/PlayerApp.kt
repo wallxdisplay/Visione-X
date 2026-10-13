@@ -1,4 +1,4 @@
-package com.wallx.visionex.player
+package com.wallx.play
 
 import android.app.AlarmManager
 import android.app.Application
@@ -30,7 +30,7 @@ class PlayerApp : Application() {
     }
 
     companion object {
-        const val TAG = "VisioneX"
+        const val TAG = "WallXPlay"
 
         fun scheduleRestart(context: Context, delayMs: Long = 3_000) {
             val intent = Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)

@@ -1,5 +1,5 @@
 {
-  "name": "@visione-x/web",
+  "name": "@wallx-play/web",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -10,9 +10,9 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@visione-x/layout-spec": "*",
-    "@visione-x/shared": "*",
-    "@visione-x/ui": "*",
+    "@wallx-play/layout-spec": "*",
+    "@wallx-play/shared": "*",
+    "@wallx-play/ui": "*",
     "firebase": "^11.8.1",
     "i18next": "^25.2.1",
     "lucide-react": "^0.511.0",

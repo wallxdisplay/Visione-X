@@ -1,6 +1,6 @@
-import { Alert, Button, Dialog, EmptyState, PageHeader, StatusChip, TextField } from '@visione-x/ui';
-import { weatherCondition, weatherIcon } from '@visione-x/layout-spec';
-import { RSS_MAX_ITEMS, type DataSourceDoc, type GeocodeResult, type RssData } from '@visione-x/shared';
+import { Alert, Button, Dialog, EmptyState, PageHeader, StatusChip, TextField } from '@wallx-play/ui';
+import { weatherCondition, weatherIcon } from '@wallx-play/layout-spec';
+import { RSS_MAX_ITEMS, type DataSourceDoc, type GeocodeResult, type RssData } from '@wallx-play/shared';
 import { CloudSun, Plug, Rss } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -31,7 +31,7 @@ export function Integrations() {
     return (
       <>
         <PageHeader title={t('nav.integrations')} description={t('integrations.description')} />
-        <div className="vx-card">
+        <div className="wxp-card">
           <EmptyState icon={<Plug size={24} aria-hidden />} title={t('integrations.notInPlanTitle')} description={t('integrations.notInPlanBody')} />
         </div>
       </>
@@ -59,7 +59,7 @@ export function Integrations() {
         description={t('integrations.description')}
         actions={
           manage ? (
-            <div className="vx-toolbar" style={{ margin: 0 }}>
+            <div className="wxp-toolbar" style={{ margin: 0 }}>
               {weatherOn ? (
                 <Button onClick={() => setEditing({ kind: 'weather', source: null })}>
                   <CloudSun size={15} aria-hidden /> {t('integrations.addWeather')}
@@ -75,12 +75,12 @@ export function Integrations() {
         }
       />
       {sources.data.length === 0 && !sources.loading ? (
-        <div className="vx-card">
+        <div className="wxp-card">
           <EmptyState icon={<Plug size={24} aria-hidden />} title={t('integrations.emptyTitle')} description={t('integrations.emptyBody')} />
         </div>
       ) : (
-        <div className="vx-table-wrap">
-          <table className="vx-table">
+        <div className="wxp-table-wrap">
+          <table className="wxp-table">
             <thead>
               <tr>
                 <th>{t('integrations.name')}</th>
@@ -95,20 +95,20 @@ export function Integrations() {
                 <tr key={s.id}>
                   <td>{s.name}</td>
                   <td>{t(`integrations.types.${s.type}`)}</td>
-                  <td className="vx-muted integrations__details">
+                  <td className="wxp-muted integrations__details">
                     {s.type === 'weather' ? `${s.config.placeName} (${s.config.latitude.toFixed(2)}, ${s.config.longitude.toFixed(2)})` : s.config.url}
                   </td>
                   <td>
                     {s.lastFetch ? (
                       <span className="integrations__status">
                         <StatusChip tone={s.lastFetch.ok ? 'success' : 'danger'}>{s.lastFetch.ok ? t('integrations.ok') : t('integrations.failed')}</StatusChip>
-                        <span className="vx-muted">{s.lastFetch.ok ? formatDateTime(s.lastFetch.at) : s.lastFetch.error}</span>
+                        <span className="wxp-muted">{s.lastFetch.ok ? formatDateTime(s.lastFetch.at) : s.lastFetch.error}</span>
                       </span>
                     ) : (
-                      <span className="vx-muted">{t('integrations.notYet')}</span>
+                      <span className="wxp-muted">{t('integrations.notYet')}</span>
                     )}
                   </td>
-                  <td className="vx-actions">
+                  <td className="wxp-actions">
                     <Button size="sm" variant="tertiary" onClick={() => setPreviewing(s)}>
                       {t('integrations.preview')}
                     </Button>
@@ -129,7 +129,7 @@ export function Integrations() {
           </table>
         </div>
       )}
-      <p className="vx-muted integrations__hint">{t('integrations.howTo')}</p>
+      <p className="wxp-muted integrations__hint">{t('integrations.howTo')}</p>
 
       {editing?.kind === 'weather' ? <WeatherDialog source={editing.source} onClose={() => setEditing(null)} /> : null}
       {editing?.kind === 'rss' ? <RssDialog source={editing.source} onClose={() => setEditing(null)} /> : null}
@@ -231,7 +231,7 @@ function WeatherDialog({ source, onClose }: { source: DataSourceDoc | null; onCl
       </form>
       {results ? (
         results.length === 0 ? (
-          <p className="vx-muted">{t('integrations.noPlaces')}</p>
+          <p className="wxp-muted">{t('integrations.noPlaces')}</p>
         ) : (
           <ul className="choice-list" role="radiogroup" aria-label={t('integrations.places')}>
             {results.map((r) => {
@@ -249,7 +249,7 @@ function WeatherDialog({ source, onClose }: { source: DataSourceDoc | null; onCl
                         if (!name.trim() || name === place?.placeName) setName(r.name);
                       }}
                     />
-                    {label} <span className="vx-muted">({r.latitude.toFixed(2)}, {r.longitude.toFixed(2)})</span>
+                    {label} <span className="wxp-muted">({r.latitude.toFixed(2)}, {r.longitude.toFixed(2)})</span>
                   </label>
                 </li>
               );
@@ -259,7 +259,7 @@ function WeatherDialog({ source, onClose }: { source: DataSourceDoc | null; onCl
       ) : null}
       {place ? <p>{t('integrations.selectedPlace', { place: place.placeName })}</p> : null}
       <TextField label={t('integrations.name')} hint={t('integrations.nameHint')} required maxLength={80} value={name} onChange={(e) => setName(e.target.value)} />
-      <p className="vx-muted">{t('integrations.weatherCredit')}</p>
+      <p className="wxp-muted">{t('integrations.weatherCredit')}</p>
     </Dialog>
   );
 }
@@ -306,7 +306,7 @@ function RssDialog({ source, onClose }: { source: DataSourceDoc | null; onClose:
     >
       {error ? <Alert tone="danger">{error}</Alert> : null}
       <TextField label={t('integrations.feedUrl')} hint={t('integrations.feedHint')} type="url" required value={url} onChange={(e) => setUrl(e.target.value)} />
-      <div className="vx-form__row">
+      <div className="wxp-form__row">
         <TextField label={t('integrations.maxItems')} type="number" min={1} max={RSS_MAX_ITEMS} value={maxItems} onChange={(e) => setMaxItems(e.target.value)} />
         <div className="integrations__test">
           <Button disabled={busy || !url.trim()} onClick={() => void runTest()}>
@@ -315,7 +315,7 @@ function RssDialog({ source, onClose }: { source: DataSourceDoc | null; onClose:
         </div>
       </div>
       {test ? (
-        <div className="vx-card integrations__headlines">
+        <div className="wxp-card integrations__headlines">
           <strong>{test.feedTitle || t('integrations.untitledFeed')}</strong>
           <ol>
             {test.items.map((i, k) => (
@@ -336,7 +336,7 @@ function PreviewDialog({ source, onClose }: { source: DataSourceDoc; onClose: ()
   const w = value?.weather;
   return (
     <Dialog open title={source.name} onClose={onClose} footer={<Button onClick={onClose}>{t('common.close')}</Button>}>
-      {value === undefined ? <p className="vx-muted">{t('common.loading')}</p> : null}
+      {value === undefined ? <p className="wxp-muted">{t('common.loading')}</p> : null}
       {value && !value.ok ? <Alert tone="warning">{value.error}</Alert> : null}
       {w ? (
         <div className="integrations__weather">
@@ -344,7 +344,7 @@ function PreviewDialog({ source, onClose }: { source: DataSourceDoc; onClose: ()
             <span aria-hidden>{weatherIcon(weatherCondition(w.current.code), w.current.isDay)}</span> <strong>{Math.round(w.current.tempC)}°C</strong>{' '}
             {t(`render.weather.${weatherCondition(w.current.code)}`)}
           </p>
-          <p className="vx-muted">
+          <p className="wxp-muted">
             {[
               w.current.feelsLikeC !== null ? t('render.weather.feels', { t: `${Math.round(w.current.feelsLikeC)}°` }) : null,
               w.current.humidity !== null ? t('integrations.humidity', { pct: Math.round(w.current.humidity) }) : null,
@@ -366,12 +366,12 @@ function PreviewDialog({ source, onClose }: { source: DataSourceDoc; onClose: ()
         <ol>
           {value.rss.items.map((i, k) => (
             <li key={k}>
-              {i.title} {i.publishedAt ? <span className="vx-muted">· {formatDateTime(i.publishedAt)}</span> : null}
+              {i.title} {i.publishedAt ? <span className="wxp-muted">· {formatDateTime(i.publishedAt)}</span> : null}
             </li>
           ))}
         </ol>
       ) : null}
-      {value?.fetchedAt ? <p className="vx-muted">{t('integrations.fetchedAt', { at: formatDateTime(value.fetchedAt) })}</p> : null}
+      {value?.fetchedAt ? <p className="wxp-muted">{t('integrations.fetchedAt', { at: formatDateTime(value.fetchedAt) })}</p> : null}
     </Dialog>
   );
 }

@@ -7,7 +7,7 @@ import {
   type Plan,
   type ReleaseStatus,
   type SubscriptionDoc,
-} from '@visione-x/shared';
+} from '@wallx-play/shared';
 import { db } from '../lib/firebase';
 import { useDoc, useQueryData } from '../lib/hooks';
 

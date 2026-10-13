@@ -1,6 +1,6 @@
 import { onAuthStateChanged, signOut as fbSignOut, type User } from 'firebase/auth';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { PLATFORM_ROLES, paths, type PlatformRole, type UserProfileDoc } from '@visione-x/shared';
+import { PLATFORM_ROLES, paths, type PlatformRole, type UserProfileDoc } from '@wallx-play/shared';
 import { auth } from '../lib/firebase';
 import { useDoc } from '../lib/hooks';
 

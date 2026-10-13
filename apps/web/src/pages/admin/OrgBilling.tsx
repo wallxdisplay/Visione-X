@@ -1,4 +1,4 @@
-import { Alert, Button, Dialog, PageHeader, SelectField, Spinner, StatusChip, TextAreaField, TextField } from '@visione-x/ui';
+import { Alert, Button, Dialog, PageHeader, SelectField, Spinner, StatusChip, TextAreaField, TextField } from '@wallx-play/ui';
 import {
   FEATURE_KEYS,
   LIMIT_KEYS,
@@ -17,7 +17,7 @@ import {
   type PaymentDoc,
   type PaymentMethod,
   type SubscriptionDoc,
-} from '@visione-x/shared';
+} from '@wallx-play/shared';
 import { ArrowLeft } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -127,7 +127,7 @@ export function OrgBilling() {
         <Link to="/admin/billing" className="back-link">
           <ArrowLeft size={14} aria-hidden /> {t('adminBilling.back')}
         </Link>
-        <p className="vx-muted">{t('adminBilling.noSubscription')}</p>
+        <p className="wxp-muted">{t('adminBilling.noSubscription')}</p>
       </>
     );
   }
@@ -141,17 +141,17 @@ export function OrgBilling() {
       <PageHeader title={org.data.name} description={t('adminBilling.orgDescription')} />
 
       <div className="admin-billing__grid">
-        <section className="vx-card">
-          <h2 className="vx-card__title">
+        <section className="wxp-card">
+          <h2 className="wxp-card__title">
             {plan?.name ?? s.planId} <StatusChip tone={STATUS_TONE[s.status]}>{t(`billing.status.${s.status}`)}</StatusChip>
           </h2>
-          <dl className="vx-dl">
+          <dl className="wxp-dl">
             <dt>{t('billing.interval')}</dt>
             <dd>{t(`billing.intervals.${s.interval}`)}</dd>
             <dt>{t('adminBilling.screensPurchased')}</dt>
-            <dd className="vx-tabular">{s.quantity}</dd>
+            <dd className="wxp-tabular">{s.quantity}</dd>
             <dt>{t('adminBilling.screenLimit')}</dt>
-            <dd className="vx-tabular">{ent.data?.limits.screens ?? '∞'}</dd>
+            <dd className="wxp-tabular">{ent.data?.limits.screens ?? '∞'}</dd>
             <dt>{t('adminBilling.pricing')}</dt>
             <dd>
               {s.customPriceMinor !== null ? t('adminBilling.customPerScreen', { price: formatInr(s.customPriceMinor) }) : t('adminBilling.listPrice')}
@@ -182,24 +182,24 @@ export function OrgBilling() {
           ) : null}
         </section>
 
-        <section className="vx-card">
-          <h2 className="vx-card__title">{t('adminBilling.entitlements')}</h2>
-          <p className="vx-muted">{t('adminBilling.entitlementsHelp')}</p>
-          <dl className="vx-dl">
+        <section className="wxp-card">
+          <h2 className="wxp-card__title">{t('adminBilling.entitlements')}</h2>
+          <p className="wxp-muted">{t('adminBilling.entitlementsHelp')}</p>
+          <dl className="wxp-dl">
             {LIMIT_KEYS.map((k) => (
               <div key={k} style={{ display: 'contents' }}>
                 <dt>{t(`limits.${k}`)}</dt>
-                <dd className="vx-tabular">
+                <dd className="wxp-tabular">
                   {ent.data?.limits[k] ?? '∞'}
-                  {overrides.data?.limits?.[k] !== undefined ? <span className="vx-muted"> ({t('adminBilling.overridden')})</span> : null}
+                  {overrides.data?.limits?.[k] !== undefined ? <span className="wxp-muted"> ({t('adminBilling.overridden')})</span> : null}
                 </dd>
               </div>
             ))}
           </dl>
           <p>
             <strong>{t('adminBilling.featureCount', { count: ent.data?.features.length ?? 0 })}</strong>
-            {overrides.data?.grant?.length ? <span className="vx-muted"> · {t('adminBilling.granted', { list: overrides.data.grant.join(', ') })}</span> : null}
-            {overrides.data?.revoke?.length ? <span className="vx-muted"> · {t('adminBilling.revoked', { list: overrides.data.revoke.join(', ') })}</span> : null}
+            {overrides.data?.grant?.length ? <span className="wxp-muted"> · {t('adminBilling.granted', { list: overrides.data.grant.join(', ') })}</span> : null}
+            {overrides.data?.revoke?.length ? <span className="wxp-muted"> · {t('adminBilling.revoked', { list: overrides.data.revoke.join(', ') })}</span> : null}
           </p>
           {editLimits ? <Button onClick={() => setOpen('overrides')}>{t('adminBilling.editOverrides')}</Button> : null}
         </section>
@@ -210,13 +210,13 @@ export function OrgBilling() {
           <h2 className="section-title">{t('billing.requests')}</h2>
           <ul className="request-list">
             {requests.data.map((r) => (
-              <li key={r.id} className="vx-card request-list__item">
+              <li key={r.id} className="wxp-card request-list__item">
                 <div>
                   <strong>{t(`billing.kinds.${r.kind}`)}</strong>
                   {r.quantity ? ` · ${t('billing.screensN', { count: r.quantity })}` : ''}
                   {r.planId ? ` · ${plans.data.find((p) => p.id === r.planId)?.name ?? r.planId}` : ''}
                   {r.interval ? ` · ${t(`billing.intervals.${r.interval}`)}` : ''}
-                  <p className="vx-muted">
+                  <p className="wxp-muted">
                     {r.message || '—'} · {r.requestedByEmail ?? r.requestedBy}, {formatDateTime(r.createdAt)}
                   </p>
                   {r.resolutionNote ? <p>{r.resolutionNote}</p> : null}
@@ -237,10 +237,10 @@ export function OrgBilling() {
 
       <h2 className="section-title">{t('billing.payments')}</h2>
       {payments.data.length === 0 ? (
-        <p className="vx-muted">{t('billing.noPayments')}</p>
+        <p className="wxp-muted">{t('billing.noPayments')}</p>
       ) : (
-        <div className="vx-table-wrap">
-          <table className="vx-table">
+        <div className="wxp-table-wrap">
+          <table className="wxp-table">
             <thead>
               <tr>
                 <th>{t('billing.paidOn')}</th>
@@ -257,17 +257,17 @@ export function OrgBilling() {
               {payments.data.map((p: WithId<PaymentDoc>) => (
                 <tr key={p.id} className={p.voided ? 'is-voided' : undefined}>
                   <td>{formatDate(p.paidAt)}</td>
-                  <td className="vx-tabular">{formatInr(p.amountMinor)}</td>
+                  <td className="wxp-tabular">{formatInr(p.amountMinor)}</td>
                   <td>{t(`billing.methods.${p.method}`)}</td>
                   <td>{p.reference}</td>
                   <td>{p.externalInvoiceNo ?? '—'}</td>
                   <td>
                     {formatDate(p.periodStart)} – {formatDate(p.periodEnd)}
                   </td>
-                  <td className="vx-muted">{p.recordedByEmail ?? p.recordedBy}</td>
-                  <td className="vx-actions">
+                  <td className="wxp-muted">{p.recordedByEmail ?? p.recordedBy}</td>
+                  <td className="wxp-actions">
                     {p.voided ? (
-                      <span className="vx-muted" title={p.voided.reason}>
+                      <span className="wxp-muted" title={p.voided.reason}>
                         {t('billing.voided')}
                       </span>
                     ) : edit ? (
@@ -339,7 +339,7 @@ function PlanDialog({ orgId, sub, onClose }: { orgId: string; sub: SubscriptionD
         call('updateSubscription', { orgId, planId, interval, quantity: q, customPriceMinor: customMinor, discountBps: Math.round(d * 100), reason })
       }
     >
-      <div className="vx-form__row">
+      <div className="wxp-form__row">
         <SelectField
           label={t('billing.plan')}
           options={plans.data.map((p) => ({
@@ -356,7 +356,7 @@ function PlanDialog({ orgId, sub, onClose }: { orgId: string; sub: SubscriptionD
           onChange={(e) => setInterval(e.target.value as BillingInterval)}
         />
       </div>
-      <div className="vx-form__row">
+      <div className="wxp-form__row">
         <TextField label={t('adminBilling.screensPurchased')} type="number" min={1} value={quantity} onChange={(e) => setQuantity(e.target.value)} />
         <TextField label={t('adminBilling.extraDiscount')} type="number" min={0} max={100} step="0.01" value={discount} onChange={(e) => setDiscount(e.target.value)} />
       </div>
@@ -407,8 +407,8 @@ function PaymentDialog({ orgId, sub, onClose }: { orgId: string; sub: Subscripti
         })
       }
     >
-      <p className="vx-muted">{t('adminBilling.paymentHelp')}</p>
-      <div className="vx-form__row">
+      <p className="wxp-muted">{t('adminBilling.paymentHelp')}</p>
+      <div className="wxp-form__row">
         <TextField
           label={t('adminBilling.amountReceived')}
           required
@@ -420,11 +420,11 @@ function PaymentDialog({ orgId, sub, onClose }: { orgId: string; sub: Subscripti
         />
         <SelectField label={t('billing.method')} options={PAYMENT_METHODS.map((m) => ({ value: m, label: t(`billing.methods.${m}`) }))} value={method} onChange={(e) => setMethod(e.target.value as PaymentMethod)} />
       </div>
-      <div className="vx-form__row">
+      <div className="wxp-form__row">
         <TextField label={t('billing.reference')} hint={t('adminBilling.referenceHint')} required maxLength={100} value={reference} onChange={(e) => setReference(e.target.value)} />
         <TextField label={t('billing.invoiceNo')} hint={t('adminBilling.invoiceHint')} maxLength={60} value={invoiceNo} onChange={(e) => setInvoiceNo(e.target.value)} />
       </div>
-      <div className="vx-form__row">
+      <div className="wxp-form__row">
         <TextField label={t('billing.paidOn')} type="date" required value={paidOn} onChange={(e) => setPaidOn(e.target.value)} />
         <TextField
           label={t('adminBilling.periods', { interval: t(`billing.intervals.${sub.interval}`) })}
@@ -460,8 +460,8 @@ function DatesDialog({ orgId, sub, onClose }: { orgId: string; sub: Subscription
       onClose={onClose}
       onSubmit={(reason) => call('adjustBillingDates', { orgId, ...changes, reason })}
     >
-      <p className="vx-muted">{t('adminBilling.datesHelp')}</p>
-      <div className="vx-form__row">
+      <p className="wxp-muted">{t('adminBilling.datesHelp')}</p>
+      <div className="wxp-form__row">
         <TextField label={t('billing.trialEnds')} hint={t('adminBilling.clearHint')} type="date" value={trial} onChange={(e) => setTrial(e.target.value)} />
         <TextField label={t('billing.paidThrough')} hint={t('adminBilling.clearHint')} type="date" value={paid} onChange={(e) => setPaid(e.target.value)} />
       </div>
@@ -487,7 +487,7 @@ function ResolveDialog({ orgId, request, onClose }: { orgId: string; request: Bi
         {t(`billing.kinds.${request.kind}`)}
         {request.quantity ? ` · ${t('billing.screensN', { count: request.quantity })}` : ''} — {request.message || '—'}
       </p>
-      <p className="vx-muted">{t('adminBilling.resolveHelp')}</p>
+      <p className="wxp-muted">{t('adminBilling.resolveHelp')}</p>
       <SelectField
         label={t('adminBilling.outcome')}
         options={(['done', 'declined'] as const).map((v) => ({ value: v, label: t(`billing.requestStatus.${v}`) }))}
@@ -531,7 +531,7 @@ function OverridesDialog({ orgId, current, onClose }: { orgId: string; current: 
         })
       }
     >
-      <p className="vx-muted">{t('adminBilling.overridesHelp')}</p>
+      <p className="wxp-muted">{t('adminBilling.overridesHelp')}</p>
       <h3>{t('adminBilling.limitOverrides')}</h3>
       <div className="limits-grid">
         {LIMIT_KEYS.map((k) => (

@@ -1,4 +1,4 @@
-package com.wallx.visionex.player
+package com.wallx.play
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
@@ -6,14 +6,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.unit.dp
-import com.wallx.visionex.player.core.DataStore
-import com.wallx.visionex.player.core.MediaLibrary
-import com.wallx.visionex.player.core.Weather
-import com.wallx.visionex.player.data.DeviceDataResponse
-import com.wallx.visionex.player.data.Manifest
-import com.wallx.visionex.player.data.json
-import com.wallx.visionex.player.ui.RenderContext
-import com.wallx.visionex.player.ui.WidgetView
+import com.wallx.play.core.DataStore
+import com.wallx.play.core.MediaLibrary
+import com.wallx.play.core.Weather
+import com.wallx.play.data.DeviceDataResponse
+import com.wallx.play.data.Manifest
+import com.wallx.play.data.json
+import com.wallx.play.ui.RenderContext
+import com.wallx.play.ui.WidgetView
 import kotlinx.serialization.json.JsonObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

@@ -1,5 +1,5 @@
 {
-  "name": "@visione-x/shared",
+  "name": "@wallx-play/shared",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -12,7 +12,7 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@visione-x/layout-spec": "*",
+    "@wallx-play/layout-spec": "*",
     "zod": "^3.25.0"
   }
 }

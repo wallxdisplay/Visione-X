@@ -1,4 +1,4 @@
-package com.wallx.visionex.player
+package com.wallx.play
 
 import android.app.admin.DeviceAdminReceiver
 import android.content.BroadcastReceiver

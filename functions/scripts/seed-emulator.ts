@@ -12,22 +12,22 @@ import { initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
-import { paths, type UserProfileDoc } from '@visione-x/shared';
+import { paths, type UserProfileDoc } from '@wallx-play/shared';
 import { applyPlatformRole } from '../src/admin/platformUsers';
 import type { Actor, Deps } from '../src/lib/context';
 import { reviewOrgSignup } from '../src/orgs/review';
 import { submitOrgSignup } from '../src/orgs/signup';
 import { seedPlatformData } from '../src/seed/seed';
 
-const PROJECT_ID = 'demo-visione-x';
+const PROJECT_ID = 'demo-wallx-play';
 
 const TEST_USERS = [
-  { email: 'superadmin@visione-x.test', password: 'Test-Admin-2026!', role: 'superadmin' as const },
-  { email: 'owner@visione-x.test', password: 'Test-Owner-2026!', role: null },
+  { email: 'superadmin@wallx-play.test', password: 'Test-Admin-2026!', role: 'superadmin' as const },
+  { email: 'owner@wallx-play.test', password: 'Test-Owner-2026!', role: null },
 ];
 
 /** Not created by the seed: used to exercise the sign-up flow by hand in the emulator. */
-export const MANUAL_SIGNUP_TEST_USER = { email: 'newcustomer@visione-x.test', password: 'Test-Signup-2026!' };
+export const MANUAL_SIGNUP_TEST_USER = { email: 'newcustomer@wallx-play.test', password: 'Test-Signup-2026!' };
 
 const app = initializeApp({ projectId: PROJECT_ID, storageBucket: `${PROJECT_ID}.appspot.com` });
 const deps: Deps = {
@@ -54,11 +54,11 @@ for (const u of TEST_USERS) {
 }
 
 // Demo organization for the test owner (skipped if they already belong to one).
-const ownerUid = uids['owner@visione-x.test']!;
+const ownerUid = uids['owner@wallx-play.test']!;
 const profile = (await db.doc(paths.userProfile(ownerUid)).get()).data() as UserProfileDoc | undefined;
 if (!profile || Object.keys(profile.memberships ?? {}).length === 0) {
-  const owner: Actor = { uid: ownerUid, email: 'owner@visione-x.test', emailVerified: true, platformRole: null };
-  const admin: Actor = { uid: uids['superadmin@visione-x.test']!, email: 'superadmin@visione-x.test', emailVerified: true, platformRole: 'superadmin' };
+  const owner: Actor = { uid: ownerUid, email: 'owner@wallx-play.test', emailVerified: true, platformRole: null };
+  const admin: Actor = { uid: uids['superadmin@wallx-play.test']!, email: 'superadmin@wallx-play.test', emailVerified: true, platformRole: 'superadmin' };
   const { requestId } = await submitOrgSignup(deps, owner, {
     orgName: 'Demo Retail (sample)',
     contactName: 'Demo Owner',

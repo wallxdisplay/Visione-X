@@ -5,8 +5,8 @@ import { getStorage } from 'firebase-admin/storage';
 import type { Actor, Deps } from '../../functions/src/lib/context';
 import { seedPlatformData } from '../../functions/src/seed/seed';
 
-export const PROJECT_ID = 'demo-visione-x';
-export const BUCKET = 'demo-visione-x.appspot.com';
+export const PROJECT_ID = 'demo-wallx-play';
+export const BUCKET = 'demo-wallx-play.appspot.com';
 
 const app = getApps()[0] ?? initializeApp({ projectId: PROJECT_ID, storageBucket: BUCKET });
 export const db = getFirestore(app);

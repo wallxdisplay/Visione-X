@@ -6,7 +6,7 @@ import {
   type MemberDoc,
   type OrgDoc,
   type UserProfileDoc,
-} from '@visione-x/shared';
+} from '@wallx-play/shared';
 import { verifyAuditChain } from '../../functions/src/lib/audit';
 import * as members from '../../functions/src/members/members';
 import { reviewOrgSignup, setOrgStatus } from '../../functions/src/orgs/review';

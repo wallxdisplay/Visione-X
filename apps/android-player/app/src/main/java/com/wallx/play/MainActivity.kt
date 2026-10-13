@@ -1,4 +1,4 @@
-package com.wallx.visionex.player
+package com.wallx.play
 
 import android.app.admin.DevicePolicyManager
 import android.graphics.Bitmap
@@ -21,8 +21,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.OnBackPressedCallback
 import androidx.lifecycle.lifecycleScope
-import com.wallx.visionex.player.core.PlayerEngine
-import com.wallx.visionex.player.ui.PlayerRoot
+import com.wallx.play.core.PlayerEngine
+import com.wallx.play.ui.PlayerRoot
 
 /**
  * The only screen. Full-screen, never sleeps, ignores Back. If the app is the device owner it

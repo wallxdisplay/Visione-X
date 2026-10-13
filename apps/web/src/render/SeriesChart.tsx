@@ -4,7 +4,7 @@
  * Marks follow the data-viz spec: 2px lines, ≥8px end dots with a surface ring, bars ≤24px
  * with 4px rounded tops and a 2px gap, hairline recessive grid, text in text colours only.
  */
-import { formatLiveValue } from '@visione-x/layout-spec';
+import { formatLiveValue } from '@wallx-play/layout-spec';
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 
 export interface Series {
@@ -179,7 +179,7 @@ export function SeriesChart({
             {ticks.map((t) => (
               <g key={t}>
                 <line x1={pad.left} x2={pad.left + plotW} y1={y(t)} y2={y(t)} stroke={gridColor} strokeWidth={1} />
-                <text x={pad.left - fontPx * 0.5} y={y(t) + fontPx * 0.35} textAnchor="end" fill={mutedColor} className="vx-tabular">
+                <text x={pad.left - fontPx * 0.5} y={y(t) + fontPx * 0.35} textAnchor="end" fill={mutedColor} className="wxp-tabular">
                   {fmt(t)}
                 </text>
               </g>
@@ -191,7 +191,7 @@ export function SeriesChart({
                 y={height - fontPx * 0.6}
                 textAnchor={i === 0 ? 'start' : i === 2 ? 'end' : 'middle'}
                 fill={mutedColor}
-                className="vx-tabular"
+                className="wxp-tabular"
               >
                 {timeFmt.format(t)}
               </text>
@@ -267,7 +267,7 @@ export function SeriesChart({
             return p ? (
               <div key={s.key} className="series-chart__tip-row">
                 <span className="series-chart__key" style={{ background: s.color }} aria-hidden />
-                <strong className="vx-tabular">
+                <strong className="wxp-tabular">
                   {fmt(p[1])}
                   {unit ? ` ${unit}` : ''}
                 </strong>

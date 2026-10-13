@@ -9,7 +9,7 @@ import {
   playlistRefs,
   type ContentRefs,
   type Widget,
-} from '@visione-x/layout-spec';
+} from '@wallx-play/layout-spec';
 import {
   paths,
   type DeleteLayoutInput,
@@ -22,7 +22,7 @@ import {
   type SaveLayoutInput,
   type SavePlaylistInput,
   type ScheduleDoc,
-} from '@visione-x/shared';
+} from '@wallx-play/shared';
 import { auditedTransaction } from '../lib/audit';
 import { requireActiveOrgPermission, requireOrgPermission } from '../lib/authz';
 import type { Actor, Deps } from '../lib/context';

@@ -1,9 +1,9 @@
-package com.wallx.visionex.player
+package com.wallx.play
 
-import com.wallx.visionex.player.data.Manifest
-import com.wallx.visionex.player.data.json
-import com.wallx.visionex.player.data.kind
-import com.wallx.visionex.player.data.str
+import com.wallx.play.data.Manifest
+import com.wallx.play.data.json
+import com.wallx.play.data.kind
+import com.wallx.play.data.str
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.io.File

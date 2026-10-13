@@ -6,8 +6,8 @@ import { promisify } from 'node:util';
 import ffmpeg from '@ffmpeg-installer/ffmpeg';
 import sharp from 'sharp';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { paths, type MediaDoc } from '@visione-x/shared';
-import { layoutFromTemplate, BUILT_IN_TEMPLATES } from '@visione-x/layout-spec';
+import { paths, type MediaDoc } from '@wallx-play/shared';
+import { layoutFromTemplate, BUILT_IN_TEMPLATES } from '@wallx-play/layout-spec';
 import * as content from '../../functions/src/content/media';
 import * as layouts from '../../functions/src/content/layouts';
 import * as schedules from '../../functions/src/content/schedules';
@@ -25,7 +25,7 @@ let orgId: string;
 let work: string;
 
 beforeAll(async () => {
-  work = await mkdtemp(join(tmpdir(), 'vx-test-'));
+  work = await mkdtemp(join(tmpdir(), 'wxp-test-'));
 });
 afterAll(async () => {
   await rm(work, { recursive: true, force: true });

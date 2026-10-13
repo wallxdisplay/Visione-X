@@ -19,7 +19,7 @@ import {
   type RssConfig,
   type RssData,
   type WeatherData,
-} from '@visione-x/shared';
+} from '@wallx-play/shared';
 import type { Deps } from '../lib/context';
 import { FetchError, safeGet } from './net';
 import { FeedError, parseFeed } from './rss';

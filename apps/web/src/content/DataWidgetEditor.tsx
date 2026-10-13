@@ -1,5 +1,5 @@
-import { SelectField, TextField } from '@visione-x/ui';
-import type { TextStyle, Widget } from '@visione-x/layout-spec';
+import { SelectField, TextField } from '@wallx-play/ui';
+import type { TextStyle, Widget } from '@wallx-play/layout-spec';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { DataSourceChoice } from './ZoneInspector';

@@ -1,4 +1,4 @@
-import type { MediaDoc } from '@visione-x/shared';
+import type { MediaDoc } from '@wallx-play/shared';
 import { FileAudio, FileImage, FileVideo, Loader2, TriangleAlert } from 'lucide-react';
 import { useStorageUrl } from './data';
 

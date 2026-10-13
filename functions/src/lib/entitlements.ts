@@ -9,7 +9,7 @@ import {
   type Limits,
   type Plan,
   type ReleaseStatus,
-} from '@visione-x/shared';
+} from '@wallx-play/shared';
 
 interface CatalogDoc {
   features: Partial<Record<FeatureKey, ReleaseStatus>>;

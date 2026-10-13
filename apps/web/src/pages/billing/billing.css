@@ -8,7 +8,7 @@
   margin: 0;
   font-size: 20px;
 }
-.billing-summary .vx-dl {
+.billing-summary .wxp-dl {
   grid-template-columns: max-content 1fr;
 }
 .billing-summary__note {
@@ -21,7 +21,7 @@ tr.is-voided td {
   color: var(--color-ink-muted);
   text-decoration: line-through;
 }
-tr.is-voided td .vx-chip {
+tr.is-voided td .wxp-chip {
   text-decoration: none;
 }
 .request-list {

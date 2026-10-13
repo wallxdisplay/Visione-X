@@ -1,6 +1,6 @@
-import { Alert, Button, EmptyState, PageHeader, StatusChip } from '@visione-x/ui';
-import { formatLiveValue } from '@visione-x/layout-spec';
-import type { AlertDoc } from '@visione-x/shared';
+import { Alert, Button, EmptyState, PageHeader, StatusChip } from '@wallx-play/ui';
+import { formatLiveValue } from '@wallx-play/layout-spec';
+import type { AlertDoc } from '@wallx-play/shared';
 import { BellOff } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -47,8 +47,8 @@ function AlertTable({ rows, history }: { rows: Array<WithId<AlertDoc>>; history:
   return (
     <>
       {error ? <Alert tone="danger">{error}</Alert> : null}
-      <div className="vx-table-wrap">
-        <table className="vx-table">
+      <div className="wxp-table-wrap">
+        <table className="wxp-table">
           <thead>
             <tr>
               <th>{t('alerts.severityLabel')}</th>
@@ -70,10 +70,10 @@ function AlertTable({ rows, history }: { rows: Array<WithId<AlertDoc>>; history:
                 <td>{alertText(a, t)}</td>
                 <td>
                   <Link to={`/sensors/${a.sensorDeviceId}`}>{a.sensorName}</Link>
-                  {a.channelName ? <span className="vx-muted"> · {a.channelName}</span> : null}
+                  {a.channelName ? <span className="wxp-muted"> · {a.channelName}</span> : null}
                 </td>
                 <td>{formatDateTime(a.openedAt)}</td>
-                <td className="vx-tabular">
+                <td className="wxp-tabular">
                   {history
                     ? formatDateTime(a.resolvedAt)
                     : a.lastValue !== null
@@ -82,7 +82,7 @@ function AlertTable({ rows, history }: { rows: Array<WithId<AlertDoc>>; history:
                 </td>
                 <td>
                   {a.acknowledgedAt ? (
-                    <span className="vx-muted">{t('alerts.ackBy', { who: a.acknowledgedByEmail ?? a.acknowledgedBy, when: formatDateTime(a.acknowledgedAt) })}</span>
+                    <span className="wxp-muted">{t('alerts.ackBy', { who: a.acknowledgedByEmail ?? a.acknowledgedBy, when: formatDateTime(a.acknowledgedAt) })}</span>
                   ) : can('sensor.manage') && a.status === 'open' ? (
                     <Button size="sm" disabled={busy === a.id} onClick={() => void acknowledge(a.id)}>
                       {t('alerts.acknowledge')}
@@ -113,14 +113,14 @@ export function Alerts() {
     <>
       <PageHeader title={t('nav.alerts')} description={t('alerts.description')} />
       {!enabled && entitlements ? (
-        <div className="vx-card">
+        <div className="wxp-card">
           <EmptyState icon={<BellOff size={24} aria-hidden />} title={t('sensors.notInPlanTitle')} description={t('sensors.notInPlanBody')} />
         </div>
       ) : (
         <>
           <h2 className="section-title">{t('alerts.openTitle', { count: open.data.length })}</h2>
           {open.data.length === 0 && !open.loading ? (
-            <div className="vx-card">
+            <div className="wxp-card">
               <EmptyState icon={<BellOff size={24} aria-hidden />} title={t('alerts.noneOpen')} description={t('alerts.noneOpenBody')} />
             </div>
           ) : (

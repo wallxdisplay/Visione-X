@@ -24,7 +24,7 @@ import {
   type SensorChannelDoc,
   type SensorDeviceDoc,
   type SensorKeyDoc,
-} from '@visione-x/shared';
+} from '@wallx-play/shared';
 import type { Deps } from '../lib/context';
 import type { ApiRequest, ApiResult } from '../devices/deviceApi';
 import { openAlert, resolveAlert } from './alerts';
@@ -57,8 +57,8 @@ export function acceptValue(channel: Pick<SensorChannelDoc, 'valueType' | 'min' 
 
 export async function ingest(deps: Deps, req: ApiRequest): Promise<ApiResult> {
   const { db, now } = deps;
-  const m = /^Bearer (vxs_[A-Za-z0-9_-]{32})$/.exec(String(req.headers.authorization ?? '').trim());
-  if (!m) return fail(401, 'unauthenticated', 'Send the device API key as "Authorization: Bearer vxs_…".');
+  const m = /^Bearer (wxp_[A-Za-z0-9_-]{32})$/.exec(String(req.headers.authorization ?? '').trim());
+  if (!m) return fail(401, 'unauthenticated', 'Send the device API key as "Authorization: Bearer wxp_…".');
   const parsed = IngestBody.safeParse(req.body);
   if (!parsed.success) {
     const issue = parsed.error.issues[0];

@@ -1,5 +1,5 @@
 import { logger } from 'firebase-functions/v2';
-import { billingState, normalizeSubscription, paths, type SubscriptionDoc } from '@visione-x/shared';
+import { billingState, normalizeSubscription, paths, type SubscriptionDoc } from '@wallx-play/shared';
 import { auditedTransaction } from '../lib/audit';
 import type { Deps } from '../lib/context';
 import { notify } from '../lib/notify';

@@ -3,8 +3,8 @@
  * The Android player implements the same spec natively; keep behaviour aligned
  * (fractions of the canvas for geometry, font sizes as a fraction of the zone height).
  */
-import type { Layout, LayoutBody, PlaylistItem, Widget, ZoneContent } from '@visione-x/layout-spec';
-import type { LayoutDoc, MediaDoc, PlaylistDoc } from '@visione-x/shared';
+import type { Layout, LayoutBody, PlaylistItem, Widget, ZoneContent } from '@wallx-play/layout-spec';
+import type { LayoutDoc, MediaDoc, PlaylistDoc } from '@wallx-play/shared';
 import { Music } from 'lucide-react';
 import QRCode from 'qrcode';
 import { createContext, useContext, useEffect, useState, type CSSProperties, type ReactNode } from 'react';
@@ -95,7 +95,7 @@ function ClockView({ widget }: { widget: Extract<Widget, { type: 'clock' }> }) {
   }
   return (
     <div className="r-fill r-text" style={textStyle(widget.style, 0.45, Math.max(4, text.length))}>
-      <span className="vx-tabular">{text}</span>
+      <span className="wxp-tabular">{text}</span>
     </div>
   );
 }

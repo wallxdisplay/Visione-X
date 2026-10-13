@@ -1,4 +1,4 @@
-package com.wallx.visionex.player.core
+package com.wallx.play.core
 
 import android.app.ActivityManager
 import android.app.admin.DevicePolicyManager
@@ -12,7 +12,7 @@ import android.os.StatFs
 import android.os.SystemClock
 import android.util.DisplayMetrics
 import android.view.WindowManager
-import com.wallx.visionex.player.BuildConfig
+import com.wallx.play.BuildConfig
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put

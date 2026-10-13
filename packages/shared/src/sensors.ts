@@ -1,6 +1,6 @@
 /**
  * Sensors (ESP32 and similar): devices, channels, readings and alerts, plus the ingest API.
- * Sensor devices never use Firebase Auth. Each holds an API key (`vxs_…`) issued once; only
+ * Sensor devices never use Firebase Auth. Each holds an API key (`wxp_…`) issued once; only
  * its SHA-256 is stored (sensorKeys/{hash} → org + device). They call POST /api/v1/ingest
  * with `Authorization: Bearer <key>`.
  */
@@ -14,7 +14,7 @@ export const ChannelKey = z
   .trim()
   .regex(/^[a-z0-9_]{1,32}$/, 'Use 1–32 lowercase letters, digits or _');
 
-export const SENSOR_KEY_PREFIX = 'vxs_';
+export const SENSOR_KEY_PREFIX = 'wxp_';
 export const SENSOR_VALUE_TYPES = ['number', 'boolean'] as const;
 export type SensorValueType = (typeof SENSOR_VALUE_TYPES)[number];
 

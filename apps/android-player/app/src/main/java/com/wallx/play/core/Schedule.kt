@@ -1,7 +1,7 @@
-package com.wallx.visionex.player.core
+package com.wallx.play.core
 
-import com.wallx.visionex.player.data.Emergency
-import com.wallx.visionex.player.data.ScheduleRule
+import com.wallx.play.data.Emergency
+import com.wallx.play.data.ScheduleRule
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId

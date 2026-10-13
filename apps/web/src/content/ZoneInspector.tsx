@@ -1,6 +1,6 @@
-import { Button, SelectField, TextAreaField, TextField } from '@visione-x/ui';
-import type { TextStyle, Widget, Zone, ZoneContent } from '@visione-x/layout-spec';
-import type { MediaDoc, PlaylistDoc } from '@visione-x/shared';
+import { Button, SelectField, TextAreaField, TextField } from '@wallx-play/ui';
+import type { TextStyle, Widget, Zone, ZoneContent } from '@wallx-play/layout-spec';
+import type { MediaDoc, PlaylistDoc } from '@wallx-play/shared';
 import { ArrowDown, ArrowUp, Copy, Trash2 } from 'lucide-react';
 import { useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -113,13 +113,13 @@ export function ZoneInspector({
     mode: 'full' | 'size' | 'colors' = 'full',
   ) => (
     <>
-      <div className="vx-form__row">
-        <label className="vx-field">
-          <span className="vx-field__label">{t('studio.color')}</span>
+      <div className="wxp-form__row">
+        <label className="wxp-field">
+          <span className="wxp-field__label">{t('studio.color')}</span>
           <input type="color" className="color-input" value={style?.color ?? '#FFFFFF'} disabled={readOnly} onChange={(e) => update({ ...style, color: e.target.value.toUpperCase() })} />
         </label>
-        <label className="vx-field">
-          <span className="vx-field__label">{t('studio.background')}</span>
+        <label className="wxp-field">
+          <span className="wxp-field__label">{t('studio.background')}</span>
           <span className="color-row">
             <input
               type="color"
@@ -137,9 +137,9 @@ export function ZoneInspector({
         </label>
       </div>
       {mode !== 'colors' ? (
-      <label className="vx-field">
-        <span className="vx-field__label">
-          {t('studio.textSize')} <span className="vx-muted">{Math.round((style?.fontScale ?? defaultScale) * 100)}%</span>
+      <label className="wxp-field">
+        <span className="wxp-field__label">
+          {t('studio.textSize')} <span className="wxp-muted">{Math.round((style?.fontScale ?? defaultScale) * 100)}%</span>
         </span>
         <input
           type="range"
@@ -152,7 +152,7 @@ export function ZoneInspector({
       </label>
       ) : null}
       {mode === 'full' ? (
-      <div className="vx-form__row">
+      <div className="wxp-form__row">
         <SelectField
           label={t('studio.align')}
           options={['start', 'center', 'end'].map((a) => ({ value: a, label: t(`studio.alignOptions.${a}`) }))}
@@ -189,7 +189,7 @@ export function ZoneInspector({
         ))}
       </div>
       {!readOnly ? (
-        <div className="vx-toolbar" style={{ margin: 0 }}>
+        <div className="wxp-toolbar" style={{ margin: 0 }}>
           <Button size="sm" onClick={() => onLayer(1)} title={t('studio.bringForward')}>
             <ArrowUp size={14} aria-hidden /> {t('studio.forward')}
           </Button>
@@ -250,7 +250,7 @@ export function ZoneInspector({
                 <span>{media.find((m) => m.id === c.mediaId)!.name}</span>
               </>
             ) : (
-              <span className="vx-field__error">{t('render.missingMedia')}</span>
+              <span className="wxp-field__error">{t('render.missingMedia')}</span>
             )}
           </div>
           {!readOnly ? <Button size="sm" onClick={() => setPicking(true)}>{t('studio.changeMedia')}</Button> : null}
@@ -276,7 +276,7 @@ export function ZoneInspector({
             onChange={(e) => setContent({ kind: 'playlist', playlistId: e.target.value })}
           />
         ) : (
-          <p className="vx-muted">{t('studio.noZonePlaylists')}</p>
+          <p className="wxp-muted">{t('studio.noZonePlaylists')}</p>
         )
       ) : null}
 
@@ -333,13 +333,13 @@ export function ZoneInspector({
             maxLength={1000}
             onChange={(e) => setWidget({ ...c.widget, value: e.target.value } as Widget)}
           />
-          <div className="vx-form__row">
-            <label className="vx-field">
-              <span className="vx-field__label">{t('studio.color')}</span>
+          <div className="wxp-form__row">
+            <label className="wxp-field">
+              <span className="wxp-field__label">{t('studio.color')}</span>
               <input type="color" className="color-input" value={c.widget.foreground} disabled={readOnly} onChange={(e) => setWidget({ ...c.widget, foreground: e.target.value.toUpperCase() } as Widget)} />
             </label>
-            <label className="vx-field">
-              <span className="vx-field__label">{t('studio.background')}</span>
+            <label className="wxp-field">
+              <span className="wxp-field__label">{t('studio.background')}</span>
               <input type="color" className="color-input" value={c.widget.background} disabled={readOnly} onChange={(e) => setWidget({ ...c.widget, background: e.target.value.toUpperCase() } as Widget)} />
             </label>
           </div>

@@ -1,5 +1,5 @@
 import { collection, query, where } from 'firebase/firestore';
-import { Alert, Button, Dialog, EmptyState, PageHeader, SelectField, Spinner, StatusChip, TextAreaField, TextField } from '@visione-x/ui';
+import { Alert, Button, Dialog, EmptyState, PageHeader, SelectField, Spinner, StatusChip, TextAreaField, TextField } from '@wallx-play/ui';
 import {
   BILLING_GRACE_DAYS,
   BILLING_REQUEST_KINDS,
@@ -9,7 +9,7 @@ import {
   type BillingRequestKind,
   type BillingStatus,
   type ScreenDoc,
-} from '@visione-x/shared';
+} from '@wallx-play/shared';
 import { CreditCard, Send } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -50,7 +50,7 @@ export function Billing() {
     return (
       <>
         <PageHeader title={t('nav.billing')} />
-        <div className="vx-card">
+        <div className="wxp-card">
           <EmptyState icon={<CreditCard size={24} aria-hidden />} title={t('billing.noAccessTitle')} description={t('billing.noAccessBody')} />
         </div>
       </>
@@ -62,7 +62,7 @@ export function Billing() {
     return (
       <>
         <PageHeader title={t('nav.billing')} />
-        <p className="vx-muted">{t('billing.none')}</p>
+        <p className="wxp-muted">{t('billing.none')}</p>
       </>
     );
   }
@@ -84,14 +84,14 @@ export function Billing() {
       />
       {sent ? <Alert tone="success">{t('billing.requestSent')}</Alert> : null}
 
-      <div className="billing-summary vx-card">
+      <div className="billing-summary wxp-card">
         <div className="billing-summary__head">
           <h2>{plan?.name ?? s.planId}</h2>
           <StatusChip tone={STATUS_TONE[s.status]}>{t(`billing.status.${s.status}`)}</StatusChip>
         </div>
-        <dl className="vx-dl">
+        <dl className="wxp-dl">
           <dt>{t('billing.screens')}</dt>
-          <dd className="vx-tabular">{t('billing.screensUsed', { used: screens.data.length, limit: limit ?? '∞' })}</dd>
+          <dd className="wxp-tabular">{t('billing.screensUsed', { used: screens.data.length, limit: limit ?? '∞' })}</dd>
           <dt>{t('billing.interval')}</dt>
           <dd>{t(`billing.intervals.${s.interval}`)}</dd>
           <dt>{t('billing.price')}</dt>
@@ -99,10 +99,10 @@ export function Billing() {
             {s.amountPerPeriodMinor !== null ? (
               <>
                 <strong>{formatInr(s.amountPerPeriodMinor)}</strong> {t(`billing.perInterval.${s.interval}`)}{' '}
-                <span className="vx-muted">{t('billing.plusGst')}</span>
+                <span className="wxp-muted">{t('billing.plusGst')}</span>
               </>
             ) : (
-              <span className="vx-muted">{s.status === 'trialing' ? t('billing.freeTrial') : t('billing.customPrice')}</span>
+              <span className="wxp-muted">{s.status === 'trialing' ? t('billing.freeTrial') : t('billing.customPrice')}</span>
             )}
           </dd>
           {s.status === 'trialing' && s.trialEndsAt ? (
@@ -124,15 +124,15 @@ export function Billing() {
             </>
           ) : null}
         </dl>
-        <p className="vx-muted billing-summary__note">{t(`billing.statusHelp.${s.status}`)}</p>
+        <p className="wxp-muted billing-summary__note">{t(`billing.statusHelp.${s.status}`)}</p>
       </div>
 
       <h2 className="section-title">{t('billing.payments')}</h2>
       {payments.data.length === 0 && !payments.loading ? (
-        <p className="vx-muted">{t('billing.noPayments')}</p>
+        <p className="wxp-muted">{t('billing.noPayments')}</p>
       ) : (
-        <div className="vx-table-wrap">
-          <table className="vx-table">
+        <div className="wxp-table-wrap">
+          <table className="wxp-table">
             <thead>
               <tr>
                 <th>{t('billing.paidOn')}</th>
@@ -147,7 +147,7 @@ export function Billing() {
               {payments.data.map((p) => (
                 <tr key={p.id} className={p.voided ? 'is-voided' : undefined}>
                   <td>{formatDate(p.paidAt)}</td>
-                  <td className="vx-tabular">
+                  <td className="wxp-tabular">
                     {formatInr(p.amountMinor)} {p.voided ? <StatusChip tone="neutral">{t('billing.voided')}</StatusChip> : null}
                   </td>
                   <td>{t(`billing.methods.${p.method}`)}</td>
@@ -168,17 +168,17 @@ export function Billing() {
           <h2 className="section-title">{t('billing.requests')}</h2>
           <ul className="request-list">
             {requests.data.map((r) => (
-              <li key={r.id} className="vx-card request-list__item">
+              <li key={r.id} className="wxp-card request-list__item">
                 <div>
                   <strong>{t(`billing.kinds.${r.kind}`)}</strong>
                   {r.quantity ? ` · ${t('billing.screensN', { count: r.quantity })}` : ''}
                   {r.planId ? ` · ${plans.data.find((p) => p.id === r.planId)?.name ?? r.planId}` : ''}
-                  {r.message ? <p className="vx-muted">{r.message}</p> : null}
+                  {r.message ? <p className="wxp-muted">{r.message}</p> : null}
                   {r.resolutionNote ? <p>{t('billing.wallxNote', { note: r.resolutionNote })}</p> : null}
                 </div>
                 <div className="request-list__meta">
                   <StatusChip tone={r.status === 'open' ? 'info' : r.status === 'done' ? 'success' : 'neutral'}>{t(`billing.requestStatus.${r.status}`)}</StatusChip>
-                  <span className="vx-muted">{formatDate(r.createdAt)}</span>
+                  <span className="wxp-muted">{formatDate(r.createdAt)}</span>
                 </div>
               </li>
             ))}
@@ -266,7 +266,7 @@ function RequestDialog({
       }
     >
       {error ? <Alert tone="danger">{error}</Alert> : null}
-      <p className="vx-muted">{t('billing.requestHelp')}</p>
+      <p className="wxp-muted">{t('billing.requestHelp')}</p>
       <SelectField
         label={t('billing.requestKind')}
         options={BILLING_REQUEST_KINDS.map((k) => ({ value: k, label: t(`billing.kinds.${k}`) }))}
@@ -274,7 +274,7 @@ function RequestDialog({
         onChange={(e) => setKind(e.target.value as BillingRequestKind)}
       />
       {kind === 'change_plan' ? (
-        <div className="vx-form__row">
+        <div className="wxp-form__row">
           <SelectField
             label={t('billing.plan')}
             options={paidPlans.map((p) => ({

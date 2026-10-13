@@ -1,5 +1,5 @@
-import { Button, Dialog, EmptyState } from '@visione-x/ui';
-import type { MediaDoc, MediaType } from '@visione-x/shared';
+import { Button, Dialog, EmptyState } from '@wallx-play/ui';
+import type { MediaDoc, MediaType } from '@wallx-play/shared';
 import { Check, Images } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -74,7 +74,7 @@ export function MediaPicker({
       }
     >
       <input
-        className="vx-input"
+        className="wxp-input"
         placeholder={t('library.search')}
         aria-label={t('library.search')}
         value={search}
@@ -107,7 +107,7 @@ export function MediaPicker({
                   ) : null}
                 </div>
                 <span className="picker-item__name">{m.name}</span>
-                {m.durationSec ? <span className="vx-muted">{formatDuration(m.durationSec)}</span> : null}
+                {m.durationSec ? <span className="wxp-muted">{formatDuration(m.durationSec)}</span> : null}
               </button>
             );
           })}

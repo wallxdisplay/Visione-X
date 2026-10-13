@@ -10,7 +10,7 @@ import {
   type ScheduleDoc,
   type ScreenGroupDoc,
   type SiteDoc,
-} from '@visione-x/shared';
+} from '@wallx-play/shared';
 import { db, storage } from '../lib/firebase';
 import { useQueryData } from '../lib/hooks';
 

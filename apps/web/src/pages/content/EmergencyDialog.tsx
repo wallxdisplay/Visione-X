@@ -1,5 +1,5 @@
-import { Alert, Button, Dialog, SelectField, TextAreaField, TextField } from '@visione-x/ui';
-import { EMERGENCY_CONFIRM_PHRASE, TriggerEmergencyInput, type ScreenDoc } from '@visione-x/shared';
+import { Alert, Button, Dialog, SelectField, TextAreaField, TextField } from '@wallx-play/ui';
+import { EMERGENCY_CONFIRM_PHRASE, TriggerEmergencyInput, type ScreenDoc } from '@wallx-play/shared';
 import { Siren } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -111,8 +111,8 @@ export function EmergencyDialog({ screens, onClose }: { screens: ScreenDoc[]; on
       {contentKind === 'message' ? (
         <>
           <TextAreaField label={t('emergency.message')} required value={text} maxLength={500} error={errors['content.text']} hint={t('emergency.messageHint')} onChange={(e) => setText(e.target.value)} />
-          <label className="vx-field">
-            <span className="vx-field__label">{t('studio.background')}</span>
+          <label className="wxp-field">
+            <span className="wxp-field__label">{t('studio.background')}</span>
             <input type="color" className="color-input" value={background} onChange={(e) => setBackground(e.target.value.toUpperCase())} />
           </label>
           {text.trim() ? (
@@ -146,7 +146,7 @@ export function EmergencyDialog({ screens, onClose }: { screens: ScreenDoc[]; on
       />
       {targetKind !== 'all' ? (
         <fieldset className="check-group check-group--row">
-          <legend className="vx-field__label">{t('emergency.choose')}</legend>
+          <legend className="wxp-field__label">{t('emergency.choose')}</legend>
           {choices.map((c) => (
             <label key={c.id} className="day-chip">
               <input type="checkbox" checked={ids.includes(c.id)} onChange={(e) => setIds(e.target.checked ? [...ids, c.id] : ids.filter((x) => x !== c.id))} />

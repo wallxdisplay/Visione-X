@@ -12,7 +12,7 @@ import {
   type ScreenDoc,
   type ScreenRefInput,
   type UpdateScreenInput,
-} from '@visione-x/shared';
+} from '@wallx-play/shared';
 import { auditedTransaction } from '../lib/audit';
 import { requireActiveOrgPermission, requireOrgPermission } from '../lib/authz';
 import type { Actor, Deps } from '../lib/context';

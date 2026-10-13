@@ -1,6 +1,6 @@
 import { collection, orderBy, query } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
-import { DATA_POLL_SEC, paths, type DataSourceDoc, type DataSourceValue } from '@visione-x/shared';
+import { DATA_POLL_SEC, paths, type DataSourceDoc, type DataSourceValue } from '@wallx-play/shared';
 import { call } from '../lib/api';
 import { db } from '../lib/firebase';
 import { useQueryData } from '../lib/hooks';

@@ -1,6 +1,6 @@
 import { collection, limit, orderBy, query, where } from 'firebase/firestore';
-import { EmptyState, PageHeader, StatusChip } from '@visione-x/ui';
-import { paths, stateName, type SignupRequestDoc } from '@visione-x/shared';
+import { EmptyState, PageHeader, StatusChip } from '@wallx-play/ui';
+import { paths, stateName, type SignupRequestDoc } from '@wallx-play/shared';
 import { ClipboardCheck } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -37,14 +37,14 @@ export function Approvals() {
   return (
     <>
       <PageHeader title={t('nav.admin.approvals')} description={t('admin.approvals.description')} />
-      <div className="vx-toolbar" role="tablist">
+      <div className="wxp-toolbar" role="tablist">
         {(['open', 'decided'] as const).map((k) => (
           <button
             key={k}
             type="button"
             role="tab"
             aria-selected={tab === k}
-            className={`vx-btn vx-btn--sm ${tab === k ? 'vx-btn--primary' : 'vx-btn--secondary'}`}
+            className={`wxp-btn wxp-btn--sm ${tab === k ? 'wxp-btn--primary' : 'wxp-btn--secondary'}`}
             onClick={() => setTab(k)}
           >
             {t(`admin.approvals.tabs.${k}`)}
@@ -53,12 +53,12 @@ export function Approvals() {
       </div>
 
       {requests.data.length === 0 && !requests.loading ? (
-        <div className="vx-card">
+        <div className="wxp-card">
           <EmptyState icon={<ClipboardCheck size={24} aria-hidden />} title={t('admin.approvals.empty')} />
         </div>
       ) : (
-        <div className="vx-table-wrap">
-          <table className="vx-table">
+        <div className="wxp-table-wrap">
+          <table className="wxp-table">
             <thead>
               <tr>
                 <th>{t('admin.approvals.company')}</th>
@@ -77,13 +77,13 @@ export function Approvals() {
                   </td>
                   <td>
                     {r.details.contactName}
-                    <div className="vx-muted">{r.requesterEmail}</div>
+                    <div className="wxp-muted">{r.requesterEmail}</div>
                   </td>
                   <td>
                     {r.details.city}, {stateName(r.details.stateCode)}
                   </td>
-                  <td className="vx-tabular">{r.details.expectedScreens}</td>
-                  <td className="vx-tabular">{formatDateTime(r.createdAt)}</td>
+                  <td className="wxp-tabular">{r.details.expectedScreens}</td>
+                  <td className="wxp-tabular">{formatDateTime(r.createdAt)}</td>
                   <td>
                     <StatusChip tone={REQUEST_TONE[r.status]}>{t(`status.${r.status}`)}</StatusChip>
                   </td>

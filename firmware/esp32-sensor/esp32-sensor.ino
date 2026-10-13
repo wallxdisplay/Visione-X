@@ -1,11 +1,11 @@
 /*
- * Visione-X reference firmware for ESP32 sensor devices.
+ * WallX Play reference firmware for ESP32 sensor devices.
  *
- * Reads the configured sensors every VX_INTERVAL_SEC seconds and sends them to the
- * Visione-X ingest API:
+ * Reads the configured sensors every WXP_INTERVAL_SEC seconds and sends them to the
+ * WallX Play ingest API:
  *
  *   POST /api/v1/ingest
- *   Authorization: Bearer vxs_…
+ *   Authorization: Bearer wxp_…
  *   {"ts": <unix seconds>, "fw": "...", "readings": [{"channel": "temp", "value": 4.2}, ...]}
  *
  * - "ts" is sent only once the clock is set by NTP; otherwise the server timestamps it.
@@ -22,18 +22,18 @@
 
 #include "config.h"
 
-#if VX_USE_DHT22
+#if WXP_USE_DHT22
 #include <DHT.h>
-DHT dht(VX_DHT_PIN, DHT22);
+DHT dht(WXP_DHT_PIN, DHT22);
 #endif
 
 static uint32_t backoffSec = 0;
 
 static void connectWifi() {
   if (WiFi.status() == WL_CONNECTED) return;
-  Serial.printf("Wi-Fi: connecting to %s\n", VX_WIFI_SSID);
+  Serial.printf("Wi-Fi: connecting to %s\n", WXP_WIFI_SSID);
   WiFi.mode(WIFI_STA);
-  WiFi.begin(VX_WIFI_SSID, VX_WIFI_PASSWORD);
+  WiFi.begin(WXP_WIFI_SSID, WXP_WIFI_PASSWORD);
   for (int i = 0; i < 40 && WiFi.status() != WL_CONNECTED; i++) delay(500);
   if (WiFi.status() == WL_CONNECTED) {
     Serial.printf("Wi-Fi: connected, IP %s\n", WiFi.localIP().toString().c_str());
@@ -62,22 +62,22 @@ static int collectReadings(String &json) {
     json += "}";
     n++;
   };
-#if VX_USE_DHT22
+#if WXP_USE_DHT22
   float t = dht.readTemperature();
   float h = dht.readHumidity();
   // A failed DHT read returns NaN: skip it rather than send a bogus value.
-  if (!isnan(t)) add(VX_CH_TEMP, String(t, 1));
-  if (!isnan(h)) add(VX_CH_HUMIDITY, String(h, 1));
+  if (!isnan(t)) add(WXP_CH_TEMP, String(t, 1));
+  if (!isnan(h)) add(WXP_CH_HUMIDITY, String(h, 1));
 #endif
-#if VX_USE_DOOR
-  add(VX_CH_DOOR, digitalRead(VX_DOOR_PIN) == HIGH ? "true" : "false");  // pull-up: open = HIGH
+#if WXP_USE_DOOR
+  add(WXP_CH_DOOR, digitalRead(WXP_DOOR_PIN) == HIGH ? "true" : "false");  // pull-up: open = HIGH
 #endif
   return n;
 }
 
 /** Sends one batch; returns the HTTP status (negative for network errors). */
 static int sendReadings(const String &readings, uint32_t &retryAfterSec) {
-  String body = "{\"fw\":\"" VX_FIRMWARE "\"";
+  String body = "{\"fw\":\"" WXP_FIRMWARE "\"";
   time_t ts = unixTime();
   if (ts) body += ",\"ts\":" + String((unsigned long)ts);
   body += ",\"readings\":[" + readings + "]}";
@@ -85,20 +85,20 @@ static int sendReadings(const String &readings, uint32_t &retryAfterSec) {
   HTTPClient http;
   WiFiClientSecure secure;
   WiFiClient plain;
-  bool tls = String(VX_INGEST_URL).startsWith("https://");
+  bool tls = String(WXP_INGEST_URL).startsWith("https://");
   if (tls) {
-#if VX_ALLOW_INSECURE_TLS
+#if WXP_ALLOW_INSECURE_TLS
     secure.setInsecure();
 #else
-    secure.setCACert(VX_ROOT_CA);
+    secure.setCACert(WXP_ROOT_CA);
 #endif
-    http.begin(secure, VX_INGEST_URL);
+    http.begin(secure, WXP_INGEST_URL);
   } else {
-    http.begin(plain, VX_INGEST_URL);
+    http.begin(plain, WXP_INGEST_URL);
   }
   http.setTimeout(15000);
   http.addHeader("Content-Type", "application/json");
-  http.addHeader("Authorization", "Bearer " VX_API_KEY);
+  http.addHeader("Authorization", "Bearer " WXP_API_KEY);
   int status = http.POST(body);
   String response = status > 0 ? http.getString() : http.errorToString(status);
   http.end();
@@ -115,19 +115,19 @@ static int sendReadings(const String &readings, uint32_t &retryAfterSec) {
 void setup() {
   Serial.begin(115200);
   delay(200);
-  Serial.println("Visione-X sensor " VX_FIRMWARE);
-#if VX_USE_DHT22
+  Serial.println("WallX Play sensor " WXP_FIRMWARE);
+#if WXP_USE_DHT22
   dht.begin();
 #endif
-#if VX_USE_DOOR
-  pinMode(VX_DOOR_PIN, INPUT_PULLUP);
+#if WXP_USE_DOOR
+  pinMode(WXP_DOOR_PIN, INPUT_PULLUP);
 #endif
   connectWifi();
 }
 
 void loop() {
   connectWifi();
-  uint32_t waitSec = VX_INTERVAL_SEC;
+  uint32_t waitSec = WXP_INTERVAL_SEC;
   if (WiFi.status() == WL_CONNECTED) {
     String readings;
     if (collectReadings(readings) > 0) {
@@ -142,7 +142,7 @@ void loop() {
         waitSec = 600;
       } else if (status == 400 || status == 422) {
         // Bad payload / unknown channel keys: fix config.h or the channels in the web app.
-        waitSec = VX_INTERVAL_SEC;
+        waitSec = WXP_INTERVAL_SEC;
       } else {
         backoffSec = backoffSec ? min<uint32_t>(backoffSec * 2, 300) : 15;
         waitSec = backoffSec;

@@ -1,5 +1,5 @@
 import type { Firestore } from 'firebase-admin/firestore';
-import { paths } from '@visione-x/shared';
+import { paths } from '@wallx-play/shared';
 import { SEED_FEATURE_CATALOG, SEED_PLANS } from './data';
 
 /** Writes plans and the feature catalog. With `overwrite: false`, existing docs are kept. */

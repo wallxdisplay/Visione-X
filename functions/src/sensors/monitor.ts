@@ -1,5 +1,5 @@
 import type { DocumentReference } from 'firebase-admin/firestore';
-import { STALE_COVERED_BY_OFFLINE, type SensorChannelDoc, type SensorDeviceDoc } from '@visione-x/shared';
+import { STALE_COVERED_BY_OFFLINE, type SensorChannelDoc, type SensorDeviceDoc } from '@wallx-play/shared';
 import type { Deps } from '../lib/context';
 import { openAlert } from './alerts';
 

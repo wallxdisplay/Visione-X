@@ -1,5 +1,5 @@
-import { Alert, Button, EmptyState, PageHeader, StatusChip } from '@visione-x/ui';
-import { isSensorOnline, type SensorDeviceDoc } from '@visione-x/shared';
+import { Alert, Button, EmptyState, PageHeader, StatusChip } from '@wallx-play/ui';
+import { isSensorOnline, type SensorDeviceDoc } from '@wallx-play/shared';
 import { Plus, Radio } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -35,7 +35,7 @@ export function Sensors() {
     return (
       <>
         <PageHeader title={t('nav.sensors')} description={t('sensors.description')} />
-        <div className="vx-card">
+        <div className="wxp-card">
           <EmptyState icon={<Radio size={24} aria-hidden />} title={t('sensors.notInPlanTitle')} description={t('sensors.notInPlanBody')} />
         </div>
       </>
@@ -60,7 +60,7 @@ export function Sensors() {
       ) : null}
 
       {devices.data.length === 0 && !devices.loading ? (
-        <div className="vx-card">
+        <div className="wxp-card">
           <EmptyState
             icon={<Radio size={24} aria-hidden />}
             title={t('sensors.emptyTitle')}
@@ -69,8 +69,8 @@ export function Sensors() {
           />
         </div>
       ) : (
-        <div className="vx-table-wrap">
-          <table className="vx-table">
+        <div className="wxp-table-wrap">
+          <table className="wxp-table">
             <thead>
               <tr>
                 <th>{t('sensors.name')}</th>
@@ -92,7 +92,7 @@ export function Sensors() {
                       <StatusChip tone={s.tone}>{t(`sensors.states.${s.key}`)}</StatusChip>
                     </td>
                     <td>{sites.data.find((x) => x.id === d.siteId)?.name ?? '—'}</td>
-                    <td className="vx-tabular">{d.channelCount}</td>
+                    <td className="wxp-tabular">{d.channelCount}</td>
                     <td>{formatDateTime(d.lastSeen)}</td>
                   </tr>
                 );

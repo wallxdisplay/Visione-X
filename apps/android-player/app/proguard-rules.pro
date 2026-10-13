@@ -1,11 +1,11 @@
 # kotlinx.serialization: keep generated serializers for @Serializable classes.
 -keepattributes *Annotation*, InnerClasses
 -dontnote kotlinx.serialization.**
--keep,includedescriptorclasses class com.wallx.visionex.player.**$$serializer { *; }
--keepclassmembers class com.wallx.visionex.player.** {
+-keep,includedescriptorclasses class com.wallx.play.**$$serializer { *; }
+-keepclassmembers class com.wallx.play.** {
     *** Companion;
 }
--keepclasseswithmembers class com.wallx.visionex.player.** {
+-keepclasseswithmembers class com.wallx.play.** {
     kotlinx.serialization.KSerializer serializer(...);
 }
 # OkHttp platform warnings

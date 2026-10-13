@@ -1,8 +1,8 @@
 {
-  "name": "visione-x",
+  "name": "wallx-play",
   "private": true,
   "type": "module",
-  "description": "Visione-X by WallX — multi-tenant digital signage SaaS",
+  "description": "WallX Play — multi-tenant digital signage SaaS",
   "workspaces": [
     "packages/*",
     "apps/web",
@@ -12,15 +12,15 @@
     "node": ">=22"
   },
   "scripts": {
-    "dev": "npm run dev -w @visione-x/web",
-    "build": "npm run build -w @visione-x/web && npm run build -w @visione-x/functions",
+    "dev": "npm run dev -w @wallx-play/web",
+    "build": "npm run build -w @wallx-play/web && npm run build -w @wallx-play/functions",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "vitest run",
-    "test:emulator": "firebase emulators:exec --only firestore,auth,storage --project demo-visione-x \"vitest run --config tests/vitest.emulator.config.ts\"",
-    "emulators": "npm run build -w @visione-x/functions && firebase emulators:start --project demo-visione-x",
-    "dev:functions": "npm run build -w @visione-x/functions -- --watch",
+    "test:emulator": "firebase emulators:exec --only firestore,auth,storage --project demo-wallx-play \"vitest run --config tests/vitest.emulator.config.ts\"",
+    "emulators": "npm run build -w @wallx-play/functions && firebase emulators:start --project demo-wallx-play",
+    "dev:functions": "npm run build -w @wallx-play/functions -- --watch",
     "seed": "tsx functions/scripts/seed-emulator.ts"
   },
   "devDependencies": {

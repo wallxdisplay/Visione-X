@@ -8,7 +8,7 @@ import {
   type PlaylistItem,
   type ScheduleRule,
   type Zone,
-} from '@visione-x/layout-spec';
+} from '@wallx-play/layout-spec';
 import {
   emergencyPlaylistId,
   paths,
@@ -20,7 +20,7 @@ import {
   type ScheduleDoc,
   type ScheduleTarget,
   type ScreenDoc,
-} from '@visione-x/shared';
+} from '@wallx-play/shared';
 import type { Deps } from '../lib/context';
 import { downloadUrl } from '../lib/storageUrl';
 

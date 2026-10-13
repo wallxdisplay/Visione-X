@@ -1,5 +1,5 @@
 import type { Firestore, Transaction, WriteBatch } from 'firebase-admin/firestore';
-import { paths, type NotificationDoc, type NotificationType } from '@visione-x/shared';
+import { paths, type NotificationDoc, type NotificationType } from '@wallx-play/shared';
 
 /**
  * Adds an in-app notification for everyone in the org. Stores type + params only; the web app

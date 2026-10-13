@@ -1,4 +1,4 @@
-import { Button } from '@visione-x/ui';
+import { Button } from '@wallx-play/ui';
 import { Siren } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';

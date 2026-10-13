@@ -5,7 +5,7 @@ import {
   type NotificationDoc,
   type PublishApprovalDoc,
   type ScreenCommandDoc,
-} from '@visione-x/shared';
+} from '@wallx-play/shared';
 import { db } from '../lib/firebase';
 import { useQueryData } from '../lib/hooks';
 

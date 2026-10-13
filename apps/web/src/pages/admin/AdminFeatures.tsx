@@ -1,4 +1,4 @@
-import { Alert, Button, Dialog, PageHeader, SelectField, StatusChip, TextAreaField, TextField } from '@visione-x/ui';
+import { Alert, Button, Dialog, PageHeader, SelectField, StatusChip, TextAreaField, TextField } from '@wallx-play/ui';
 import {
   FEATURE_KEYS,
   LIMIT_KEYS,
@@ -9,7 +9,7 @@ import {
   type LimitKey,
   type Plan,
   type ReleaseStatus,
-} from '@visione-x/shared';
+} from '@wallx-play/shared';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -50,8 +50,8 @@ export function AdminFeatures() {
       {notice ? <Alert tone="success">{notice}</Alert> : null}
 
       <h2 className="section-title">{t('adminFeatures.plans')}</h2>
-      <div className="vx-table-wrap">
-        <table className="vx-table">
+      <div className="wxp-table-wrap">
+        <table className="wxp-table">
           <thead>
             <tr>
               <th>{t('adminFeatures.plan')}</th>
@@ -68,15 +68,15 @@ export function AdminFeatures() {
             {sorted.map((p: WithId<Plan>) => (
               <tr key={p.id}>
                 <td>
-                  {p.name} <span className="vx-muted">({p.id})</span> {p.active ? null : <StatusChip tone="neutral">{t('adminFeatures.inactive')}</StatusChip>}
+                  {p.name} <span className="wxp-muted">({p.id})</span> {p.active ? null : <StatusChip tone="neutral">{t('adminFeatures.inactive')}</StatusChip>}
                 </td>
-                <td className="vx-tabular">{p.pricePerScreenMonthlyMinor !== null ? formatInr(p.pricePerScreenMonthlyMinor) : t('adminFeatures.custom')}</td>
-                <td className="vx-tabular">{p.annualDiscountBps / 100}%</td>
-                <td className="vx-tabular">{p.limits.screens ?? t('adminFeatures.purchased')}</td>
-                <td className="vx-tabular">{p.limits.users ?? '∞'}</td>
-                <td className="vx-tabular">{p.limits.storageGB ?? '∞'}</td>
-                <td className="vx-tabular">{p.featureKeys.length}</td>
-                <td className="vx-actions">
+                <td className="wxp-tabular">{p.pricePerScreenMonthlyMinor !== null ? formatInr(p.pricePerScreenMonthlyMinor) : t('adminFeatures.custom')}</td>
+                <td className="wxp-tabular">{p.annualDiscountBps / 100}%</td>
+                <td className="wxp-tabular">{p.limits.screens ?? t('adminFeatures.purchased')}</td>
+                <td className="wxp-tabular">{p.limits.users ?? '∞'}</td>
+                <td className="wxp-tabular">{p.limits.storageGB ?? '∞'}</td>
+                <td className="wxp-tabular">{p.featureKeys.length}</td>
+                <td className="wxp-actions">
                   {manage ? (
                     <Button size="sm" variant="tertiary" onClick={() => setEditing({ plan: p })}>
                       {t('common.edit')}
@@ -90,9 +90,9 @@ export function AdminFeatures() {
       </div>
 
       <h2 className="section-title">{t('adminFeatures.release')}</h2>
-      <p className="vx-muted">{t('adminFeatures.releaseHelp')}</p>
-      <div className="vx-table-wrap">
-        <table className="vx-table">
+      <p className="wxp-muted">{t('adminFeatures.releaseHelp')}</p>
+      <div className="wxp-table-wrap">
+        <table className="wxp-table">
           <thead>
             <tr>
               <th>{t('adminFeatures.feature')}</th>
@@ -112,7 +112,7 @@ export function AdminFeatures() {
                   <td>
                     {manage ? (
                       <select
-                        className="vx-input"
+                        className="wxp-input"
                         aria-label={t('adminFeatures.statusFor', { feature: t(`features.${k}`) })}
                         value={status}
                         onChange={(e) => setRelease({ key: k, to: e.target.value as ReleaseStatus })}
@@ -262,11 +262,11 @@ function PlanDialog({ plan, onClose, onSaved }: { plan: Plan | null; onClose: ()
     >
       {error ? <Alert tone="danger">{error}</Alert> : null}
       {plan ? <Alert tone="info">{t('adminFeatures.editWarning')}</Alert> : null}
-      <div className="vx-form__row">
+      <div className="wxp-form__row">
         <TextField label={t('adminFeatures.planId')} hint={t('adminFeatures.planIdHint')} required disabled={!!plan} value={id} onChange={(e) => setId(e.target.value.toLowerCase())} />
         <TextField label={t('adminFeatures.planName')} required maxLength={60} value={name} onChange={(e) => setName(e.target.value)} />
       </div>
-      <div className="vx-form__row">
+      <div className="wxp-form__row">
         <SelectField label={t('adminFeatures.tier')} options={TIERS.map((v) => ({ value: v, label: t(`adminFeatures.tiers.${v}`) }))} value={tier} onChange={(e) => setTier(e.target.value as Plan['tier'])} />
         <TextField
           label={t('adminFeatures.price')}
@@ -277,12 +277,12 @@ function PlanDialog({ plan, onClose, onSaved }: { plan: Plan | null; onClose: ()
           onChange={(e) => setPrice(e.target.value)}
         />
       </div>
-      <div className="vx-form__row">
+      <div className="wxp-form__row">
         <TextField label={t('adminFeatures.annualDiscount')} type="number" min={0} max={100} step="0.01" value={annual} onChange={(e) => setAnnual(e.target.value)} />
         <TextField label={t('adminFeatures.trialDays')} type="number" min={0} max={90} value={trialDays} onChange={(e) => setTrialDays(e.target.value)} />
       </div>
       <h3>{t('adminFeatures.limits')}</h3>
-      <p className="vx-muted">{t('adminFeatures.limitsHint')}</p>
+      <p className="wxp-muted">{t('adminFeatures.limitsHint')}</p>
       <div className="limits-grid">
         {LIMIT_KEYS.map((k) => (
           <TextField key={k} label={t(`limits.${k}`)} type="number" min={0} placeholder="∞" value={limits[k]} onChange={(e) => setLimits({ ...limits, [k]: e.target.value })} />

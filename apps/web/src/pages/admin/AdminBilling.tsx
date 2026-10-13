@@ -1,6 +1,6 @@
 import { collection, limit, query } from 'firebase/firestore';
-import { Alert, Button, PageHeader, StatusChip } from '@visione-x/ui';
-import { BILLING_STATUSES, formatInr, hasPlatformPermission, isLegacySubscription, type BillingStatus, type OrgDoc } from '@visione-x/shared';
+import { Alert, Button, PageHeader, StatusChip } from '@wallx-play/ui';
+import { BILLING_STATUSES, formatInr, hasPlatformPermission, isLegacySubscription, type BillingStatus, type OrgDoc } from '@wallx-play/shared';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
@@ -63,8 +63,8 @@ export function AdminBilling() {
       {requests.data.length ? (
         <>
           <h2 className="section-title">{t('adminBilling.openRequests', { count: requests.data.length })}</h2>
-          <div className="vx-table-wrap">
-            <table className="vx-table">
+          <div className="wxp-table-wrap">
+            <table className="wxp-table">
               <thead>
                 <tr>
                   <th>{t('adminBilling.org')}</th>
@@ -87,7 +87,7 @@ export function AdminBilling() {
                         {r.planId ? ` · ${planName(r.planId)}` : ''}
                         {r.interval ? ` · ${t(`billing.intervals.${r.interval}`)}` : ''}
                       </td>
-                      <td className="vx-muted">{r.message || '—'}</td>
+                      <td className="wxp-muted">{r.message || '—'}</td>
                       <td>{formatDate(r.createdAt)}</td>
                     </tr>
                   ))}
@@ -104,15 +104,15 @@ export function AdminBilling() {
             key={f}
             type="button"
             aria-pressed={filter === f}
-            className={`vx-btn vx-btn--sm ${filter === f ? 'vx-btn--primary' : 'vx-btn--secondary'}`}
+            className={`wxp-btn wxp-btn--sm ${filter === f ? 'wxp-btn--primary' : 'wxp-btn--secondary'}`}
             onClick={() => setFilter(f)}
           >
             {f === 'all' ? t('common.all') : `${t(`billing.status.${f}`)} (${counts[f]})`}
           </button>
         ))}
       </div>
-      <div className="vx-table-wrap">
-        <table className="vx-table">
+      <div className="wxp-table-wrap">
+        <table className="wxp-table">
           <thead>
             <tr>
               <th>{t('adminBilling.org')}</th>
@@ -132,14 +132,14 @@ export function AdminBilling() {
                     <Link to={`/admin/billing/${id}`}>{orgName.get(id) ?? id}</Link>
                   </td>
                   <td>
-                    {planName(s.planId)} <span className="vx-muted">· {t(`billing.intervals.${s.interval}`)}</span>
+                    {planName(s.planId)} <span className="wxp-muted">· {t(`billing.intervals.${s.interval}`)}</span>
                   </td>
                   <td>
                     <StatusChip tone={STATUS_TONE[s.status]}>{t(`billing.status.${s.status}`)}</StatusChip>
                   </td>
-                  <td className="vx-tabular">{s.quantity}</td>
+                  <td className="wxp-tabular">{s.quantity}</td>
                   <td>{formatDate(s.status === 'trialing' ? s.trialEndsAt : s.currentPeriodEnd)}</td>
-                  <td className="vx-tabular">{s.amountPerPeriodMinor !== null ? formatInr(s.amountPerPeriodMinor) : '—'}</td>
+                  <td className="wxp-tabular">{s.amountPerPeriodMinor !== null ? formatInr(s.amountPerPeriodMinor) : '—'}</td>
                 </tr>
               );
             })}

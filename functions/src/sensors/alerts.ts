@@ -1,5 +1,5 @@
 import type { Firestore, Transaction, WriteBatch } from 'firebase-admin/firestore';
-import { paths, type AlertDoc } from '@visione-x/shared';
+import { paths, type AlertDoc } from '@wallx-play/shared';
 import { notify } from '../lib/notify';
 
 type Writer = Transaction | WriteBatch;

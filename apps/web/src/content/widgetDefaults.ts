@@ -1,5 +1,5 @@
-import type { DataBinding, Widget } from '@visione-x/layout-spec';
-import type { SensorChannelDoc } from '@visione-x/shared';
+import type { DataBinding, Widget } from '@wallx-play/layout-spec';
+import type { SensorChannelDoc } from '@wallx-play/shared';
 
 export type EditableWidgetType = 'text' | 'clock' | 'qr' | 'table' | 'web';
 

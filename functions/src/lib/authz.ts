@@ -8,7 +8,7 @@ import {
   type OrgDoc,
   type OrgPermission,
   type PlatformPermission,
-} from '@visione-x/shared';
+} from '@wallx-play/shared';
 import type { Actor } from './context';
 
 export function requireVerifiedEmail(actor: Actor): asserts actor is Actor & { email: string } {

@@ -1,6 +1,6 @@
 {
   "projects": {
-    "default": "demo-visione-x",
-    "prod": "visione-x"
+    "default": "demo-wallx-play",
+    "prod": "wallx-play"
   }
 }

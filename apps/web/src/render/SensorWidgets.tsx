@@ -1,6 +1,6 @@
 /**
  * Sensor widgets for the web renderer (Studio preview). The Android player draws the same
- * widgets natively (ui/SensorWidgets.kt) with the rules in @visione-x/layout-spec/live.
+ * widgets natively (ui/SensorWidgets.kt) with the rules in @wallx-play/layout-spec/live.
  * Sizes are fractions of the zone (cqh/cqw), like the other widgets.
  */
 import {
@@ -13,10 +13,10 @@ import {
   type LiveState,
   type Threshold,
   type Widget,
-} from '@visione-x/layout-spec';
+} from '@wallx-play/layout-spec';
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { paths, type SensorChannelDoc } from '@visione-x/shared';
+import { paths, type SensorChannelDoc } from '@wallx-play/shared';
 import { useLiveValue, useReadings } from '../content/sensors';
 import { useDoc } from '../lib/hooks';
 import { SERIES_COLORS, SeriesChart } from './SeriesChart';
@@ -87,7 +87,7 @@ export function SensorValueView({ widget, orgId }: { widget: W<'sensorValue'>; o
         <NoData state={state} />
       ) : (
         <>
-          <span className="r-sensor__value vx-tabular" style={{ fontSize: `min(${scale * 100}cqh, 22cqw)`, color: band?.color }}>
+          <span className="r-sensor__value wxp-tabular" style={{ fontSize: `min(${scale * 100}cqh, 22cqw)`, color: band?.color }}>
             {formatLiveValue(v, widget.binding.decimals)}
             {widget.unit ? <span className="r-sensor__unit">{widget.unit}</span> : null}
           </span>
@@ -120,14 +120,14 @@ export function GaugeView({ widget, orgId }: { widget: W<'gauge'>; orgId?: strin
       <svg viewBox="0 0 100 60" className="r-gauge" role="img" aria-label={widget.label || widget.unit}>
         <path d={arc(0, 1)} stroke={text} strokeOpacity={0.18} strokeWidth={9} fill="none" strokeLinecap="round" />
         {v != null && f > 0 ? <path d={arc(0, f)} stroke={color} strokeWidth={9} fill="none" strokeLinecap="round" /> : null}
-        <text x={50} y={47} textAnchor="middle" fill={text} fontSize={v == null ? 8 : 15} fontWeight={700} className="vx-tabular">
+        <text x={50} y={47} textAnchor="middle" fill={text} fontSize={v == null ? 8 : 15} fontWeight={700} className="wxp-tabular">
           {v == null ? '—' : formatLiveValue(v, widget.binding.decimals)}
           {v != null && widget.unit ? <tspan fontSize={7} fontWeight={500}>{` ${widget.unit}`}</tspan> : null}
         </text>
-        <text x={10} y={58} textAnchor="middle" fill={text} fillOpacity={0.7} fontSize={6} className="vx-tabular">
+        <text x={10} y={58} textAnchor="middle" fill={text} fillOpacity={0.7} fontSize={6} className="wxp-tabular">
           {formatLiveValue(widget.min)}
         </text>
-        <text x={90} y={58} textAnchor="middle" fill={text} fillOpacity={0.7} fontSize={6} className="vx-tabular">
+        <text x={90} y={58} textAnchor="middle" fill={text} fillOpacity={0.7} fontSize={6} className="wxp-tabular">
           {formatLiveValue(widget.max)}
         </text>
       </svg>

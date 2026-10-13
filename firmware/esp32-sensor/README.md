@@ -1,11 +1,11 @@
 # ESP32 sensor firmware (reference)
 
-A minimal Arduino sketch that sends readings from an ESP32 to Visione-X. It reads a DHT22
+A minimal Arduino sketch that sends readings from an ESP32 to WallX Play. It reads a DHT22
 temperature/humidity sensor and a door (reed) switch. Use it as-is or as a starting point for
 other sensors: any device that can make an HTTPS POST can use the same API.
 
-## Set up the device in Visione-X
-1. **Sensors → Add sensor device.** Copy the API key (`vxs_…`). It is shown only once.
+## Set up the device in WallX Play
+1. **Sensors → Add sensor device.** Copy the API key (`wxp_…`). It is shown only once.
 2. On the device page, **add a channel** for each value the firmware sends. The channel *key*
    must match the firmware: `temp` (Number, °C), `humidity` (Number, %), `door` (On / off).
 3. Optional: add alert rules (e.g. `temp > 8`, `door == 1`) and a valid range (e.g. −40…85 °C
@@ -14,7 +14,7 @@ other sensors: any device that can make an HTTPS POST can use the same API.
 ## Build and flash
 1. Install the Arduino IDE (or `arduino-cli`) with the **esp32** board package (Espressif).
 2. Library Manager → install **DHT sensor library** (Adafruit) and **Adafruit Unified Sensor**
-   (only needed with `VX_USE_DHT22 1`).
+   (only needed with `WXP_USE_DHT22 1`).
 3. Copy `config.example.h` to `config.h` and fill in the Wi-Fi, ingest URL, API key and the
    server's root certificate (see the comment in the file). `config.h` is git-ignored.
 4. Select your board (e.g. *ESP32 Dev Module*), flash, and open the serial monitor at 115200
@@ -27,7 +27,7 @@ and GND (internal pull-up, so "open" reads HIGH and is sent as `true`).
 `POST /api/v1/ingest` with `Authorization: Bearer <key>` and a JSON body:
 
 ```json
-{ "ts": 1791806476, "fw": "vx-esp32 1.0.0", "readings": [{ "channel": "temp", "value": 4.2 }, { "channel": "door", "value": false }] }
+{ "ts": 1791806476, "fw": "wxp-esp32 1.0.0", "readings": [{ "channel": "temp", "value": 4.2 }, { "channel": "door", "value": false }] }
 ```
 
 | Field | Notes |
@@ -46,6 +46,6 @@ plenty for most sensors.
 
 ## Security
 - The key identifies one device; the server stores only its hash. If it leaks, open the device
-  in Visione-X and **Rotate key**, then flash the new key.
-- Keep certificate checking on (`VX_ALLOW_INSECURE_TLS 0`) for real deployments.
+  in WallX Play and **Rotate key**, then flash the new key.
+- Keep certificate checking on (`WXP_ALLOW_INSECURE_TLS 0`) for real deployments.
 - Local testing against the emulator is plain HTTP on your LAN; use it only on a trusted network.

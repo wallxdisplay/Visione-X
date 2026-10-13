@@ -1,6 +1,6 @@
-import { Alert, Button, Dialog, EmptyState, PageHeader, Spinner, StatusChip } from '@visione-x/ui';
-import { formatLiveValue, liveState } from '@visione-x/layout-spec';
-import { isSensorOnline, paths, type SensorChannelDoc, type SensorDeviceDoc } from '@visione-x/shared';
+import { Alert, Button, Dialog, EmptyState, PageHeader, Spinner, StatusChip } from '@wallx-play/ui';
+import { formatLiveValue, liveState } from '@wallx-play/layout-spec';
+import { isSensorOnline, paths, type SensorChannelDoc, type SensorDeviceDoc } from '@wallx-play/shared';
 import { ArrowLeft, KeyRound, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -38,10 +38,10 @@ function ChannelChart({ orgId, deviceId, channel, minutes }: { orgId: string; de
   const now = Date.now();
   const recent = points.slice(-12).reverse();
   return (
-    <section className="vx-card channel-chart">
+    <section className="wxp-card channel-chart">
       <h3 className="channel-chart__title">
         {channel.name}
-        {channel.unit ? <span className="vx-muted"> · {channel.unit}</span> : null}
+        {channel.unit ? <span className="wxp-muted"> · {channel.unit}</span> : null}
       </h3>
       <div className="channel-chart__plot">
         {loading ? (
@@ -65,7 +65,7 @@ function ChannelChart({ orgId, deviceId, channel, minutes }: { orgId: string; de
       {recent.length ? (
         <details className="channel-chart__table">
           <summary>{t('channels.showReadings')}</summary>
-          <table className="vx-table">
+          <table className="wxp-table">
             <thead>
               <tr>
                 <th>{t('channels.time')}</th>
@@ -76,7 +76,7 @@ function ChannelChart({ orgId, deviceId, channel, minutes }: { orgId: string; de
               {recent.map(([ts, v]) => (
                 <tr key={ts}>
                   <td>{formatDateTime(ts)}</td>
-                  <td className="vx-tabular">{display(channel, v, t)}</td>
+                  <td className="wxp-tabular">{display(channel, v, t)}</td>
                 </tr>
               ))}
             </tbody>
@@ -108,7 +108,7 @@ export function SensorDetail() {
   const d = device.data;
   if (!d) {
     return (
-      <div className="vx-card">
+      <div className="wxp-card">
         <EmptyState title={t('sensors.notFound')} action={<Link to="/sensors">{t('sensors.back')}</Link>} />
       </div>
     );
@@ -151,7 +151,7 @@ export function SensorDetail() {
         }
         actions={
           manage ? (
-            <div className="vx-toolbar" style={{ margin: 0 }}>
+            <div className="wxp-toolbar" style={{ margin: 0 }}>
               <Button onClick={() => setEditing(true)}>
                 <Pencil size={14} aria-hidden /> {t('common.edit')}
               </Button>
@@ -167,8 +167,8 @@ export function SensorDetail() {
       />
       {error && !confirm ? <Alert tone="danger">{error}</Alert> : null}
 
-      <div className="vx-card">
-        <dl className="vx-dl sensor-facts">
+      <div className="wxp-card">
+        <dl className="wxp-dl sensor-facts">
           <dt>{t('sensors.lastSeen')}</dt>
           <dd>{formatDateTime(d.lastSeen)}</dd>
           <dt>{t('sensors.site')}</dt>
@@ -179,7 +179,7 @@ export function SensorDetail() {
           <dd>{d.firmware ?? '—'}</dd>
           <dt>{t('sensors.apiKey')}</dt>
           <dd>
-            <code>{d.keyPrefix}…</code> <span className="vx-muted">({formatDateTime(d.keyCreatedAt)})</span>
+            <code>{d.keyPrefix}…</code> <span className="wxp-muted">({formatDateTime(d.keyCreatedAt)})</span>
           </dd>
           <dt>{t('sensors.deviceId')}</dt>
           <dd>
@@ -201,10 +201,10 @@ export function SensorDetail() {
         ) : null}
       </div>
       {channels.data.length === 0 && !channels.loading ? (
-        <p className="vx-muted">{t('channels.empty')}</p>
+        <p className="wxp-muted">{t('channels.empty')}</p>
       ) : (
-        <div className="vx-table-wrap">
-          <table className="vx-table">
+        <div className="wxp-table-wrap">
+          <table className="wxp-table">
             <thead>
               <tr>
                 <th>{t('channels.name')}</th>
@@ -224,12 +224,12 @@ export function SensorDetail() {
                     <td>
                       <code>{c.id}</code>
                     </td>
-                    <td className="vx-tabular">{c.latest ? display(c, c.latest.value, t) : '—'}</td>
+                    <td className="wxp-tabular">{c.latest ? display(c, c.latest.value, t) : '—'}</td>
                     <td>
                       <StatusChip tone={s.tone}>{t(`channels.states.${s.key}`)}</StatusChip>
                     </td>
                     <td>{formatDateTime(c.latest?.ts)}</td>
-                    <td className="vx-actions">
+                    <td className="wxp-actions">
                       {manage ? (
                         <>
                           <Button size="sm" variant="tertiary" onClick={() => setChannelDialog({ channel: c })}>

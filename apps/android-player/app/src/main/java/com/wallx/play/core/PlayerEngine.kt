@@ -1,4 +1,4 @@
-package com.wallx.visionex.player.core
+package com.wallx.play.core
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -7,25 +7,25 @@ import android.os.StatFs
 import android.util.DisplayMetrics
 import android.util.Log
 import android.view.WindowManager
-import com.wallx.visionex.player.BuildConfig
-import com.wallx.visionex.player.ErrorLog
-import com.wallx.visionex.player.PlayerApp.Companion.TAG
-import com.wallx.visionex.player.data.Api
-import com.wallx.visionex.player.data.ApiException
-import com.wallx.visionex.player.data.Asset
-import com.wallx.visionex.player.data.AssetCache
-import com.wallx.visionex.player.data.DeviceHardware
-import com.wallx.visionex.player.data.DeviceState
-import com.wallx.visionex.player.data.DeviceStore
-import com.wallx.visionex.player.data.Heartbeat
-import com.wallx.visionex.player.data.Manifest
-import com.wallx.visionex.player.data.ManifestStore
-import com.wallx.visionex.player.data.Playing
-import com.wallx.visionex.player.data.SUPPORTED_SPEC_VERSION
-import com.wallx.visionex.player.data.Size
-import com.wallx.visionex.player.data.json
-import com.wallx.visionex.player.data.CommandResult
-import com.wallx.visionex.player.PlayerApp
+import com.wallx.play.BuildConfig
+import com.wallx.play.ErrorLog
+import com.wallx.play.PlayerApp.Companion.TAG
+import com.wallx.play.data.Api
+import com.wallx.play.data.ApiException
+import com.wallx.play.data.Asset
+import com.wallx.play.data.AssetCache
+import com.wallx.play.data.DeviceHardware
+import com.wallx.play.data.DeviceState
+import com.wallx.play.data.DeviceStore
+import com.wallx.play.data.Heartbeat
+import com.wallx.play.data.Manifest
+import com.wallx.play.data.ManifestStore
+import com.wallx.play.data.Playing
+import com.wallx.play.data.SUPPORTED_SPEC_VERSION
+import com.wallx.play.data.Size
+import com.wallx.play.data.json
+import com.wallx.play.data.CommandResult
+import com.wallx.play.PlayerApp
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -99,7 +99,7 @@ class PlayerEngine internal constructor(
     internal var rebooter: () -> Boolean = {
         val dpm = context.getSystemService(Context.DEVICE_POLICY_SERVICE) as android.app.admin.DevicePolicyManager
         if (dpm.isDeviceOwnerApp(context.packageName)) {
-            dpm.reboot(android.content.ComponentName(context, com.wallx.visionex.player.KioskAdminReceiver::class.java))
+            dpm.reboot(android.content.ComponentName(context, com.wallx.play.KioskAdminReceiver::class.java))
             true
         } else {
             false

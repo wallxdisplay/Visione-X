@@ -14,7 +14,7 @@ const ORIGINAL = 'orgs/org1/media/m1/original';
 
 beforeAll(async () => {
   env = await initializeTestEnvironment({
-    projectId: 'demo-visione-x',
+    projectId: 'demo-wallx-play',
     firestore: { rules: readFileSync('firestore.rules', 'utf8') },
     storage: { rules: readFileSync('storage.rules', 'utf8') },
   });

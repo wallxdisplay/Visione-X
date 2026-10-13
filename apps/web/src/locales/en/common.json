@@ -1,6 +1,6 @@
 {
   "product": {
-    "name": "Visione-X",
+    "name": "WallX Play",
     "byline": "by WallX",
     "tagline": "One Platform. Every Screen."
   },
@@ -84,14 +84,14 @@
   },
   "placeholder": {
     "title": "Coming in phase {{phase}}",
-    "description": "This area is part of the Visione-X roadmap and will be built in phase {{phase}}."
+    "description": "This area is part of the WallX Play roadmap and will be built in phase {{phase}}."
   },
   "player": {
     "title": "Player registration",
-    "description": "Visione-X screens run the dedicated Android player app on the Android box connected to your LED controller.",
-    "step1": "Install the Visione-X Player app on the Android box.",
+    "description": "WallX Play screens run the dedicated Android player app on the Android box connected to your LED controller.",
+    "step1": "Install the WallX Play Player app on the Android box.",
     "step2": "Open the app. It shows a pairing code and QR code on the screen.",
-    "step3": "Sign in to Visione-X, open Screens and choose Add screen, then enter the code.",
+    "step3": "Sign in to WallX Play, open Screens and choose Add screen, then enter the code.",
     "step4": "An organization admin authorizes the screen before content is delivered."
   },
   "notFound": {
@@ -111,9 +111,9 @@
     "google": "Continue with Google",
     "backToSignIn": "Back to sign in",
     "signIn": {
-      "title": "Sign in to Visione-X",
+      "title": "Sign in to WallX Play",
       "action": "Sign in",
-      "noAccount": "New to Visione-X?"
+      "noAccount": "New to WallX Play?"
     },
     "signUp": {
       "title": "Create your account",
@@ -323,7 +323,7 @@
       },
       "confirmBody": {
         "approve": "{{org}} becomes active with a 14-day free trial. Its users can then add sites, team members and screens.",
-        "reject": "{{org}} will not be able to use Visione-X. The requester sees your reason.",
+        "reject": "{{org}} will not be able to use WallX Play. The requester sees your reason.",
         "request_info": "{{org}} stays inactive until the requester answers. They see your message."
       },
       "messageRequired": "Message to requester",
@@ -347,7 +347,7 @@
       "description": "WallX staff and their platform roles.",
       "grant": "Grant or change a role",
       "grantAction": "Save role",
-      "emailHint": "The person must already have a Visione-X account.",
+      "emailHint": "The person must already have a WallX Play account.",
       "saved": "Role updated for {{email}}. They must sign in again for it to apply.",
       "superadminOnly": "Only superadmins can manage platform roles.",
       "updated": "Updated",

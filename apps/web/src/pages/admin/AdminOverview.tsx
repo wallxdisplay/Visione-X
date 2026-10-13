@@ -1,6 +1,6 @@
 import { collection, getCountFromServer, query, where } from 'firebase/firestore';
-import { Card, PageHeader } from '@visione-x/ui';
-import { paths } from '@visione-x/shared';
+import { Card, PageHeader } from '@wallx-play/ui';
+import { paths } from '@wallx-play/shared';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
@@ -30,22 +30,22 @@ export function AdminOverview() {
   }, []);
 
   const stat = (label: string, value: number | undefined, to?: string) => (
-    <div className="vx-stat">
-      <div className="vx-stat__label">{to ? <Link to={to}>{label}</Link> : label}</div>
-      <div className="vx-stat__value">{value ?? '—'}</div>
+    <div className="wxp-stat">
+      <div className="wxp-stat__label">{to ? <Link to={to}>{label}</Link> : label}</div>
+      <div className="wxp-stat__value">{value ?? '—'}</div>
     </div>
   );
 
   return (
     <>
       <PageHeader title={t('nav.admin.overview')} description={t('admin.overview.description')} />
-      <div className="vx-stat-row">
+      <div className="wxp-stat-row">
         {stat(t('admin.overview.pending'), counts?.pending, '/admin/approvals')}
         {stat(t('admin.overview.active'), counts?.active, '/admin/orgs')}
         {stat(t('admin.overview.suspended'), counts?.suspended, '/admin/orgs')}
       </div>
       <Card title={t('admin.overview.comingTitle')}>
-        <p className="vx-muted" style={{ margin: 0 }}>
+        <p className="wxp-muted" style={{ margin: 0 }}>
           {t('admin.overview.comingBody')}
         </p>
       </Card>

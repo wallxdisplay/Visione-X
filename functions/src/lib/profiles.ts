@@ -1,5 +1,5 @@
 import { FieldValue, type Firestore, type Transaction } from 'firebase-admin/firestore';
-import { paths, type MemberDoc, type OrgStatus, type UserMembership } from '@visione-x/shared';
+import { paths, type MemberDoc, type OrgStatus, type UserMembership } from '@wallx-play/shared';
 
 /** Adds/updates (or removes, when membership is null) one org in users/{uid}.memberships. */
 export function setMembership(

@@ -3,7 +3,7 @@
  * same widgets natively (ui/DataWidgets.kt) from /devices/data. Sizes are fractions of the
  * zone (cqh/cqw).
  */
-import { weatherCondition, weatherIcon, type Widget } from '@visione-x/layout-spec';
+import { weatherCondition, weatherIcon, type Widget } from '@wallx-play/layout-spec';
 import { useEffect, useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDataSourceValue } from '../content/dataSources';
@@ -43,7 +43,7 @@ export function WeatherView({ widget, orgId }: { widget: W<'weather'>; orgId?: s
         </span>
         <div className="r-weather__main">
           <div className="r-weather__place">{value!.name}</div>
-          <div className="r-weather__temp vx-tabular">{round(w.current.tempC)}</div>
+          <div className="r-weather__temp wxp-tabular">{round(w.current.tempC)}</div>
           <div className="r-weather__cond">
             {t(`render.weather.${cond}`)}
             {w.current.feelsLikeC !== null ? ` · ${t('render.weather.feels', { t: round(w.current.feelsLikeC) })}` : ''}
@@ -56,7 +56,7 @@ export function WeatherView({ widget, orgId }: { widget: W<'weather'>; orgId?: s
             <div key={d.date} className="r-weather__day">
               <span>{weekday(d.date)}</span>
               <span aria-hidden>{weatherIcon(weatherCondition(d.code))}</span>
-              <span className="vx-tabular">
+              <span className="wxp-tabular">
                 {round(d.maxC)} <span className="r-weather__min">{round(d.minC)}</span>
               </span>
             </div>

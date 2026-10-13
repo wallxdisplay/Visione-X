@@ -1,5 +1,5 @@
-import { Button, SelectField, TextField } from '@visione-x/ui';
-import type { DataBinding, TextStyle, Threshold, Widget } from '@visione-x/layout-spec';
+import { Button, SelectField, TextField } from '@wallx-play/ui';
+import type { DataBinding, TextStyle, Threshold, Widget } from '@wallx-play/layout-spec';
 import { Plus, Trash2 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -47,20 +47,20 @@ function ThresholdsEditor({ value, readOnly, onChange }: { value: Threshold[]; r
   const set = (i: number, patch: Partial<Threshold>) => onChange(value.map((x, j) => (j === i ? { ...x, ...patch } : x)));
   return (
     <fieldset className="sensor-editor__group">
-      <legend className="vx-field__label">{t('sensorWidgets.bands')}</legend>
-      <p className="vx-muted sensor-editor__hint">{t('sensorWidgets.bandsHint')}</p>
+      <legend className="wxp-field__label">{t('sensorWidgets.bands')}</legend>
+      <p className="wxp-muted sensor-editor__hint">{t('sensorWidgets.bandsHint')}</p>
       {value.map((b, i) => (
         <div key={i} className="sensor-editor__row">
-          <select aria-label={t('sensorWidgets.operator')} className="vx-input sensor-editor__op" value={b.operator} disabled={readOnly} onChange={(e) => set(i, { operator: e.target.value as Threshold['operator'] })}>
+          <select aria-label={t('sensorWidgets.operator')} className="wxp-input sensor-editor__op" value={b.operator} disabled={readOnly} onChange={(e) => set(i, { operator: e.target.value as Threshold['operator'] })}>
             {['>', '>=', '<', '<='].map((op) => (
               <option key={op} value={op}>
                 {op}
               </option>
             ))}
           </select>
-          <input aria-label={t('sensorWidgets.value')} className="vx-input sensor-editor__num" type="number" step="any" value={b.value} disabled={readOnly} onChange={(e) => set(i, { value: Number(e.target.value) })} />
+          <input aria-label={t('sensorWidgets.value')} className="wxp-input sensor-editor__num" type="number" step="any" value={b.value} disabled={readOnly} onChange={(e) => set(i, { value: Number(e.target.value) })} />
           <input aria-label={t('studio.color')} type="color" className="color-input" value={b.color.slice(0, 7)} disabled={readOnly} onChange={(e) => set(i, { color: e.target.value.toUpperCase() })} />
-          <input aria-label={t('sensorWidgets.bandLabel')} className="vx-input" placeholder={t('sensorWidgets.bandLabel')} maxLength={40} value={b.label} disabled={readOnly} onChange={(e) => set(i, { label: e.target.value })} />
+          <input aria-label={t('sensorWidgets.bandLabel')} className="wxp-input" placeholder={t('sensorWidgets.bandLabel')} maxLength={40} value={b.label} disabled={readOnly} onChange={(e) => set(i, { label: e.target.value })} />
           {!readOnly ? (
             <Button size="sm" variant="tertiary" aria-label={t('sensorWidgets.remove')} onClick={() => onChange(value.filter((_, j) => j !== i))}>
               <Trash2 size={14} aria-hidden />
@@ -129,7 +129,7 @@ export function SensorWidgetEditor({
           </Button>
         ) : null}
         {labelField}
-        <div className="vx-form__row">
+        <div className="wxp-form__row">
           <SelectField
             label={t('sensorWidgets.chartKind')}
             disabled={readOnly}
@@ -157,13 +157,13 @@ export function SensorWidgetEditor({
       <ChannelSelect label={t('sensorWidgets.channel')} binding={widget.binding} channels={channels} readOnly={readOnly} onChange={setBinding} />
       {labelField}
       {widget.type !== 'status' ? (
-        <div className="vx-form__row">
+        <div className="wxp-form__row">
           <TextField label={t('sensorWidgets.unit')} maxLength={16} value={widget.unit} disabled={readOnly} onChange={(e) => onChange({ ...widget, unit: e.target.value })} />
           {decimalsField(widget.binding, setBinding)}
         </div>
       ) : null}
       {widget.type === 'gauge' ? (
-        <div className="vx-form__row">
+        <div className="wxp-form__row">
           <TextField label={t('sensorWidgets.min')} type="number" step="any" value={widget.min} disabled={readOnly} onChange={(e) => onChange({ ...widget, min: Number(e.target.value) })} />
           <TextField
             label={t('sensorWidgets.max')}
@@ -181,15 +181,15 @@ export function SensorWidgetEditor({
       ) : null}
       {widget.type === 'status' ? (
         <fieldset className="sensor-editor__group">
-          <legend className="vx-field__label">{t('sensorWidgets.states')}</legend>
-          <p className="vx-muted sensor-editor__hint">{t('sensorWidgets.statesHint')}</p>
+          <legend className="wxp-field__label">{t('sensorWidgets.states')}</legend>
+          <p className="wxp-muted sensor-editor__hint">{t('sensorWidgets.statesHint')}</p>
           {widget.states.map((s, i) => {
             const set = (patch: Partial<typeof s>) => onChange({ ...widget, states: widget.states.map((x, j) => (j === i ? { ...x, ...patch } : x)) });
             return (
               <div key={i} className="sensor-editor__row">
-                <input aria-label={t('sensorWidgets.match')} className="vx-input sensor-editor__num" maxLength={20} value={s.match} disabled={readOnly} onChange={(e) => set({ match: e.target.value })} />
+                <input aria-label={t('sensorWidgets.match')} className="wxp-input sensor-editor__num" maxLength={20} value={s.match} disabled={readOnly} onChange={(e) => set({ match: e.target.value })} />
                 <input aria-label={t('studio.color')} type="color" className="color-input" value={s.color.slice(0, 7)} disabled={readOnly} onChange={(e) => set({ color: e.target.value.toUpperCase() })} />
-                <input aria-label={t('sensorWidgets.stateLabel')} className="vx-input" maxLength={40} value={s.label} disabled={readOnly} onChange={(e) => set({ label: e.target.value })} />
+                <input aria-label={t('sensorWidgets.stateLabel')} className="wxp-input" maxLength={40} value={s.label} disabled={readOnly} onChange={(e) => set({ label: e.target.value })} />
                 {!readOnly && widget.states.length > 1 ? (
                   <Button size="sm" variant="tertiary" aria-label={t('sensorWidgets.remove')} onClick={() => onChange({ ...widget, states: widget.states.filter((_, j) => j !== i) })}>
                     <Trash2 size={14} aria-hidden />

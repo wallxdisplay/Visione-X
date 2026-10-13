@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { Manifest, resolvePlaylist } from '@visione-x/layout-spec';
+import { Manifest, resolvePlaylist } from '@wallx-play/layout-spec';
 import {
   EMERGENCY_CONFIRM_PHRASE,
   OFFLINE_AFTER_MS,
@@ -9,7 +9,7 @@ import {
   type NotificationDoc,
   type ScreenCommandDoc,
   type ScreenDoc,
-} from '@visione-x/shared';
+} from '@wallx-play/shared';
 import { handle } from '../../functions/src/api/router';
 import * as layouts from '../../functions/src/content/layouts';
 import * as schedules from '../../functions/src/content/schedules';

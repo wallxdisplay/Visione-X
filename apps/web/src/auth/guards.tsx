@@ -1,4 +1,4 @@
-import { Spinner } from '@visione-x/ui';
+import { Spinner } from '@wallx-play/ui';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, Outlet, useLocation } from 'react-router';

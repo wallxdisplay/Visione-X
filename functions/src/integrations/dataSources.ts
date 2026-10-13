@@ -4,7 +4,7 @@
  */
 import { HttpsError } from 'firebase-functions/v2/https';
 import type { z } from 'zod';
-import type { ManifestDataSource } from '@visione-x/layout-spec';
+import type { ManifestDataSource } from '@wallx-play/layout-spec';
 import {
   paths,
   type DataSourceDoc,
@@ -20,7 +20,7 @@ import {
   type RssData,
   type SaveDataSourceInput,
   type TestRssInput,
-} from '@visione-x/shared';
+} from '@wallx-play/shared';
 import { userAudit } from '../content/media';
 import { authenticate, type ApiRequest, type ApiResult } from '../devices/deviceApi';
 import { auditedTransaction } from '../lib/audit';

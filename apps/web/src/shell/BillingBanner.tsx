@@ -1,4 +1,4 @@
-import { BILLING_GRACE_DAYS, TRIAL_REMINDER_DAYS } from '@visione-x/shared';
+import { BILLING_GRACE_DAYS, TRIAL_REMINDER_DAYS } from '@wallx-play/shared';
 import { CreditCard } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';

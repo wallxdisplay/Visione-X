@@ -1,4 +1,4 @@
-package com.wallx.visionex.player.ui
+package com.wallx.play.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -31,11 +31,11 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.wallx.visionex.player.R
-import com.wallx.visionex.player.core.PlayerEngine
-import com.wallx.visionex.player.core.Schedule
-import com.wallx.visionex.player.core.UiState
-import com.wallx.visionex.player.data.Playing
+import com.wallx.play.R
+import com.wallx.play.core.PlayerEngine
+import com.wallx.play.core.Schedule
+import com.wallx.play.core.UiState
+import com.wallx.play.data.Playing
 import kotlinx.coroutines.delay
 import java.text.DateFormat
 import java.util.Date
@@ -112,7 +112,7 @@ private fun Brand() {
             Text("X", color = Orange, fontSize = 26.sp, fontWeight = FontWeight.ExtraBold)
         }
         Spacer(Modifier.size(14.dp))
-        Text("Visione-X", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+        Text("WallX Play", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
     }
 }
 

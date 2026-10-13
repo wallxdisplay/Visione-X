@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import type { Firestore, Transaction } from 'firebase-admin/firestore';
-import { paths, type AuditDoc } from '@visione-x/shared';
+import { paths, type AuditDoc } from '@wallx-play/shared';
 
 export type AuditInput = Omit<AuditDoc, 'chainId' | 'seq' | 'prevHash' | 'hash'>;
 export type RecordAudit = (chainId: string, entry: AuditInput) => void;

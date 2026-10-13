@@ -4,7 +4,7 @@
  * /api/v1/devices/* with `Authorization: Device <deviceId>:<secret>`. Only its hash is stored.
  */
 import { z } from 'zod';
-import { RESOLUTION_PRESETS } from '@visione-x/layout-spec';
+import { RESOLUTION_PRESETS } from '@wallx-play/layout-spec';
 
 export const DEVICE_STATUSES = ['unpaired', 'pending_authorization', 'authorized', 'revoked'] as const;
 export type DeviceStatus = (typeof DEVICE_STATUSES)[number];

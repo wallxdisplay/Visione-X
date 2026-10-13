@@ -1,7 +1,7 @@
 import type { Auth } from 'firebase-admin/auth';
 import type { Firestore } from 'firebase-admin/firestore';
 import type { Bucket } from '@google-cloud/storage';
-import type { PlatformRole } from '@visione-x/shared';
+import type { PlatformRole } from '@wallx-play/shared';
 
 /** Injected into every service so tests can pass emulator-backed clients and a fixed clock. */
 export interface Deps {

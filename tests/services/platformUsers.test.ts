@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { PLATFORM_AUDIT_CHAIN } from '@visione-x/shared';
+import { PLATFORM_AUDIT_CHAIN } from '@wallx-play/shared';
 import { setPlatformRole } from '../../functions/src/admin/platformUsers';
 import { verifyAuditChain } from '../../functions/src/lib/audit';
 import { auth, db, deps, expectCode, resetEmulator, superadmin, user } from './helpers';
 
 async function resetAuth() {
   const host = process.env.FIREBASE_AUTH_EMULATOR_HOST;
-  await fetch(`http://${host}/emulator/v1/projects/demo-visione-x/accounts`, { method: 'DELETE' });
+  await fetch(`http://${host}/emulator/v1/projects/demo-wallx-play/accounts`, { method: 'DELETE' });
 }
 
 beforeEach(async () => {

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { Manifest } from '@visione-x/layout-spec';
-import { paths, type DataSourceDoc, type DataSourceValue, type DeviceDataResponse } from '@visione-x/shared';
+import { Manifest } from '@wallx-play/layout-spec';
+import { paths, type DataSourceDoc, type DataSourceValue, type DeviceDataResponse } from '@wallx-play/shared';
 import { handle } from '../../functions/src/api/router';
 import * as layouts from '../../functions/src/content/layouts';
 import * as schedules from '../../functions/src/content/schedules';

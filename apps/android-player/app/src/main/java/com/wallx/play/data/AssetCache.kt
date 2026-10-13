@@ -1,4 +1,4 @@
-package com.wallx.visionex.player.data
+package com.wallx.play.data
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive

@@ -11,7 +11,7 @@ export function Button({
   return (
     <button
       type="button"
-      className={['vx-btn', `vx-btn--${variant}`, size === 'sm' && 'vx-btn--sm', className]
+      className={['wxp-btn', `wxp-btn--${variant}`, size === 'sm' && 'wxp-btn--sm', className]
         .filter(Boolean)
         .join(' ')}
       {...props}
@@ -23,13 +23,13 @@ export type StatusTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral';
 
 /** Status is always shown as text + color, never color alone. */
 export function StatusChip({ tone, children }: { tone: StatusTone; children: ReactNode }) {
-  return <span className={`vx-chip vx-chip--${tone}`}>{children}</span>;
+  return <span className={`wxp-chip wxp-chip--${tone}`}>{children}</span>;
 }
 
 export function Card({ title, children }: { title?: ReactNode; children: ReactNode }) {
   return (
-    <section className="vx-card">
-      {title ? <h2 className="vx-card__title">{title}</h2> : null}
+    <section className="wxp-card">
+      {title ? <h2 className="wxp-card__title">{title}</h2> : null}
       {children}
     </section>
   );
@@ -45,7 +45,7 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <header className="vx-page-header">
+    <header className="wxp-page-header">
       <div>
         <h1>{title}</h1>
         {description ? <p>{description}</p> : null}
@@ -67,7 +67,7 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="vx-empty">
+    <div className="wxp-empty">
       {icon}
       <h2>{title}</h2>
       {description ? <p>{description}</p> : null}

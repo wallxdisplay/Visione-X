@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { LayoutDoc, MediaDoc, PlaylistDoc, ScheduleDoc, ScreenDoc } from '@visione-x/shared';
+import type { LayoutDoc, MediaDoc, PlaylistDoc, ScheduleDoc, ScreenDoc } from '@wallx-play/shared';
 import { newPairingCode } from '../devices/deviceApi';
 import { assembleManifest, targetsScreen } from './manifest';
 

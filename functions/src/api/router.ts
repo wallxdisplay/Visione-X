@@ -1,4 +1,4 @@
-import { PRODUCT_NAME, REGION } from '@visione-x/shared';
+import { PRODUCT_NAME, REGION } from '@wallx-play/shared';
 import type { Deps } from '../lib/context';
 import {
   deviceCommandResult,

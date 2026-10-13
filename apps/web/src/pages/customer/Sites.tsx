@@ -1,6 +1,6 @@
 import { collection, orderBy, query } from 'firebase/firestore';
-import { Alert, Button, Dialog, EmptyState, PageHeader, SelectField, TextField } from '@visione-x/ui';
-import { paths, UpsertSiteInput, type SiteDoc } from '@visione-x/shared';
+import { Alert, Button, Dialog, EmptyState, PageHeader, SelectField, TextField } from '@wallx-play/ui';
+import { paths, UpsertSiteInput, type SiteDoc } from '@wallx-play/shared';
 import { MapPin, Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -85,7 +85,7 @@ export function Sites() {
       />
 
       {sites.data.length === 0 && !sites.loading ? (
-        <div className="vx-card">
+        <div className="wxp-card">
           <EmptyState
             icon={<MapPin size={24} aria-hidden />}
             title={t('sites.emptyTitle')}
@@ -100,8 +100,8 @@ export function Sites() {
           />
         </div>
       ) : (
-        <div className="vx-table-wrap">
-          <table className="vx-table">
+        <div className="wxp-table-wrap">
+          <table className="wxp-table">
             <thead>
               <tr>
                 <th>{t('sites.name')}</th>
@@ -114,9 +114,9 @@ export function Sites() {
               {sites.data.map((s) => (
                 <tr key={s.id}>
                   <td>{s.name}</td>
-                  <td className="vx-muted">{s.address ?? '—'}</td>
+                  <td className="wxp-muted">{s.address ?? '—'}</td>
                   <td>{s.timezone}</td>
-                  <td className="vx-actions">
+                  <td className="wxp-actions">
                     {manage ? (
                       <>
                         <Button

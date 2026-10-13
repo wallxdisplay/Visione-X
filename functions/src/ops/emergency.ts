@@ -6,7 +6,7 @@ import {
   type EndEmergencyInput,
   type ScreenDoc,
   type TriggerEmergencyInput,
-} from '@visione-x/shared';
+} from '@wallx-play/shared';
 import { userAudit } from '../content/media';
 import { auditedTransaction } from '../lib/audit';
 import { requireActiveOrgPermission, requireOrgPermission } from '../lib/authz';

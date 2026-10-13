@@ -4,7 +4,7 @@
  * API key is required (secret OPEN_METEO_API_KEY → customer-api.open-meteo.com); without it
  * weather requests fail with a clear "not configured" error instead of using the free API.
  */
-import type { GeocodeResult, WeatherConfig, WeatherData } from '@visione-x/shared';
+import type { GeocodeResult, WeatherConfig, WeatherData } from '@wallx-play/shared';
 import type { Deps } from '../lib/context';
 import { FetchError } from './net';
 

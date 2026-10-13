@@ -57,7 +57,7 @@ export function NotificationBell() {
         <div className="bell__panel" role="dialog" aria-label={t('shell.notifications')}>
           <div className="bell__head">{t('shell.notifications')}</div>
           {notifications.data.length === 0 ? (
-            <p className="vx-muted bell__empty">{t('notifications.empty')}</p>
+            <p className="wxp-muted bell__empty">{t('notifications.empty')}</p>
           ) : (
             <ul className="bell__list">
               {notifications.data.map((n) => {
@@ -72,7 +72,7 @@ export function NotificationBell() {
                     ) : (
                       <span>{text}</span>
                     )}
-                    <span className="vx-muted">{formatDateTime(n.createdAt)}</span>
+                    <span className="wxp-muted">{formatDateTime(n.createdAt)}</span>
                   </li>
                 );
               })}

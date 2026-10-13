@@ -1,5 +1,5 @@
-import { Alert, Button, Card, Dialog, PageHeader, Spinner, StatusChip, TextAreaField } from '@visione-x/ui';
-import { hasPlatformPermission, paths, stateName, type SignupRequestDoc } from '@visione-x/shared';
+import { Alert, Button, Card, Dialog, PageHeader, Spinner, StatusChip, TextAreaField } from '@wallx-play/ui';
+import { hasPlatformPermission, paths, stateName, type SignupRequestDoc } from '@wallx-play/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
@@ -55,7 +55,7 @@ export function ApprovalReview() {
         description={<StatusChip tone={REQUEST_TONE[r.status]}>{t(`status.${r.status}`)}</StatusChip>}
         actions={
           canDecide && open ? (
-            <div className="vx-toolbar" style={{ margin: 0 }}>
+            <div className="wxp-toolbar" style={{ margin: 0 }}>
               {r.status === 'pending' ? (
                 <Button onClick={() => setDecision('request_info')}>{t('admin.approvals.requestInfo')}</Button>
               ) : null}
@@ -69,9 +69,9 @@ export function ApprovalReview() {
           ) : null
         }
       />
-      <div className="vx-stack">
+      <div className="wxp-stack">
         <Card title={t('admin.approvals.details')}>
-          <dl className="vx-dl">
+          <dl className="wxp-dl">
             <dt>{t('onboarding.contactName')}</dt>
             <dd>{d.contactName}</dd>
             <dt>{t('auth.email')}</dt>
@@ -83,7 +83,7 @@ export function ApprovalReview() {
               {d.city}, {stateName(d.stateCode)}
             </dd>
             <dt>{t('onboarding.expectedScreens')}</dt>
-            <dd className="vx-tabular">{d.expectedScreens}</dd>
+            <dd className="wxp-tabular">{d.expectedScreens}</dd>
             <dt>{t('onboarding.gstin')}</dt>
             <dd>{d.gstin ?? '—'}</dd>
             <dt>{t('onboarding.timezone')}</dt>
@@ -99,7 +99,7 @@ export function ApprovalReview() {
             <ul className="thread">
               {r.messages.map((m) => (
                 <li key={m.at} className={`thread__msg thread__msg--${m.from}`}>
-                  <div className="vx-muted">
+                  <div className="wxp-muted">
                     {t(`admin.approvals.from.${m.from}`)} · {formatDateTime(m.at)}
                   </div>
                   <div>{m.text}</div>

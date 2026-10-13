@@ -6,11 +6,11 @@ import {
   type OrgDoc,
   type OrgPermission,
   type UserMembership,
-} from '@visione-x/shared';
+} from '@wallx-play/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { useDoc } from '../lib/hooks';
 
-const STORAGE_KEY = 'vx.currentOrg';
+const STORAGE_KEY = 'wxp.currentOrg';
 
 interface OrgState {
   orgId: string;

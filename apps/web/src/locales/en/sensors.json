@@ -1,6 +1,6 @@
 {
   "sensors": {
-    "description": "ESP32 and other sensor devices that send readings to Visione-X. Show their values on screens and get alerts when something is wrong.",
+    "description": "ESP32 and other sensor devices that send readings to WallX Play. Show their values on screens and get alerts when something is wrong.",
     "add": "Add sensor device",
     "create": "Create and show key",
     "edit": "Edit sensor device",

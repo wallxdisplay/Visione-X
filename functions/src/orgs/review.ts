@@ -11,7 +11,7 @@ import {
   type SetOrgStatusInput,
   type SignupRequestDoc,
   type SubscriptionDoc,
-} from '@visione-x/shared';
+} from '@wallx-play/shared';
 import { auditedTransaction } from '../lib/audit';
 import { getOrg, requirePlatform } from '../lib/authz';
 import type { Actor, Deps } from '../lib/context';

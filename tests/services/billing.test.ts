@@ -10,7 +10,7 @@ import {
   type OrgDoc,
   type PaymentDoc,
   type SubscriptionDoc,
-} from '@visione-x/shared';
+} from '@wallx-play/shared';
 import * as billing from '../../functions/src/billing/billing';
 import * as plans from '../../functions/src/billing/plans';
 import * as layouts from '../../functions/src/content/layouts';

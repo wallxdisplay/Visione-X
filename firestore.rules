@@ -1,6 +1,6 @@
 rules_version = '2';
 
-// Visione-X Firestore rules.
+// WallX Play Firestore rules.
 // Principle: deny by default. In phase 1 every write goes through Cloud Functions (Admin SDK
 // bypasses rules), which check permissions and write an audit entry in the same transaction.
 // Clients get narrowly scoped READ access only.

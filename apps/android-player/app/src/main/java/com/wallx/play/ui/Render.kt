@@ -1,4 +1,4 @@
-package com.wallx.visionex.player.ui
+package com.wallx.play.ui
 
 import android.annotation.SuppressLint
 import android.net.Uri
@@ -57,14 +57,14 @@ import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
 import coil.decode.GifDecoder
 import coil.ImageLoader
-import com.wallx.visionex.player.core.DataStore
-import com.wallx.visionex.player.core.LiveStore
-import com.wallx.visionex.player.core.MediaLibrary
-import com.wallx.visionex.player.data.Layout
-import com.wallx.visionex.player.data.Manifest
-import com.wallx.visionex.player.data.PlaylistItem
-import com.wallx.visionex.player.data.kind
-import com.wallx.visionex.player.data.str
+import com.wallx.play.core.DataStore
+import com.wallx.play.core.LiveStore
+import com.wallx.play.core.MediaLibrary
+import com.wallx.play.data.Layout
+import com.wallx.play.data.Manifest
+import com.wallx.play.data.PlaylistItem
+import com.wallx.play.data.kind
+import com.wallx.play.data.str
 import kotlinx.coroutines.delay
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject

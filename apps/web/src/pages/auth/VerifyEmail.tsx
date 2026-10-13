@@ -1,5 +1,5 @@
 import { sendEmailVerification } from 'firebase/auth';
-import { Alert, Button } from '@visione-x/ui';
+import { Alert, Button } from '@wallx-play/ui';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, useSearchParams } from 'react-router';
@@ -48,7 +48,7 @@ export function VerifyEmail() {
         </button>
       }
     >
-      <div className="vx-form">
+      <div className="wxp-form">
         {message ? <Alert tone={message.tone}>{message.text}</Alert> : null}
         <Button variant="primary" disabled={busy} onClick={() => void check()}>
           {t('auth.verify.done')}

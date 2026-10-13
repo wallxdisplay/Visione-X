@@ -3,7 +3,7 @@ import { connectAuthEmulator, getAuth } from 'firebase/auth';
 import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore';
 import { connectFunctionsEmulator, getFunctions } from 'firebase/functions';
 import { connectStorageEmulator, getStorage } from 'firebase/storage';
-import { REGION } from '@visione-x/shared';
+import { REGION } from '@wallx-play/shared';
 
 const env = import.meta.env;
 // Dev server defaults to the local emulators; production builds never use them unless told to.
@@ -12,8 +12,8 @@ export const useEmulators = env.VITE_USE_EMULATORS ? env.VITE_USE_EMULATORS === 
 const app: FirebaseApp = initializeApp({
   apiKey: env.VITE_FIREBASE_API_KEY || 'demo-key',
   authDomain: env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: env.VITE_FIREBASE_PROJECT_ID || 'demo-visione-x',
-  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET || 'demo-visione-x.appspot.com',
+  projectId: env.VITE_FIREBASE_PROJECT_ID || 'demo-wallx-play',
+  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET || 'demo-wallx-play.appspot.com',
   appId: env.VITE_FIREBASE_APP_ID,
 });
 
