@@ -228,7 +228,7 @@ Platform overview · Organization approvals (approve/reject/request info) · Org
 - Audit logs: Functions-only append, hash chain, daily export to retention-locked bucket.
 - Support access issues a short-lived scoped token; never reveals passwords or unmasked secrets.
 - Input sanitization for RSS/HTML widgets; web widgets sandboxed on device.
-- Data retention jobs per org policy (Cloud Scheduler).
+- Data retention: a daily job removes expired pairing codes and invitations, old remote commands, screenshots and notifications, and abandoned uploads (releasing their reserved storage); customer history and the audit log are kept (docs/DEVELOPMENT.md).
 
 ## 13. Notifications
 Firestore-triggered event bus → in-app (`notifications`) + email provider (adapter) + FCM web push later. Events: org approval status, screen offline, publish failed, sensor threshold/stale, limit approaching, payment failed, invoice issued, emergency triggered, security alert.

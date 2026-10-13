@@ -112,6 +112,27 @@ Remaining one-time steps (console):
       `functions/.env.wallx-play` and redeploy functions. Players are not affected: they use the
       device API (`api` function), which authenticates devices with their own credentials.
 
+**Audit-log archive.** `auditExportDaily` (06:00 IST) writes each finished UTC day of the audit
+log to a separate bucket as `audit/YYYY/MM/YYYY-MM-DD.ndjson` plus a `.summary.json` (entry
+count, SHA-256, last hash per chain). Until the bucket exists it only logs "skipped". One-time
+setup (PowerShell, with `CLOUDSDK_PYTHON` set as above):
+```powershell
+gcloud storage buckets create gs://wallx-play-audit-archive --project wallx-play --location asia-south1 --uniform-bucket-level-access --public-access-prevention
+gcloud storage buckets update gs://wallx-play-audit-archive --retention-period 400d
+```
+Then add `AUDIT_ARCHIVE_BUCKET=wallx-play-audit-archive` to `functions/.env.wallx-play` and
+deploy functions. The retention period stops anyone (including admins) from deleting or
+changing an exported day for 400 days. Once a few exports look right, you can **lock** it
+(`gcloud storage buckets update gs://wallx-play-audit-archive --lock-retention-period`); locking
+is permanent and the period can then only be extended.
+
+**Data retention.** `retentionDaily` (03:30 IST) deletes pairing codes a day after they expire,
+invitations 30 days after they expire, remote commands and their screenshots after 30 days,
+notifications after 90 days, rejected or unfinished player uploads after 7 days, and media
+uploads that never finished after a day (giving back the storage they reserved). Periods are in
+`functions/src/ops/retention.ts`. Alerts, approvals, emergencies, payments and the audit log are
+kept. Sensor readings expire through the TTL policy (plan `retentionDays`).
+
 **Weather provider (phase 6).** Open-Meteo's free API is non-commercial, so production needs a
 commercial key. Once purchased: `npx firebase functions:secrets:set OPEN_METEO_API_KEY --project prod`,
 then bind the secret to the `api`, `previewDataSource` and `geocodePlace` functions (add

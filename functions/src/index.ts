@@ -5,3 +5,5 @@ export { api } from './api/index';
 export * from './callables';
 export { processMedia } from './media/trigger';
 export { monitorScreens } from './ops/monitor';
+export { retentionDaily } from './ops/retention';
+export { auditExportDaily } from './ops/auditExport';
