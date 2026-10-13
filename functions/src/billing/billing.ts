@@ -30,17 +30,11 @@ import {
   type VoidPaymentInput,
 } from '@wallx-play/shared';
 import { userAudit } from '../content/media';
-import { auditedTransaction, type RecordAudit } from '../lib/audit';
+import { auditedTransaction, platformAudit, type RecordAudit } from '../lib/audit';
 import { getOrg, requireOrgPermission, requirePlatform } from '../lib/authz';
 import type { Actor, Deps } from '../lib/context';
 import { computeEntitlements } from '../lib/entitlements';
 import { notify } from '../lib/notify';
-
-export const platformAudit = (actor: Actor) => ({
-  actorType: 'platform_user' as const,
-  actorId: actor.uid,
-  ...(actor.email ? { actorEmail: actor.email } : {}),
-});
 
 /** Price per billing period before GST; null when neither the plan nor the deal has a price. */
 export function periodAmount(plan: Pick<Plan, 'pricePerScreenMonthlyMinor' | 'annualDiscountBps'>, sub: Pick<SubscriptionDoc, 'customPriceMinor' | 'quantity' | 'interval' | 'discountBps'>): number | null {

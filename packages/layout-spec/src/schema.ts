@@ -310,5 +310,7 @@ export const Manifest = z.object({
   liveChannels: z.array(LiveChannel).default([]),
   /** Data sources the player fetches from /devices/data (empty when none are used). */
   dataSources: z.array(ManifestDataSource).default([]),
+  /** Clockwise degrees the player rotates its whole output (portrait walls on landscape HDMI). */
+  rotation: z.union([z.literal(0), z.literal(90), z.literal(180), z.literal(270)]).default(0),
 });
 export type Manifest = z.infer<typeof Manifest>;

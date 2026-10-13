@@ -4,7 +4,7 @@ import {
   initializeTestEnvironment,
   type RulesTestEnvironment,
 } from '@firebase/rules-unit-testing';
-import { collectionGroup, doc, getDoc, getDocs, query, setDoc, where } from 'firebase/firestore';
+import { collection, collectionGroup, doc, getDoc, getDocs, query, setDoc, where } from 'firebase/firestore';
 import { readFileSync } from 'node:fs';
 import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
 
@@ -234,6 +234,44 @@ describe('integrations (phase 6)', () => {
     await assertFails(setDoc(doc(alice, 'orgs/org1/dataSources/ds2'), { name: 'X' }));
     await assertFails(getDoc(doc(env.authenticatedContext('mallory').firestore(), 'orgs/org1/dataSources/ds1')));
     await assertFails(getDoc(doc(env.authenticatedContext('root', { platformRole: 'superadmin' }).firestore(), 'providerCache/w_18.52_73.86')));
+  });
+});
+
+describe('site scope', () => {
+  beforeEach(async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await setDoc(doc(db, 'orgs/org1/members/pune'), { role: 'editor', status: 'active', permissions: ['screen.view', 'sensor.view'], siteScope: ['pune'] });
+      await setDoc(doc(db, 'orgs/org1/screens/sPune'), { name: 'Pune lobby', siteId: 'pune' });
+      await setDoc(doc(db, 'orgs/org1/screens/sMumbai'), { name: 'Mumbai lobby', siteId: 'mumbai' });
+      await setDoc(doc(db, 'orgs/org1/screens/sMumbai/commands/c1'), { type: 'refresh' });
+      await setDoc(doc(db, 'orgs/org1/sensorDevices/dMumbai'), { name: 'Mumbai fridge', siteId: 'mumbai' });
+      await setDoc(doc(db, 'orgs/org1/sensorDevices/dMumbai/channels/temp'), { name: 'Temp' });
+      await setDoc(doc(db, 'orgs/org1/alerts/aMumbai'), { status: 'open', siteId: 'mumbai' });
+      await setDoc(doc(db, 'orgs/org1/alerts/aPune'), { status: 'open', siteId: 'pune' });
+    });
+  });
+
+  it('scoped members read only their sites; queries must be limited to their sites', async () => {
+    const db = env.authenticatedContext('pune').firestore();
+    await assertSucceeds(getDoc(doc(db, 'orgs/org1/screens/sPune')));
+    await assertFails(getDoc(doc(db, 'orgs/org1/screens/sMumbai')));
+    await assertFails(getDoc(doc(db, 'orgs/org1/screens/sMumbai/commands/c1')));
+    await assertFails(getDoc(doc(db, 'orgs/org1/sensorDevices/dMumbai')));
+    await assertFails(getDoc(doc(db, 'orgs/org1/sensorDevices/dMumbai/channels/temp')));
+    await assertFails(getDoc(doc(db, 'orgs/org1/alerts/aMumbai')));
+    await assertSucceeds(getDoc(doc(db, 'orgs/org1/alerts/aPune')));
+    await assertSucceeds(getDocs(query(collection(db, 'orgs/org1/screens'), where('siteId', 'in', ['pune']))));
+    await assertFails(getDocs(query(collection(db, 'orgs/org1/screens'))));
+  });
+
+  it('unscoped members see every site; device staff list screens across orgs', async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'orgs/org1/members/all'), { role: 'viewer', status: 'active', permissions: ['screen.view'] });
+    });
+    await assertSucceeds(getDocs(query(collection(env.authenticatedContext('all').firestore(), 'orgs/org1/screens'))));
+    await assertSucceeds(getDocs(query(collectionGroup(env.authenticatedContext('ops', { platformRole: 'ops' }).firestore(), 'screens'))));
+    await assertFails(getDocs(query(collectionGroup(env.authenticatedContext('bill', { platformRole: 'billing' }).firestore(), 'screens'))));
   });
 });
 

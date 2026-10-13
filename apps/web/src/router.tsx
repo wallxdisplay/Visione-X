@@ -4,6 +4,7 @@ import { AuthProvider } from './auth/AuthProvider';
 import { CustomerGate, RedirectIfSignedIn, RequirePlatformStaff, RequireUser } from './auth/guards';
 import { AcceptInvite } from './pages/AcceptInvite';
 import { AdminBilling } from './pages/admin/AdminBilling';
+import { AdminDevices } from './pages/admin/AdminDevices';
 import { AdminFeatures } from './pages/admin/AdminFeatures';
 import { AdminOverview } from './pages/admin/AdminOverview';
 import { OrgBilling } from './pages/admin/OrgBilling';
@@ -60,6 +61,7 @@ const PAGES: Record<string, ReactNode> = {
   '/admin/users': <PlatformUsers />,
   '/admin/audit': <AuditLogs />,
   '/admin/billing': <AdminBilling />,
+  '/admin/devices': <AdminDevices />,
   '/admin/features': <AdminFeatures />,
 };
 

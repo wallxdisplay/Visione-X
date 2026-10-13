@@ -18,11 +18,10 @@ import {
   type SetFeatureReleaseInput,
   type SubscriptionDoc,
 } from '@wallx-play/shared';
-import { auditedTransaction } from '../lib/audit';
 import { getOrg, requirePlatform } from '../lib/authz';
 import type { Actor, Deps } from '../lib/context';
 import { computeEntitlements } from '../lib/entitlements';
-import { platformAudit } from './billing';
+import { auditedTransaction, platformAudit } from '../lib/audit';
 
 /** Recomputes entitlements for every org (or only those on `planId`). Returns how many. */
 export async function recomputeEntitlements({ db, now }: Deps, planId?: string): Promise<number> {

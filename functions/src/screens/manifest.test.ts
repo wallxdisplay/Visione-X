@@ -87,6 +87,9 @@ describe('assembleManifest', () => {
     expect(manifest.defaultPlaylistId).toBeNull();
     expect(manifest.version).toBe(3);
     expect(manifest.liveChannels).toEqual([]);
+    expect(manifest.rotation).toBe(0);
+    const rotated = assembleManifest({ orgId: 'o', screen: { ...screen, rotation: 90 } as ScreenDoc, version: 1, now: 1, schedules: [], playlists, layouts, media: new Map(), assetUrls: new Map() });
+    expect(rotated.rotation).toBe(90);
   });
 
   it('never references media that is not downloadable', () => {

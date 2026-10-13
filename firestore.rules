@@ -45,6 +45,17 @@ service cloud.firestore {
       return isActiveMember(orgId) && permission in get(memberPath(orgId)).data.permissions;
     }
 
+    // Site scope (member.siteScope; empty = all sites); mirrors inSiteScope in packages/shared.
+    // A scoped member must list with where('siteId', 'in', scope) for queries to be allowed.
+    function inSiteScope(orgId, siteId) {
+      let scope = get(memberPath(orgId)).data.get('siteScope', []);
+      return scope.size() == 0 || (siteId != null && siteId in scope);
+    }
+
+    function siteOf(orgId, collection, id) {
+      return get(/databases/$(database)/documents/orgs/$(orgId)/$(collection)/$(id)).data.get('siteId', null);
+    }
+
     // ---------- platform-level ----------
     match /platformUsers/{uid} {
       allow read: if (signedIn() && request.auth.uid == uid) || platformRole() == 'superadmin';
@@ -111,36 +122,41 @@ service cloud.firestore {
 
       // Content (phase 2): readable by any active member, written only by Functions.
       match /{collection}/{docId} {
-        allow read: if collection in ['media', 'folders', 'layouts', 'playlists', 'screenGroups', 'schedules', 'screens',
+        allow read: if collection in ['media', 'folders', 'layouts', 'playlists', 'screenGroups', 'schedules',
                                       'emergencies', 'notifications', 'approvals', 'dataSources']
           && (isActiveMember(orgId) || isPlatformStaff());
         allow write: if false;
       }
 
-      // Remote command history (results, diagnostics) per screen.
-      match /screens/{screenId}/commands/{commandId} {
-        allow read: if isActiveMember(orgId) || isPlatformStaff();
+      // Screens, limited to the member's sites; command history follows its screen.
+      match /screens/{screenId} {
+        allow read: if (isActiveMember(orgId) && inSiteScope(orgId, resource.data.get('siteId', null))) || isPlatformStaff();
         allow write: if false;
+
+        match /commands/{commandId} {
+          allow read: if (isActiveMember(orgId) && inSiteScope(orgId, siteOf(orgId, 'screens', screenId))) || isPlatformStaff();
+          allow write: if false;
+        }
       }
 
       // Sensors (phase 5). API keys live in the server-only sensorKeys collection, never here.
       match /sensorDevices/{sensorId} {
-        allow read: if hasPerm(orgId, 'sensor.view') || isPlatformStaff();
+        allow read: if (hasPerm(orgId, 'sensor.view') && inSiteScope(orgId, resource.data.get('siteId', null))) || isPlatformStaff();
         allow write: if false;
 
         match /channels/{channelId} {
-          allow read: if hasPerm(orgId, 'sensor.view') || isPlatformStaff();
+          allow read: if (hasPerm(orgId, 'sensor.view') && inSiteScope(orgId, siteOf(orgId, 'sensorDevices', sensorId))) || isPlatformStaff();
           allow write: if false;
 
           match /readings/{bucketId} {
-            allow read: if hasPerm(orgId, 'sensor.view') || isPlatformStaff();
+            allow read: if (hasPerm(orgId, 'sensor.view') && inSiteScope(orgId, siteOf(orgId, 'sensorDevices', sensorId))) || isPlatformStaff();
             allow write: if false;
           }
         }
       }
 
       match /alerts/{alertId} {
-        allow read: if hasPerm(orgId, 'sensor.view') || isPlatformStaff();
+        allow read: if (hasPerm(orgId, 'sensor.view') && inSiteScope(orgId, resource.data.get('siteId', null))) || isPlatformStaff();
         allow write: if false;
       }
 
@@ -164,6 +180,11 @@ service cloud.firestore {
       match /{document=**} {
         allow read, write: if false;
       }
+    }
+
+    // ---------- platform staff with device.view: screens across organizations ----------
+    match /{path=**}/screens/{screenId} {
+      allow read: if platformRole() in ['superadmin', 'support', 'ops', 'auditor'];
     }
 
     // ---------- billing staff: lists across organizations ----------

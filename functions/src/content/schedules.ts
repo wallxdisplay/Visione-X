@@ -10,7 +10,8 @@ import {
   type UpsertScreenGroupInput,
 } from '@wallx-play/shared';
 import { auditedTransaction } from '../lib/audit';
-import { requireActiveOrgPermission, requireOrgPermission } from '../lib/authz';
+import { requireActiveOrgPermission, requireOrgPermission, requireSiteInScope } from '../lib/authz';
+import { requireTargetInScope } from '../lib/scope';
 import type { Actor, Deps } from '../lib/context';
 import { userAudit } from './media';
 
@@ -24,9 +25,11 @@ export async function upsertScreenGroup(
     ? db.doc(paths.screenGroup(input.orgId, input.groupId))
     : db.collection(paths.screenGroups(input.orgId)).doc();
   await auditedTransaction(db, [input.orgId], async (tx, audit) => {
-    await requireActiveOrgPermission(tx, db, actor, input.orgId, 'screen.manage');
+    const { member } = await requireActiveOrgPermission(tx, db, actor, input.orgId, 'screen.manage');
     const existing = input.groupId ? await tx.get(ref) : null;
     if (existing && !existing.exists) throw new HttpsError('not-found', 'Group not found.');
+    if (existing) requireSiteInScope(member, (existing.data() as ScreenGroupDoc).siteId, 'this group');
+    requireSiteInScope(member, input.siteId, 'a group without one of your sites');
     if (input.siteId && !(await tx.get(db.doc(paths.site(input.orgId, input.siteId)))).exists) {
       throw new HttpsError('not-found', 'Site not found.');
     }
@@ -58,10 +61,11 @@ export async function deleteScreenGroup(
 ): Promise<void> {
   const at = now();
   await auditedTransaction(db, [input.orgId], async (tx, audit) => {
-    await requireOrgPermission(tx, db, actor, input.orgId, 'screen.manage');
+    const member = await requireOrgPermission(tx, db, actor, input.orgId, 'screen.manage');
     const ref = db.doc(paths.screenGroup(input.orgId, input.groupId));
     const snap = await tx.get(ref);
     if (!snap.exists) throw new HttpsError('not-found', 'Group not found.');
+    requireSiteInScope(member, (snap.data() as ScreenGroupDoc).siteId, 'this group');
     const [screens, schedules] = await Promise.all([
       tx.get(db.collection(paths.screens(input.orgId)).where('groupIds', 'array-contains', input.groupId).limit(1)),
       tx.get(db.collection(paths.schedules(input.orgId)).where('target.ids', 'array-contains', input.groupId).limit(1)),
@@ -96,9 +100,11 @@ export async function saveSchedule(
     : db.collection(paths.schedules(input.orgId)).doc();
 
   await auditedTransaction(db, [input.orgId], async (tx, audit) => {
-    await requireActiveOrgPermission(tx, db, actor, input.orgId, 'schedule.edit');
+    const { member } = await requireActiveOrgPermission(tx, db, actor, input.orgId, 'schedule.edit');
     const existing = input.scheduleId ? await tx.get(ref) : null;
     if (existing && !existing.exists) throw new HttpsError('not-found', 'Schedule not found.');
+    if (existing) await requireTargetInScope(tx, db, input.orgId, member, (existing.data() as ScheduleDoc).target);
+    await requireTargetInScope(tx, db, input.orgId, member, input.target);
     if (!(await tx.get(db.doc(paths.playlist(input.orgId, input.playlistId)))).exists) {
       throw new HttpsError('invalid-argument', 'The selected playlist no longer exists.');
     }
@@ -149,10 +155,11 @@ export async function deleteSchedule(
 ): Promise<void> {
   const at = now();
   await auditedTransaction(db, [input.orgId], async (tx, audit) => {
-    await requireOrgPermission(tx, db, actor, input.orgId, 'schedule.edit');
+    const member = await requireOrgPermission(tx, db, actor, input.orgId, 'schedule.edit');
     const ref = db.doc(paths.schedule(input.orgId, input.scheduleId));
     const snap = await tx.get(ref);
     if (!snap.exists) throw new HttpsError('not-found', 'Schedule not found.');
+    await requireTargetInScope(tx, db, input.orgId, member, (snap.data() as ScheduleDoc).target);
     tx.delete(ref);
     audit(input.orgId, {
       at,

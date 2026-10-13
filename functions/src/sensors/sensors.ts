@@ -27,7 +27,7 @@ import {
 } from '@wallx-play/shared';
 import { userAudit } from '../content/media';
 import { auditedTransaction } from '../lib/audit';
-import { requireActiveOrgPermission, requireOrgPermission } from '../lib/authz';
+import { requireActiveOrgPermission, requireOrgPermission, requireSiteInScope } from '../lib/authz';
 import type { Actor, Deps } from '../lib/context';
 import { readEntitlements, requireFeature } from '../lib/entitlements';
 import { resolveAlert } from './alerts';
@@ -67,7 +67,8 @@ export async function saveSensorDevice(
   let apiKey: string | undefined;
 
   await auditedTransaction(db, [input.orgId], async (tx, audit) => {
-    await requireActiveOrgPermission(tx, db, actor, input.orgId, 'sensor.manage');
+    const { member } = await requireActiveOrgPermission(tx, db, actor, input.orgId, 'sensor.manage');
+    requireSiteInScope(member, input.siteId, 'a sensor without one of your sites');
     const entitlements = await readEntitlements(tx, db, input.orgId);
     requireFeature(entitlements, 'sensor.esp32', 'Sensors');
     if (input.siteId && !(await tx.get(db.doc(paths.site(input.orgId, input.siteId)))).exists) {
@@ -114,6 +115,7 @@ export async function saveSensorDevice(
     const snap = await tx.get(ref);
     const existing = snap.data() as SensorDeviceDoc | undefined;
     if (!existing) throw new HttpsError('not-found', 'Sensor device not found.');
+    requireSiteInScope(member, existing.siteId, 'this sensor device');
     const disabling = existing.status === 'active' && status === 'disabled';
     const open = disabling ? await tx.get(openAlertsOf(db, input.orgId, ref.id)) : null;
     const channels = disabling ? await tx.get(db.collection(paths.sensorChannels(input.orgId, ref.id))) : null;
@@ -159,9 +161,10 @@ export async function rotateSensorKey(
   const at = now();
   const ref = db.doc(paths.sensorDevice(input.orgId, input.sensorDeviceId));
   const apiKey = await auditedTransaction(db, [input.orgId], async (tx, audit) => {
-    await requireActiveOrgPermission(tx, db, actor, input.orgId, 'sensor.manage');
+    const { member } = await requireActiveOrgPermission(tx, db, actor, input.orgId, 'sensor.manage');
     const device = (await tx.get(ref)).data() as SensorDeviceDoc | undefined;
     if (!device) throw new HttpsError('not-found', 'Sensor device not found.');
+    requireSiteInScope(member, device.siteId, 'this sensor device');
     const old = await tx.get(keysOf(db, input.orgId, input.sensorDeviceId));
     old.docs.forEach((d) => tx.delete(d.ref));
     const key = issueKey(tx, db, input.orgId, input.sensorDeviceId, at);
@@ -209,9 +212,10 @@ export async function deleteSensorDevice(
   const at = now();
   const ref = db.doc(paths.sensorDevice(input.orgId, input.sensorDeviceId));
   await auditedTransaction(db, [input.orgId], async (tx, audit) => {
-    await requireOrgPermission(tx, db, actor, input.orgId, 'sensor.manage');
+    const member = await requireOrgPermission(tx, db, actor, input.orgId, 'sensor.manage');
     const device = (await tx.get(ref)).data() as SensorDeviceDoc | undefined;
     if (!device) throw new HttpsError('not-found', 'Sensor device not found.');
+    requireSiteInScope(member, device.siteId, 'this sensor device');
     const usedBy = await usage(tx, db, input.orgId, input.sensorDeviceId);
     if (usedBy.length) {
       throw new HttpsError('failed-precondition', `This sensor is shown in ${usedBy.join(', ')}. Remove it there first.`);
@@ -242,10 +246,11 @@ export async function saveSensorChannel(
   const deviceRef = db.doc(paths.sensorDevice(input.orgId, input.sensorDeviceId));
   const ref = db.doc(paths.sensorChannel(input.orgId, input.sensorDeviceId, input.channelId));
   await auditedTransaction(db, [input.orgId], async (tx, audit) => {
-    await requireActiveOrgPermission(tx, db, actor, input.orgId, 'sensor.manage');
+    const { member } = await requireActiveOrgPermission(tx, db, actor, input.orgId, 'sensor.manage');
     const [deviceSnap, snap] = await Promise.all([tx.get(deviceRef), tx.get(ref)]);
     const device = deviceSnap.data() as SensorDeviceDoc | undefined;
     if (!device) throw new HttpsError('not-found', 'Sensor device not found.');
+    requireSiteInScope(member, device.siteId, 'this sensor device');
     const existing = snap.data() as SensorChannelDoc | undefined;
     if (input.isNew && existing) throw new HttpsError('already-exists', `Channel “${input.channelId}” already exists on this device.`);
     if (!input.isNew && !existing) throw new HttpsError('not-found', 'Channel not found.');
@@ -311,11 +316,12 @@ export async function deleteSensorChannel(
   const deviceRef = db.doc(paths.sensorDevice(input.orgId, input.sensorDeviceId));
   const ref = db.doc(paths.sensorChannel(input.orgId, input.sensorDeviceId, input.channelId));
   await auditedTransaction(db, [input.orgId], async (tx, audit) => {
-    await requireOrgPermission(tx, db, actor, input.orgId, 'sensor.manage');
+    const member = await requireOrgPermission(tx, db, actor, input.orgId, 'sensor.manage');
     const [deviceSnap, snap] = await Promise.all([tx.get(deviceRef), tx.get(ref)]);
     const device = deviceSnap.data() as SensorDeviceDoc | undefined;
     const channel = snap.data() as SensorChannelDoc | undefined;
     if (!device || !channel) throw new HttpsError('not-found', 'Channel not found.');
+    requireSiteInScope(member, device.siteId, 'this sensor device');
     const usedBy = await usage(tx, db, input.orgId, input.sensorDeviceId, input.channelId);
     if (usedBy.length) {
       throw new HttpsError('failed-precondition', `This channel is shown in ${usedBy.join(', ')}. Remove it there first.`);
@@ -345,9 +351,14 @@ export async function acknowledgeAlert(
 ): Promise<void> {
   const ref = db.doc(paths.alert(input.orgId, input.alertId));
   await db.runTransaction(async (tx) => {
-    await requireOrgPermission(tx, db, actor, input.orgId, 'sensor.manage');
+    const member = await requireOrgPermission(tx, db, actor, input.orgId, 'sensor.manage');
     const alert = (await tx.get(ref)).data() as AlertDoc | undefined;
     if (!alert) throw new HttpsError('not-found', 'Alert not found.');
+    if (member.siteScope?.length) {
+      // Alerts before site scoping have no siteId: use the device's site.
+      const siteId = alert.siteId !== undefined ? alert.siteId : ((await tx.get(db.doc(paths.sensorDevice(input.orgId, alert.sensorDeviceId)))).data() as SensorDeviceDoc | undefined)?.siteId;
+      requireSiteInScope(member, siteId, 'this alert');
+    }
     if (alert.acknowledgedAt) return;
     tx.update(ref, { acknowledgedBy: actor.uid, acknowledgedByEmail: actor.email, acknowledgedAt: now() });
   });

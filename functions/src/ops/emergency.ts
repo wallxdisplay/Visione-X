@@ -13,6 +13,7 @@ import { requireActiveOrgPermission, requireOrgPermission } from '../lib/authz';
 import type { Actor, Deps } from '../lib/context';
 import { readEntitlements, requireFeature } from '../lib/entitlements';
 import { notify } from '../lib/notify';
+import { requireTargetInScope } from '../lib/scope';
 import { matchesTarget } from '../screens/manifest';
 import { authorizedScreens, publishToScreens } from '../screens/screens';
 
@@ -33,7 +34,8 @@ export async function triggerEmergency(
   const screens = await authorizedScreens(db, input.orgId);
 
   const emergency = await auditedTransaction(db, [input.orgId], async (tx, audit) => {
-    await requireActiveOrgPermission(tx, db, actor, input.orgId, 'emergency.trigger');
+    const { member } = await requireActiveOrgPermission(tx, db, actor, input.orgId, 'emergency.trigger');
+    await requireTargetInScope(tx, db, input.orgId, member, input.target);
     requireFeature(await readEntitlements(tx, db, input.orgId), 'emergency.override', 'Emergency override');
     if (input.content.kind === 'playlist') {
       const playlist = await tx.get(db.doc(paths.playlist(input.orgId, input.content.playlistId)));
@@ -82,9 +84,10 @@ export async function endEmergency(
   const at = now();
   const ref = db.doc(paths.emergency(input.orgId, input.emergencyId));
   const emergency = await auditedTransaction(db, [input.orgId], async (tx, audit) => {
-    if (actor) await requireOrgPermission(tx, db, actor, input.orgId, 'emergency.trigger');
+    const member = actor ? await requireOrgPermission(tx, db, actor, input.orgId, 'emergency.trigger') : null;
     const doc = (await tx.get(ref)).data() as EmergencyDoc | undefined;
     if (!doc) throw new HttpsError('not-found', 'Emergency not found.');
+    if (member) await requireTargetInScope(tx, db, input.orgId, member, doc.target);
     if (!doc.active) throw new HttpsError('failed-precondition', 'This emergency has already ended.');
     tx.update(ref, { active: false, endedAt: at, endedBy: actor?.uid ?? 'system' });
     notify(tx, db, input.orgId, 'emergency_ended', { name: doc.name, by: actor ? (actor.email ?? actor.uid) : 'schedule' }, '/screens', at);

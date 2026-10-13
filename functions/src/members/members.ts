@@ -13,6 +13,7 @@ import {
   type MemberDoc,
   type RemoveMemberInput,
   type RevokeInviteInput,
+  type SetMemberSitesInput,
   type UpdateMemberRoleInput,
 } from '@wallx-play/shared';
 import { auditedTransaction } from '../lib/audit';
@@ -28,6 +29,14 @@ import { readEntitlements } from '../lib/entitlements';
 import { setMembership } from '../lib/profiles';
 
 const DAY_MS = 86_400_000;
+
+/** Owners are never limited to sites; every listed site must exist (reads only). */
+async function checkSiteScope(tx: Transaction, db: Deps['db'], orgId: string, role: MemberDoc['role'], siteScope: string[]) {
+  if (siteScope.length === 0) return;
+  if (role === 'owner') throw new HttpsError('invalid-argument', 'Owners always have access to all sites.');
+  const snaps = await Promise.all(siteScope.map((id) => tx.get(db.doc(paths.site(orgId, id)))));
+  if (snaps.some((s) => !s.exists)) throw new HttpsError('invalid-argument', 'A selected site no longer exists.');
+}
 
 export const hashToken = (token: string) => createHash('sha256').update(token).digest('hex');
 
@@ -53,6 +62,8 @@ export async function inviteMember(
   const tokenHash = hashToken(token);
   const inviteRef = db.collection(paths.invites(input.orgId)).doc();
   const expiresAt = at + INVITE_TTL_DAYS * DAY_MS;
+  // Direct service callers may omit it (the callable schema defaults it to all sites).
+  const siteScope = input.siteScope ?? [];
 
   await auditedTransaction(db, [input.orgId], async (tx, audit) => {
     const me = await requireOrgPermission(tx, db, actor, input.orgId, 'member.manage');
@@ -60,6 +71,7 @@ export async function inviteMember(
     if (input.role === 'owner' && me.role !== 'owner') {
       throw new HttpsError('permission-denied', 'Only owners can invite another owner.');
     }
+    await checkSiteScope(tx, db, input.orgId, input.role, siteScope);
 
     const entitlements = await readEntitlements(tx, db, input.orgId);
     const [members, pendingInvites, existingMember, existingInvite] = await Promise.all([
@@ -92,6 +104,7 @@ export async function inviteMember(
       invitedBy: actor.uid,
       createdAt: at,
       expiresAt,
+      siteScope,
     };
     tx.create(inviteRef, invite);
     tx.create(db.doc(paths.inviteToken(tokenHash)), { orgId: input.orgId, inviteId: inviteRef.id });
@@ -101,7 +114,7 @@ export async function inviteMember(
       orgId: input.orgId,
       action: 'member.invited',
       target: { type: 'invite', id: inviteRef.id },
-      data: { email: input.email, role: input.role },
+      data: { email: input.email, role: input.role, siteScope },
     });
   });
 
@@ -143,7 +156,7 @@ export async function acceptInvite(
       email,
       role: invite.role,
       permissions: [...SYSTEM_ORG_ROLE_PERMISSIONS[invite.role]],
-      siteScope: [],
+      siteScope: invite.siteScope ?? [],
       status: 'active',
       joinedAt: at,
       invitedBy: invite.invitedBy,
@@ -225,6 +238,8 @@ export async function updateMemberRole(
     tx.update(db.doc(paths.member(input.orgId, input.uid)), {
       role: input.role,
       permissions: [...SYSTEM_ORG_ROLE_PERMISSIONS[input.role]],
+      // Owners always have every site.
+      ...(input.role === 'owner' ? { siteScope: [] } : {}),
     });
     setMembership(tx, db, {
       uid: target.uid,
@@ -276,6 +291,31 @@ export async function removeMember(
       action: self ? 'member.left' : 'member.removed',
       target: { type: 'member', id: input.uid },
       data: { email: target.email, role: target.role },
+    });
+  });
+}
+
+/** Limits a member to some sites (or gives back all sites with an empty list). */
+export async function setMemberSites(
+  { db, now }: Deps,
+  actor: Actor,
+  input: z.infer<typeof SetMemberSitesInput>,
+): Promise<void> {
+  const at = now();
+  await auditedTransaction(db, [input.orgId], async (tx, audit) => {
+    await requireOrgPermission(tx, db, actor, input.orgId, 'member.manage');
+    requireOrgActive(await getOrg(tx, db, input.orgId));
+    const target = await getMember(tx, db, input.orgId, input.uid);
+    if (!target) throw new HttpsError('not-found', 'Member not found.');
+    await checkSiteScope(tx, db, input.orgId, target.role, input.siteScope);
+    tx.update(db.doc(paths.member(input.orgId, input.uid)), { siteScope: input.siteScope });
+    audit(input.orgId, {
+      at,
+      ...userAudit(actor),
+      orgId: input.orgId,
+      action: 'member.sites.changed',
+      target: { type: 'member', id: input.uid },
+      data: { email: target.email, before: target.siteScope ?? [], after: input.siteScope },
     });
   });
 }

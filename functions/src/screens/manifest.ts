@@ -156,6 +156,7 @@ export function assembleManifest(src: ManifestSources): Manifest {
     assets,
     liveChannels: liveChannelsOf(layouts, playlists),
     dataSources: dataSourcesOf(layouts, playlists),
+    rotation: src.screen.rotation ?? 0,
   });
 }
 

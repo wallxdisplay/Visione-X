@@ -169,6 +169,8 @@ export interface AlertDoc {
   severity: AlertSeverity;
   status: 'open' | 'resolved';
   sensorDeviceId: string;
+  /** The device's site, so site-scoped members see only their alerts (absent on older alerts). */
+  siteId: string | null;
   sensorName: string;
   channelId: string | null;
   channelName: string | null;

@@ -159,6 +159,7 @@ export async function ingest(deps: Deps, req: ApiRequest): Promise<ApiResult> {
               type: 'threshold',
               severity: rule.severity,
               sensorDeviceId,
+              siteId: device.siteId,
               sensorName: device.name,
               channelId: key,
               channelName: channel.name,

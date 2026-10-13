@@ -61,6 +61,8 @@ export interface ScreenDoc {
   groupIds: string[];
   orientation: 'landscape' | 'portrait';
   resolution: { width: number; height: number };
+  /** Degrees the player rotates its output (portrait LED walls on a landscape HDMI output). */
+  rotation?: ScreenRotation;
   deviceId: string | null;
   status: Exclude<DeviceStatus, 'unpaired'>;
   defaultPlaylistId: string | null;
@@ -88,12 +90,16 @@ export const PairingCode = z
   .transform((s) => s.replace(/[\s-]/g, ''))
   .pipe(z.string().length(PAIRING_CODE_LENGTH).regex(new RegExp(`^[${PAIRING_CODE_ALPHABET}]+$`), 'Invalid pairing code'));
 
+export const SCREEN_ROTATIONS = [0, 90, 180, 270] as const;
+export type ScreenRotation = (typeof SCREEN_ROTATIONS)[number];
+
 const ScreenFields = {
   name: z.string().trim().min(1).max(80),
   siteId: id.nullable(),
   groupIds: z.array(id).max(20),
   orientation: z.enum(['landscape', 'portrait']),
   resolution: z.object({ width: z.number().int().min(320).max(7680), height: z.number().int().min(320).max(7680) }),
+  rotation: z.union([z.literal(0), z.literal(90), z.literal(180), z.literal(270)]).default(0),
 };
 
 export const ClaimDeviceInput = z.object({ orgId: id, pairingCode: PairingCode, ...ScreenFields });

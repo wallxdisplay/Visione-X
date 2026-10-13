@@ -1,6 +1,6 @@
 import { collection, orderBy, query, where } from 'firebase/firestore';
 import { Alert, Button, Dialog, PageHeader, SelectField, TextField } from '@wallx-play/ui';
-import { paths, SYSTEM_ORG_ROLES, type InviteDoc, type MemberDoc, type SystemOrgRole } from '@wallx-play/shared';
+import { MAX_SITE_SCOPE, paths, SYSTEM_ORG_ROLES, type InviteDoc, type MemberDoc, type SystemOrgRole } from '@wallx-play/shared';
 import { UserPlus } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -10,6 +10,43 @@ import { db } from '../../lib/firebase';
 import { formatDate, roleLabel } from '../../lib/format';
 import { useQueryData } from '../../lib/hooks';
 import { useOrg } from '../../org/OrgProvider';
+import { useSites } from '../../content/data';
+
+/** "All sites" or a chosen subset (empty array = all sites). */
+function SitePicker({ sites, value, onChange }: { sites: Array<{ id: string; name: string }>; value: string[]; onChange: (v: string[]) => void }) {
+  const { t } = useTranslation();
+  const limited = value.length > 0;
+  return (
+    <fieldset className="site-picker">
+      <legend className="wxp-field__label">{t('team.sites')}</legend>
+      <label className="checkbox-row">
+        <input type="radio" checked={!limited} onChange={() => onChange([])} /> {t('team.allSites')}
+      </label>
+      <label className="checkbox-row">
+        <input type="radio" checked={limited} disabled={sites.length === 0} onChange={() => sites[0] && onChange([sites[0].id])} /> {t('team.someSites')}
+      </label>
+      {limited ? (
+        <div className="site-picker__list">
+          {sites.map((s) => (
+            <label key={s.id} className="checkbox-row">
+              <input
+                type="checkbox"
+                checked={value.includes(s.id)}
+                disabled={!value.includes(s.id) && value.length >= MAX_SITE_SCOPE}
+                onChange={(e) => {
+                  const next = e.target.checked ? [...value, s.id] : value.filter((id) => id !== s.id);
+                  if (next.length) onChange(next);
+                }}
+              />
+              {s.name}
+            </label>
+          ))}
+        </div>
+      ) : null}
+      <p className="wxp-field__hint">{limited ? t('team.someSitesHint') : t('team.allSitesHint')}</p>
+    </fieldset>
+  );
+}
 
 export function Team() {
   const { t } = useTranslation();
@@ -29,6 +66,11 @@ export function Team() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [removing, setRemoving] = useState<MemberDoc | null>(null);
+  const [siteScope, setSiteScope] = useState<string[]>([]);
+  const [scoping, setScoping] = useState<{ member: MemberDoc; sites: string[] } | null>(null);
+  const sites = useSites(orgId);
+  const siteNames = (ids: string[] | undefined) =>
+    ids?.length ? ids.map((id) => sites.data.find((s) => s.id === id)?.name ?? id).join(', ') : t('team.allSites');
 
   const roleOptions = SYSTEM_ORG_ROLES.filter((r) => r !== 'owner' || me?.role === 'owner').map((r) => ({
     value: r,
@@ -51,7 +93,7 @@ export function Team() {
 
   async function sendInvite() {
     await run(async () => {
-      const res = await call<{ token: string }>('inviteMember', { orgId, email, role });
+      const res = await call<{ token: string }>('inviteMember', { orgId, email, role, siteScope: role === 'owner' ? [] : siteScope });
       setLink(`${window.location.origin}/invite/${res.token}`);
     });
   }
@@ -59,6 +101,7 @@ export function Team() {
   function closeInvite() {
     setInviteOpen(false);
     setEmail('');
+    setSiteScope([]);
     setLink(null);
     setError(null);
   }
@@ -90,6 +133,7 @@ export function Team() {
             <tr>
               <th>{t('team.email')}</th>
               <th>{t('team.role')}</th>
+              <th>{t('team.sites')}</th>
               <th>{t('team.joined')}</th>
               <th aria-label={t('common.actions')} />
             </tr>
@@ -125,6 +169,14 @@ export function Team() {
                       roleLabel(m.role)
                     )}
                   </td>
+                  <td>
+                    {siteNames(m.siteScope)}
+                    {manage && !isMe && m.role !== 'owner' ? (
+                      <Button size="sm" variant="tertiary" onClick={() => setScoping({ member: m, sites: m.siteScope ?? [] })}>
+                        {t('common.edit')}
+                      </Button>
+                    ) : null}
+                  </td>
                   <td className="wxp-tabular">{formatDate(m.joinedAt)}</td>
                   <td className="wxp-actions">
                     {(manage && !isMe) || isMe ? (
@@ -149,6 +201,7 @@ export function Team() {
                 <tr>
                   <th>{t('team.email')}</th>
                   <th>{t('team.role')}</th>
+                  <th>{t('team.sites')}</th>
                   <th>{t('team.expires')}</th>
                   <th aria-label={t('common.actions')} />
                 </tr>
@@ -158,6 +211,7 @@ export function Team() {
                   <tr key={i.id}>
                     <td>{i.email}</td>
                     <td>{roleLabel(i.role)}</td>
+                    <td>{siteNames(i.siteScope)}</td>
                     <td className="wxp-tabular">{formatDate(i.expiresAt)}</td>
                     <td className="wxp-actions">
                       <Button
@@ -225,6 +279,7 @@ export function Team() {
               onChange={(e) => setRole(e.target.value as SystemOrgRole)}
               hint={t(`roles.${role}Hint`)}
             />
+            {role !== 'owner' ? <SitePicker sites={sites.data} value={siteScope} onChange={setSiteScope} /> : null}
           </>
         )}
       </Dialog>
@@ -252,6 +307,30 @@ export function Team() {
       >
         {error ? <Alert tone="danger">{error}</Alert> : null}
         <p>{t('team.removeBody', { email: removing?.email })}</p>
+      </Dialog>
+
+      <Dialog
+        open={!!scoping}
+        title={t('team.sitesFor', { email: scoping?.member.email })}
+        onClose={() => setScoping(null)}
+        footer={
+          <>
+            <Button onClick={() => setScoping(null)}>{t('common.cancel')}</Button>
+            <Button
+              variant="primary"
+              disabled={busy}
+              onClick={() =>
+                scoping &&
+                void run(() => call('setMemberSites', { orgId, uid: scoping.member.uid, siteScope: scoping.sites })).then((ok) => ok && setScoping(null))
+              }
+            >
+              {t('common.save')}
+            </Button>
+          </>
+        }
+      >
+        {error ? <Alert tone="danger">{error}</Alert> : null}
+        {scoping ? <SitePicker sites={sites.data} value={scoping.sites} onChange={(v) => setScoping({ ...scoping, sites: v })} /> : null}
       </Dialog>
 
       {manage ? (

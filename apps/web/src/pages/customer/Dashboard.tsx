@@ -1,10 +1,10 @@
-import { collection, orderBy, query } from 'firebase/firestore';
+import { collection, query } from 'firebase/firestore';
 import { Card, PageHeader, StatusChip } from '@wallx-play/ui';
-import { isScreenOnline, paths, type MemberDoc, type ScreenDoc, type SubscriptionDoc } from '@wallx-play/shared';
+import { isScreenOnline, paths, type MemberDoc, type SubscriptionDoc } from '@wallx-play/shared';
 import { CheckCircle2, Circle, TriangleAlert } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
-import { useSites } from '../../content/data';
+import { useScreens, useSites } from '../../content/data';
 import { db } from '../../lib/firebase';
 import { daysLeft, formatDate, formatDateTime } from '../../lib/format';
 import { useDoc, useQueryData } from '../../lib/hooks';
@@ -20,9 +20,9 @@ interface Issue {
 /** "What needs attention, and what should I do next?" — in about 30 seconds. */
 export function Dashboard() {
   const { t } = useTranslation();
-  const { orgId, org, entitlements, can } = useOrg();
+  const { orgId, org, entitlements, can, siteScope } = useOrg();
   const sites = useSites(orgId);
-  const screens = useQueryData<ScreenDoc>(`screens:${orgId}`, () => query(collection(db, paths.screens(orgId)), orderBy('name')));
+  const screens = useScreens(orgId, siteScope);
   const members = useQueryData<MemberDoc>(can('member.view') ? `members:${orgId}` : null, () =>
     query(collection(db, paths.members(orgId))),
   );

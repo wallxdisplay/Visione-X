@@ -67,6 +67,8 @@ export interface InviteDoc {
   invitedBy: string;
   createdAt: number;
   expiresAt: number;
+  /** Sites the member will be limited to (empty or absent = all sites). */
+  siteScope?: string[];
 }
 
 export interface SignupMessage {

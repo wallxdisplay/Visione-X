@@ -114,3 +114,25 @@ export function hasPlatformPermission(
 ): boolean {
   return role ? PLATFORM_ROLE_PERMISSIONS[role].includes(permission) : false;
 }
+
+// ---------------------------------------------------------------- site scope
+
+/**
+ * Members can be limited to some sites (MemberDoc.siteScope; empty = all sites). A scoped
+ * member sees and manages only screens, sensors and alerts of those sites; shared content
+ * (media, layouts, playlists) stays org-wide. Owners are never scoped.
+ */
+export const MAX_SITE_SCOPE = 10;
+
+/** Org-wide powers that a site-scoped member never has (else they could widen their own scope). */
+export const ORG_WIDE_PERMISSIONS: readonly OrgPermission[] = [
+  'org.settings.edit',
+  'member.manage',
+  'billing.manage',
+  'integration.manage',
+  'apikey.manage',
+];
+
+export function inSiteScope(scope: readonly string[] | undefined, siteId: string | null | undefined): boolean {
+  return !scope || scope.length === 0 || (!!siteId && scope.includes(siteId));
+}

@@ -100,8 +100,10 @@ private fun Playback(state: UiState.Playing, engine: PlayerEngine) {
         Box(Modifier.fillMaxSize().background(Color.Black))
         return
     }
-    PlaylistPlayer(playlist.items, ctx) { item ->
-        engine.nowPlaying = Playing(playlist.id, item?.id, resolution.source)
+    Rotated(m.rotation) {
+        PlaylistPlayer(playlist.items, ctx) { item ->
+            engine.nowPlaying = Playing(playlist.id, item?.id, resolution.source)
+        }
     }
 }
 

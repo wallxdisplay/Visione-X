@@ -1,12 +1,12 @@
-import { collection, orderBy, query } from 'firebase/firestore';
 import { Alert, Button, Dialog, EmptyState, PageHeader, SelectField, StatusChip, TextField } from '@wallx-play/ui';
 import { RESOLUTION_PRESETS } from '@wallx-play/layout-spec';
 import {
   ClaimDeviceInput,
   DEFAULT_SCREEN_RESOLUTION,
+  SCREEN_ROTATIONS,
   isScreenOnline,
-  paths,
   type ScreenDoc,
+  type ScreenRotation,
 } from '@wallx-play/shared';
 import { Monitor, Plus, Send, Siren } from 'lucide-react';
 import { ApprovalsPanel } from './ApprovalsPanel';
@@ -15,11 +15,9 @@ import { ScreenCommands } from './ScreenCommands';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router';
-import { usePlaylists, useScreenGroups, useSites } from '../../content/data';
+import { usePlaylists, useScreenGroups, useScreens, useSites } from '../../content/data';
 import { call, errorMessage } from '../../lib/api';
-import { db } from '../../lib/firebase';
 import { fieldErrors, formatDateTime } from '../../lib/format';
-import { useQueryData } from '../../lib/hooks';
 import { useOrg } from '../../org/OrgProvider';
 
 type Tone = 'success' | 'danger' | 'warning' | 'neutral';
@@ -35,6 +33,7 @@ interface ScreenForm {
   siteId: string;
   groupIds: string[];
   orientation: 'landscape' | 'portrait';
+  rotation: ScreenRotation;
   preset: string;
   defaultPlaylistId: string;
 }
@@ -46,9 +45,9 @@ function resolutionFor(form: ScreenForm) {
 
 export function Screens() {
   const { t } = useTranslation();
-  const { orgId, can } = useOrg();
+  const { orgId, can, siteScope } = useOrg();
   const [params, setParams] = useSearchParams();
-  const screens = useQueryData<ScreenDoc>(`screens:${orgId}`, () => query(collection(db, paths.screens(orgId)), orderBy('name')));
+  const screens = useScreens(orgId, siteScope);
   const sites = useSites(orgId);
   const [adding, setAdding] = useState<string | null>(null);
   const [editing, setEditing] = useState<ScreenDoc | null>(null);
@@ -212,17 +211,20 @@ export function Screens() {
 /** Add (pair) a screen when `code` is given, otherwise edit `screen`. */
 function ScreenDialog({ code, screen, onClose }: { code?: string; screen?: ScreenDoc; onClose: () => void }) {
   const { t } = useTranslation();
-  const { orgId, can } = useOrg();
-  const sites = useSites(orgId);
+  const { orgId, can, siteScope } = useOrg();
+  const allSites = useSites(orgId);
+  // Scoped members place screens only at their own sites (a site is then required).
+  const siteChoices = siteScope.length ? allSites.data.filter((x) => siteScope.includes(x.id)) : allSites.data;
   const groups = useScreenGroups(orgId);
   const playlists = usePlaylists(orgId);
   const editable = can('screen.manage');
   const [pairingCode, setPairingCode] = useState(code ?? '');
   const [form, setForm] = useState<ScreenForm>(() => ({
     name: screen?.name ?? '',
-    siteId: screen?.siteId ?? '',
+    siteId: screen?.siteId ?? (siteScope.length ? (siteScope[0] ?? '') : ''),
     groupIds: screen?.groupIds ?? [],
     orientation: screen?.orientation ?? 'landscape',
+    rotation: screen?.rotation ?? 0,
     preset:
       RESOLUTION_PRESETS.find(
         (p) =>
@@ -243,6 +245,7 @@ function ScreenDialog({ code, screen, onClose }: { code?: string; screen?: Scree
       siteId: form.siteId || null,
       groupIds: form.groupIds,
       orientation: form.orientation,
+      rotation: form.rotation,
       resolution: resolutionFor(form),
     };
     setBusy(true);
@@ -326,7 +329,7 @@ function ScreenDialog({ code, screen, onClose }: { code?: string; screen?: Scree
         <SelectField
           label={t('screens.site')}
           disabled={!editable}
-          options={[{ value: '', label: t('screens.noSite') }, ...sites.data.map((s) => ({ value: s.id, label: s.name }))]}
+          options={[...(siteScope.length ? [] : [{ value: '', label: t('screens.noSite') }]), ...siteChoices.map((s) => ({ value: s.id, label: s.name }))]}
           value={form.siteId}
           onChange={(e) => set('siteId', e.target.value)}
         />
@@ -345,6 +348,14 @@ function ScreenDialog({ code, screen, onClose }: { code?: string; screen?: Scree
           onChange={(e) => set('preset', e.target.value)}
         />
       </div>
+      <SelectField
+        label={t('screens.rotation')}
+        hint={t('screens.rotationHint')}
+        disabled={!editable}
+        options={SCREEN_ROTATIONS.map((r) => ({ value: String(r), label: t(`screens.rotations.r${r}`) }))}
+        value={String(form.rotation)}
+        onChange={(e) => set('rotation', Number(e.target.value) as ScreenRotation)}
+      />
       {groups.data.length ? (
         <fieldset className="check-group check-group--row">
           <legend className="wxp-field__label">{t('screens.groups')}</legend>

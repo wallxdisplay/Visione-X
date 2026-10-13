@@ -5,6 +5,13 @@ import { paths, type AuditDoc } from '@wallx-play/shared';
 export type AuditInput = Omit<AuditDoc, 'chainId' | 'seq' | 'prevHash' | 'hash'>;
 export type RecordAudit = (chainId: string, entry: AuditInput) => void;
 
+/** Audit actor fields for WallX platform staff acting through the Super Admin tools. */
+export const platformAudit = (actor: { uid: string; email: string | null }) => ({
+  actorType: 'platform_user' as const,
+  actorId: actor.uid,
+  ...(actor.email ? { actorEmail: actor.email } : {}),
+});
+
 interface Head {
   seq: number;
   hash: string | null;

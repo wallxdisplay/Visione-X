@@ -20,6 +20,8 @@ interface OrgState {
   loading: boolean;
   /** UI hint only — the server enforces every permission again. */
   can: (permission: OrgPermission) => boolean;
+  /** Sites the member is limited to (empty = all sites). Lists of screens, sensors and alerts must filter by it. */
+  siteScope: string[];
   activeOrgs: Array<[string, UserMembership]>;
   switchOrg: (orgId: string) => void;
 }
@@ -67,6 +69,7 @@ export function OrgProvider({ orgId: initialOrgId, children }: { orgId: string; 
       entitlements: entitlements.data,
       loading: org.loading || member.loading,
       can: (p) => perms.has(p),
+      siteScope: member.data?.status === 'active' ? (member.data.siteScope ?? []) : [],
       activeOrgs: Object.entries(profile?.memberships ?? {}).filter(([, m]) => m.orgStatus === 'active'),
       switchOrg,
     };

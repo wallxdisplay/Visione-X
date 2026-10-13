@@ -2,7 +2,9 @@ import type { Firestore, Transaction } from 'firebase-admin/firestore';
 import { HttpsError } from 'firebase-functions/v2/https';
 import {
   BILLING_LOCKED_PERMISSIONS,
+  ORG_WIDE_PERMISSIONS,
   hasPlatformPermission,
+  inSiteScope,
   paths,
   type MemberDoc,
   type OrgDoc,
@@ -83,5 +85,15 @@ export async function requireOrgPermission(
   if (!member || member.status !== 'active' || !member.permissions.includes(permission)) {
     throw new HttpsError('permission-denied', 'You do not have permission for this action.');
   }
+  if (member.siteScope?.length && ORG_WIDE_PERMISSIONS.includes(permission)) {
+    throw new HttpsError('permission-denied', 'Your access is limited to some sites, so organization-wide settings are not available to you.');
+  }
   return member;
+}
+
+/** Site-scoped members may act only on their sites (screens, sensors, sites, schedules). */
+export function requireSiteInScope(member: Pick<MemberDoc, 'siteScope'>, siteId: string | null | undefined, what = 'this'): void {
+  if (!inSiteScope(member.siteScope, siteId)) {
+    throw new HttpsError('permission-denied', `Your access is limited to some sites; ${what} is outside them.`);
+  }
 }

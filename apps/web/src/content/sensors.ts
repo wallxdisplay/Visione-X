@@ -11,11 +11,18 @@ import {
 } from '@wallx-play/shared';
 import { db } from '../lib/firebase';
 import { useDoc, useQueryData, type WithId } from '../lib/hooks';
+import { bySite, scopeKey } from '../lib/scope';
+import { useOrg } from '../org/OrgProvider';
 
-export const useSensorDevices = (orgId: string, enabled = true) =>
-  useQueryData<SensorDeviceDoc>(enabled ? `sensorDevices:${orgId}` : null, () =>
-    query(collection(db, paths.sensorDevices(orgId)), orderBy('name')),
+/** Sensor devices the member may see (their sites when scoped), sorted by name. */
+export function useSensorDevices(orgId: string, enabled = true) {
+  const { siteScope } = useOrg();
+  const live = useQueryData<SensorDeviceDoc>(enabled ? `sensorDevices:${orgId}${scopeKey(siteScope)}` : null, () =>
+    query(collection(db, paths.sensorDevices(orgId)), ...bySite(siteScope, orderBy('name'))),
   );
+  const data = useMemo(() => [...live.data].sort((a, b) => a.name.localeCompare(b.name)), [live.data]);
+  return { ...live, data };
+}
 
 export const useSensorChannels = (orgId: string, sensorDeviceId: string | null) =>
   useQueryData<SensorChannelDoc>(sensorDeviceId ? `channels:${orgId}:${sensorDeviceId}` : null, () =>
@@ -105,12 +112,21 @@ export function useReadings(
   return { points, loading: live.loading };
 }
 
-export const useOpenAlerts = (orgId: string, enabled = true) =>
-  useQueryData<AlertDoc>(enabled ? `alerts:open:${orgId}` : null, () =>
-    query(collection(db, paths.alerts(orgId)), where('status', '==', 'open'), orderBy('openedAt', 'desc'), limit(100)),
-  );
+const newestFirst = <T extends { openedAt: number }>(xs: T[]) => [...xs].sort((a, b) => b.openedAt - a.openedAt);
 
-export const useRecentAlerts = (orgId: string, enabled = true) =>
-  useQueryData<AlertDoc>(enabled ? `alerts:recent:${orgId}` : null, () =>
-    query(collection(db, paths.alerts(orgId)), orderBy('openedAt', 'desc'), limit(50)),
+/** Open alerts the member may see (their sites when scoped), newest first. */
+export function useOpenAlerts(orgId: string, enabled = true) {
+  const { siteScope } = useOrg();
+  const live = useQueryData<AlertDoc>(enabled ? `alerts:open:${orgId}${scopeKey(siteScope)}` : null, () =>
+    query(collection(db, paths.alerts(orgId)), where('status', '==', 'open'), ...bySite(siteScope, orderBy('openedAt', 'desc')), limit(100)),
   );
+  return { ...live, data: useMemo(() => newestFirst(live.data), [live.data]) };
+}
+
+export function useRecentAlerts(orgId: string, enabled = true) {
+  const { siteScope } = useOrg();
+  const live = useQueryData<AlertDoc>(enabled ? `alerts:recent:${orgId}${scopeKey(siteScope)}` : null, () =>
+    query(collection(db, paths.alerts(orgId)), ...bySite(siteScope, orderBy('openedAt', 'desc')), limit(50)),
+  );
+  return { ...live, data: useMemo(() => newestFirst(live.data), [live.data]) };
+}

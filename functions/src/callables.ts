@@ -15,6 +15,7 @@ import {
   SavePlanInput,
   SetCancellationInput,
   SetEntitlementOverridesInput,
+  SetMemberSitesInput,
   SetFeatureReleaseInput,
   UpdateSubscriptionInput,
   VoidPaymentInput,
@@ -124,6 +125,7 @@ export const acceptInvite = callable(AcceptInviteInput, members.acceptInvite);
 export const revokeInvite = callable(RevokeInviteInput, members.revokeInvite);
 export const updateMemberRole = callable(UpdateMemberRoleInput, members.updateMemberRole);
 export const removeMember = callable(RemoveMemberInput, members.removeMember);
+export const setMemberSites = callable(SetMemberSitesInput, members.setMemberSites);
 export const setPlatformRole = callable(SetPlatformRoleInput, setPlatformRoleSvc);
 
 // Content (phase 2)

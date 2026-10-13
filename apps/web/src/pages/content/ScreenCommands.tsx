@@ -10,16 +10,27 @@ import { useOrg } from '../../org/OrgProvider';
 
 const TONE = { pending: 'info', delivered: 'info', done: 'success', failed: 'danger', expired: 'neutral' } as const;
 
-/** Remote command buttons + recent results (screenshots, diagnostics) for one screen. */
+/** Remote control for one screen in the customer app (permission and plan from the org). */
 export function ScreenCommands({ screen }: { screen: ScreenDoc }) {
-  const { t } = useTranslation();
   const { orgId, can, entitlements } = useOrg();
+  return (
+    <CommandPanel
+      orgId={orgId}
+      screen={screen}
+      canSend={can('screen.command')}
+      entitled={entitlements?.features.includes('screen.remoteCommands') ?? false}
+    />
+  );
+}
+
+/** Remote command buttons + recent results (screenshots, diagnostics). Also used by Super Admin. */
+export function CommandPanel({ orgId, screen, canSend, entitled }: { orgId: string; screen: ScreenDoc; canSend: boolean; entitled: boolean }) {
+  const { t } = useTranslation();
   const history = useScreenCommands(orgId, screen.id);
   const [confirming, setConfirming] = useState<ScreenCommandType | null>(null);
   const [message, setMessage] = useState<{ tone: 'success' | 'danger'; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
-  const allowed = can('screen.command') && screen.status === 'authorized';
-  const entitled = entitlements?.features.includes('screen.remoteCommands') ?? false;
+  const allowed = canSend && screen.status === 'authorized';
 
   async function send(type: ScreenCommandType) {
     setBusy(true);

@@ -4,6 +4,7 @@ import type { z } from 'zod';
 import {
   CommandResultBody,
   DISRUPTIVE_COMMANDS,
+  hasPlatformPermission,
   paths,
   type MarkNotificationsReadInput,
   type ScreenCommandDoc,
@@ -11,12 +12,16 @@ import {
   type SendScreenCommandInput,
 } from '@wallx-play/shared';
 import { userAudit } from '../content/media';
-import { auditedTransaction } from '../lib/audit';
-import { requireActiveOrgPermission, requireOrgPermission } from '../lib/authz';
+import { auditedTransaction, platformAudit } from '../lib/audit';
+import { requireActiveOrgPermission, requireOrgPermission, requireSiteInScope } from '../lib/authz';
 import type { Actor, Deps } from '../lib/context';
 import { readEntitlements, requireFeature } from '../lib/entitlements';
 
-/** Queues a command for a screen's player (delivered on its next poll). */
+/**
+ * Queues a command for a screen's player (delivered on its next poll). Org members need
+ * screen.command (and the plan feature); WallX staff with the platform permission
+ * device.command may send any command for troubleshooting, always audited.
+ */
 export async function sendScreenCommand(
   { db, now }: Deps,
   actor: Actor,
@@ -26,8 +31,12 @@ export async function sendScreenCommand(
   const screenRef = db.doc(paths.screen(input.orgId, input.screenId));
   const ref = db.collection(paths.commands(input.orgId, input.screenId)).doc();
   await auditedTransaction(db, [input.orgId], async (tx, audit) => {
-    await requireActiveOrgPermission(tx, db, actor, input.orgId, 'screen.command');
-    requireFeature(await readEntitlements(tx, db, input.orgId), 'screen.remoteCommands', 'Remote commands');
+    const staff = hasPlatformPermission(actor.platformRole, 'device.command');
+    if (!staff) {
+      const { member } = await requireActiveOrgPermission(tx, db, actor, input.orgId, 'screen.command');
+      requireFeature(await readEntitlements(tx, db, input.orgId), 'screen.remoteCommands', 'Remote commands');
+      requireSiteInScope(member, ((await tx.get(screenRef)).data() as ScreenDoc | undefined)?.siteId, 'this screen');
+    }
     const screen = (await tx.get(screenRef)).data() as ScreenDoc | undefined;
     if (!screen) throw new HttpsError('not-found', 'Screen not found.');
     if (screen.status !== 'authorized') throw new HttpsError('failed-precondition', 'Authorize the screen first.');
@@ -44,10 +53,10 @@ export async function sendScreenCommand(
     };
     tx.create(ref, command);
     tx.update(screenRef, { pendingCommands: FieldValue.increment(1) });
-    if (DISRUPTIVE_COMMANDS.includes(input.type)) {
+    if (staff || DISRUPTIVE_COMMANDS.includes(input.type)) {
       audit(input.orgId, {
         at,
-        ...userAudit(actor),
+        ...(staff ? platformAudit(actor) : userAudit(actor)),
         orgId: input.orgId,
         action: `screen.command.${input.type}`,
         target: { type: 'screen', id: input.screenId },

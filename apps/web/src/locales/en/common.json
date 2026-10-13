@@ -1,4 +1,25 @@
 {
+  "adminDevices": {
+    "description": "Every screen and player across all organizations: status, app version and health.",
+    "stats": { "all": "Screens", "online": "Online", "offline": "Offline", "pending": "Awaiting authorization" },
+    "versions": "Player versions in the field:",
+    "filter": "Filter screens",
+    "filters": { "all": "All", "online": "Online", "offline": "Offline", "pending": "Awaiting authorization", "neverSeen": "Not connected yet", "errors": "With errors" },
+    "search": "Search screen, organization or box model",
+    "screen": "Screen",
+    "org": "Organization",
+    "status": "Status",
+    "player": "Player app",
+    "box": "Box",
+    "lastSeen": "Last seen",
+    "errors": "Errors",
+    "none": "No screens match.",
+    "display": "Display",
+    "storage": "Free storage",
+    "content": "Content",
+    "manifest": "Published version {{published}}, playing {{playing}}",
+    "recentErrors": "Recent errors reported by the player"
+  },
   "product": {
     "name": "WallX Play",
     "byline": "by WallX",
@@ -237,6 +258,12 @@
     }
   },
   "team": {
+    "sites": "Sites",
+    "allSites": "All sites",
+    "someSites": "Only some sites",
+    "allSitesHint": "Sees and manages every site.",
+    "someSitesHint": "Sees and manages only these sites’ screens, sensors and alerts. Organization-wide settings (team, billing, integrations) are not available.",
+    "sitesFor": "Sites for {{email}}",
     "description": "{{count}} of {{limit}} users on your plan",
     "invite": "Invite member",
     "email": "Email",

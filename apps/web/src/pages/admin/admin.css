@@ -1,0 +1,29 @@
+.admin-devices__versions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.admin-devices__version {
+  padding: 2px 8px;
+  border-radius: var(--radius-chip);
+  background: var(--color-neutral-soft);
+  font-size: 13px;
+}
+.admin-devices__filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+}
+.admin-devices__errors {
+  max-height: 200px;
+  overflow: auto;
+  padding-left: var(--space-5);
+  font-size: 13px;
+}
+.admin-devices__errors code {
+  overflow-wrap: anywhere;
+}

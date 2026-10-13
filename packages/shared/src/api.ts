@@ -3,7 +3,7 @@
  * schemas, but the server always re-validates: client validation is UX only.
  */
 import { z } from 'zod';
-import { SYSTEM_ORG_ROLES } from './permissions';
+import { MAX_SITE_SCOPE, SYSTEM_ORG_ROLES } from './permissions';
 import { PLATFORM_ROLES } from './permissions';
 import { GSTIN } from './schemas';
 
@@ -72,11 +72,17 @@ export const UpdateOrgSettingsInput = z.object({
 
 export const InvitableRole = z.enum(SYSTEM_ORG_ROLES);
 
+/** Sites a member is limited to; empty = all sites. */
+const SiteScope = z.array(id).max(MAX_SITE_SCOPE).default([]);
+
 export const InviteMemberInput = z.object({
   orgId: id,
   email: z.string().trim().toLowerCase().email(),
   role: InvitableRole,
+  siteScope: SiteScope,
 });
+
+export const SetMemberSitesInput = z.object({ orgId: id, uid: id, siteScope: SiteScope });
 
 export const AcceptInviteInput = z.object({
   token: z.string().regex(/^[A-Za-z0-9_-]{32,64}$/),
@@ -163,4 +169,5 @@ export const CALLABLES = {
   geocodePlace: 'geocodePlace',
   testRssFeed: 'testRssFeed',
   previewDataSource: 'previewDataSource',
+  setMemberSites: 'setMemberSites',
 } as const;

@@ -335,6 +335,9 @@
     "hint": "Approving publishes the current content of layouts, playlists and schedules — preview them first."
   },
   "screens": {
+    "rotation": "Rotate output",
+    "rotationHint": "For a portrait LED wall driven by a landscape HDMI output, choose 90° or 270° (whichever matches how the wall is mounted). The player turns everything it shows.",
+    "rotations": { "r0": "No rotation", "r90": "90° clockwise", "r180": "180° (upside down)", "r270": "270° clockwise (90° anticlockwise)" },
     "sentForApproval": "Publishing needs approval in this organization. Your request was sent to the approvers.",
     "description": "Android players connected to your LED walls and displays.",
     "add": "Add screen",

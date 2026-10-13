@@ -1,23 +1,19 @@
-import { collection, query, where } from 'firebase/firestore';
 import { Alert, Button, Dialog, EmptyState, PageHeader, SelectField, Spinner, StatusChip, TextAreaField, TextField } from '@wallx-play/ui';
 import {
   BILLING_GRACE_DAYS,
   BILLING_REQUEST_KINDS,
   formatInr,
-  paths,
   type BillingInterval,
   type BillingRequestKind,
   type BillingStatus,
-  type ScreenDoc,
 } from '@wallx-play/shared';
 import { CreditCard, Send } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBillingRequests, usePayments, usePlans, useSubscription } from '../../content/billing';
+import { useScreens } from '../../content/data';
 import { call, errorMessage } from '../../lib/api';
-import { db } from '../../lib/firebase';
 import { formatDate } from '../../lib/format';
-import { useQueryData } from '../../lib/hooks';
 import { useOrg } from '../../org/OrgProvider';
 import './billing.css';
 
@@ -34,15 +30,14 @@ export const STATUS_TONE: Record<BillingStatus, 'success' | 'info' | 'warning' |
 /** Customer view of the subscription: plan, usage, paid period, payments and change requests. */
 export function Billing() {
   const { t } = useTranslation();
-  const { orgId, can, entitlements } = useOrg();
+  const { orgId, can, entitlements, siteScope } = useOrg();
   const view = can('billing.view');
   const sub = useSubscription(view ? orgId : null);
   const payments = usePayments(view ? orgId : null);
   const requests = useBillingRequests(view ? orgId : null);
   const plans = usePlans();
-  const screens = useQueryData<ScreenDoc>(`authorizedScreens:${orgId}`, () =>
-    query(collection(db, paths.screens(orgId)), where('status', '==', 'authorized')),
-  );
+  const allScreens = useScreens(orgId, siteScope);
+  const screens = { ...allScreens, data: allScreens.data.filter((s) => s.status === 'authorized') };
   const [requesting, setRequesting] = useState(false);
   const [sent, setSent] = useState(false);
 

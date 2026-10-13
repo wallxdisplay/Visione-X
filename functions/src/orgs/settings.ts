@@ -8,7 +8,7 @@ import {
   type UpsertSiteInput,
 } from '@wallx-play/shared';
 import { auditedTransaction } from '../lib/audit';
-import { getOrg, requireOrgActive, requireOrgPermission } from '../lib/authz';
+import { getOrg, requireOrgActive, requireOrgPermission, requireSiteInScope } from '../lib/authz';
 import type { Actor, Deps } from '../lib/context';
 import { readEntitlements, requireFeature } from '../lib/entitlements';
 import { fanOutOrgToProfiles, readMembers } from '../lib/profiles';
@@ -70,8 +70,10 @@ export async function upsertSite(
 ): Promise<{ siteId: string }> {
   const at = now();
   return auditedTransaction(db, [input.orgId], async (tx, audit) => {
-    await requireOrgPermission(tx, db, actor, input.orgId, 'site.manage');
+    const member = await requireOrgPermission(tx, db, actor, input.orgId, 'site.manage');
     requireOrgActive(await getOrg(tx, db, input.orgId));
+    // Scoped members may edit their own sites but not add new ones.
+    requireSiteInScope(member, input.siteId, input.siteId ? 'this site' : 'a new site');
 
     const ref = input.siteId
       ? db.doc(paths.site(input.orgId, input.siteId))
@@ -107,8 +109,11 @@ export async function deleteSite(
 ): Promise<void> {
   const at = now();
   await auditedTransaction(db, [input.orgId], async (tx, audit) => {
-    await requireOrgPermission(tx, db, actor, input.orgId, 'site.manage');
+    const member = await requireOrgPermission(tx, db, actor, input.orgId, 'site.manage');
     requireOrgActive(await getOrg(tx, db, input.orgId));
+    if (member.siteScope?.length) {
+      throw new HttpsError('permission-denied', 'Only members with access to all sites can delete sites.');
+    }
     const ref = db.doc(paths.site(input.orgId, input.siteId));
     const snap = await tx.get(ref);
     if (!snap.exists) throw new HttpsError('not-found', 'Site not found.');

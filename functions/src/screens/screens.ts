@@ -2,6 +2,7 @@ import { FieldValue, type Transaction } from 'firebase-admin/firestore';
 import { HttpsError } from 'firebase-functions/v2/https';
 import type { z } from 'zod';
 import {
+  inSiteScope,
   paths,
   withinLimit,
   type ClaimDeviceInput,
@@ -14,7 +15,7 @@ import {
   type UpdateScreenInput,
 } from '@wallx-play/shared';
 import { auditedTransaction } from '../lib/audit';
-import { requireActiveOrgPermission, requireOrgPermission } from '../lib/authz';
+import { requireActiveOrgPermission, requireOrgPermission, requireSiteInScope } from '../lib/authz';
 import type { Actor, Deps } from '../lib/context';
 import { readEntitlements } from '../lib/entitlements';
 import { userAudit } from '../content/media';
@@ -53,6 +54,7 @@ export async function claimDevice(
   const screenRef = db.collection(paths.screens(input.orgId)).doc();
   return auditedTransaction(db, [input.orgId], async (tx, audit) => {
     const { member } = await requireActiveOrgPermission(tx, db, actor, input.orgId, 'screen.manage');
+    requireSiteInScope(member, input.siteId, 'a screen without one of your sites');
     const entitlements = await readEntitlements(tx, db, input.orgId);
     const codeRef = db.doc(paths.pairingCode(input.pairingCode));
     const code = (await tx.get(codeRef)).data() as { deviceId: string; expiresAt: number } | undefined;
@@ -80,6 +82,7 @@ export async function claimDevice(
       siteId: input.siteId,
       groupIds: input.groupIds,
       orientation: input.orientation,
+      rotation: input.rotation ?? 0,
       resolution: input.resolution,
       deviceId: device.id,
       status,
@@ -125,10 +128,11 @@ export async function authorizeScreen(
 ): Promise<void> {
   const at = now();
   await auditedTransaction(db, [input.orgId], async (tx, audit) => {
-    await requireActiveOrgPermission(tx, db, actor, input.orgId, 'device.authorize');
+    const { member } = await requireActiveOrgPermission(tx, db, actor, input.orgId, 'device.authorize');
     const ref = db.doc(paths.screen(input.orgId, input.screenId));
     const screen = (await tx.get(ref)).data() as ScreenDoc | undefined;
     if (!screen) throw new HttpsError('not-found', 'Screen not found.');
+    requireSiteInScope(member, screen.siteId, 'this screen');
     if (screen.status !== 'pending_authorization' || !screen.deviceId) {
       throw new HttpsError('failed-precondition', 'This screen is not waiting for authorization.');
     }
@@ -152,16 +156,19 @@ export async function updateScreen(
 ): Promise<void> {
   const at = now();
   await auditedTransaction(db, [input.orgId], async (tx, audit) => {
-    await requireActiveOrgPermission(tx, db, actor, input.orgId, 'screen.manage');
+    const { member } = await requireActiveOrgPermission(tx, db, actor, input.orgId, 'screen.manage');
     const ref = db.doc(paths.screen(input.orgId, input.screenId));
     const before = (await tx.get(ref)).data() as ScreenDoc | undefined;
     if (!before) throw new HttpsError('not-found', 'Screen not found.');
+    requireSiteInScope(member, before.siteId, 'this screen');
+    requireSiteInScope(member, input.siteId, 'the selected site');
     await checkTargets(tx, db, input.orgId, input.siteId, input.groupIds, input.defaultPlaylistId);
     tx.update(ref, {
       name: input.name,
       siteId: input.siteId,
       groupIds: input.groupIds,
       orientation: input.orientation,
+      rotation: input.rotation ?? 0,
       resolution: input.resolution,
       defaultPlaylistId: input.defaultPlaylistId,
       updatedAt: at,
@@ -185,10 +192,11 @@ export async function removeScreen(
 ): Promise<void> {
   const at = now();
   await auditedTransaction(db, [input.orgId], async (tx, audit) => {
-    await requireOrgPermission(tx, db, actor, input.orgId, 'screen.manage');
+    const member = await requireOrgPermission(tx, db, actor, input.orgId, 'screen.manage');
     const ref = db.doc(paths.screen(input.orgId, input.screenId));
     const screen = (await tx.get(ref)).data() as ScreenDoc | undefined;
     if (!screen) throw new HttpsError('not-found', 'Screen not found.');
+    requireSiteInScope(member, screen.siteId, 'this screen');
     tx.delete(ref);
     tx.delete(db.doc(paths.screenManifest(input.orgId, input.screenId)));
     if (screen.deviceId) tx.update(db.doc(paths.device(screen.deviceId)), { status: 'revoked', updatedAt: at });
@@ -244,7 +252,13 @@ export async function publishScreens(
   const { member, org } = await db.runTransaction((tx) =>
     requireActiveOrgPermission(tx, db, actor, input.orgId, 'content.publish'),
   );
-  const screens = await authorizedScreens(db, input.orgId, input.screenIds);
+  const all = await authorizedScreens(db, input.orgId, input.screenIds);
+  // A site-scoped member publishes only to their own sites' screens.
+  const scope = member.siteScope ?? [];
+  if (scope.length && input.screenIds.length && all.some((s) => !inSiteScope(scope, s.siteId))) {
+    throw new HttpsError('permission-denied', 'Your access is limited to some sites; a selected screen is outside them.');
+  }
+  const screens = all.filter((s) => inSiteScope(scope, s.siteId));
   if (screens.length === 0) throw new HttpsError('failed-precondition', 'There are no authorized screens to publish to.');
 
   if (org.settings?.requirePublishApproval && !member.permissions.includes('content.approve')) {
@@ -252,7 +266,8 @@ export async function publishScreens(
     await auditedTransaction(db, [input.orgId], async (tx, audit) => {
       const approval: PublishApprovalDoc = {
         id: ref.id,
-        screenIds: input.screenIds,
+        // Scoped requests name their screens, so approving them never reaches other sites.
+        screenIds: scope.length ? screens.map((s) => s.id) : input.screenIds,
         note: input.note ?? null,
         status: 'pending',
         requestedBy: actor.uid,
@@ -299,9 +314,15 @@ export async function reviewPublish(
   const { db, now } = deps;
   const ref = db.doc(paths.approval(input.orgId, input.approvalId));
   const approval = await auditedTransaction(db, [input.orgId], async (tx, audit) => {
-    await requireActiveOrgPermission(tx, db, actor, input.orgId, 'content.approve');
+    const { member } = await requireActiveOrgPermission(tx, db, actor, input.orgId, 'content.approve');
     const doc = (await tx.get(ref)).data() as PublishApprovalDoc | undefined;
     if (!doc) throw new HttpsError('not-found', 'Approval request not found.');
+    if (member.siteScope?.length) {
+      const targets = doc.screenIds.length ? await Promise.all(doc.screenIds.map((id) => tx.get(db.doc(paths.screen(input.orgId, id))))) : [];
+      if (!doc.screenIds.length || targets.some((t) => !inSiteScope(member.siteScope, (t.data() as ScreenDoc | undefined)?.siteId))) {
+        throw new HttpsError('permission-denied', 'This request includes screens outside your sites.');
+      }
+    }
     if (doc.status !== 'pending') throw new HttpsError('failed-precondition', `This request was already ${doc.status}.`);
     const status = input.decision === 'approve' ? 'approved' : 'rejected';
     tx.update(ref, { status, decidedBy: actor.uid, decidedAt: now(), decisionNote: input.note ?? null });

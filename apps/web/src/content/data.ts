@@ -8,11 +8,13 @@ import {
   type MediaDoc,
   type PlaylistDoc,
   type ScheduleDoc,
+  type ScreenDoc,
   type ScreenGroupDoc,
   type SiteDoc,
 } from '@wallx-play/shared';
 import { db, storage } from '../lib/firebase';
 import { useQueryData } from '../lib/hooks';
+import { bySite, scopeKey } from '../lib/scope';
 
 /** Live content collections of the current org. */
 export const useMediaList = (orgId: string) =>
@@ -111,3 +113,12 @@ export function formatDuration(sec: number): string {
 }
 
 export const newId = () => Math.random().toString(36).slice(2, 10);
+
+/** Screens the member may see (filtered to their sites when scoped), sorted by name. */
+export function useScreens(orgId: string, siteScope: readonly string[]) {
+  const live = useQueryData<ScreenDoc>(`screens:${orgId}${scopeKey(siteScope)}`, () =>
+    query(collection(db, paths.screens(orgId)), ...bySite(siteScope, orderBy('name'))),
+  );
+  const data = useMemo(() => [...live.data].sort((a, b) => a.name.localeCompare(b.name)), [live.data]);
+  return { ...live, data };
+}

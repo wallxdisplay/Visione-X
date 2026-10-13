@@ -36,6 +36,8 @@ data class Manifest(
     val liveChannels: List<LiveChannel> = emptyList(),
     /** Weather / RSS data sources the content shows; values come from /devices/data (phase 6). */
     val dataSources: List<ManifestDataSource> = emptyList(),
+    /** Clockwise degrees to rotate the whole output (0, 90, 180, 270): portrait walls on landscape HDMI. */
+    val rotation: Int = 0,
 )
 
 @Serializable
