@@ -129,6 +129,17 @@ class LiveTest {
     }
 
     @Test
+    fun pollsAsOftenAsThePlanSays() {
+        val store = LiveStore()
+        assertEquals(15L, store.pollSec) // before the first answer
+        store.applyLive(LiveResponse(now, emptyList(), refreshSec = 30), emptyList())
+        assertEquals(30L, store.pollSec)
+        store.applyLive(LiveResponse(now, emptyList(), refreshSec = 1), emptyList())
+        assertEquals(10L, store.pollSec) // never faster than sensors can report
+        assertEquals(15, json.decodeFromString<LiveResponse>("""{"serverTime":1,"values":[]}""").refreshSec) // older servers
+    }
+
+    @Test
     fun staleTableCellsAreDimmed() {
         val v = LiveValue(4.0, now - 20 * 60_000, 600, true, unit = "°C")
         assertEquals(TableCell("4 °C", dim = true), liveCell(v, Live.state(v, now), null))

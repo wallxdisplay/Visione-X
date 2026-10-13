@@ -69,7 +69,7 @@ object Live {
 
 /**
  * Live values and chart history for the channels of the playing manifest. The engine fills it
- * from /devices/live (every LIVE_POLL_SEC) and /devices/live/history (every HISTORY_POLL_SEC);
+ * from /devices/live (as often as the plan allows, [pollSec]) and /devices/live/history (every HISTORY_POLL_SEC);
  * between history fetches, new live readings are appended to the series so charts move.
  * When the network is down the last values stay, and widgets show them as stale.
  */
@@ -83,11 +83,16 @@ class LiveStore {
     @Volatile var names: Map<String, String> = emptyMap()
         private set
 
+    /** Seconds until the next /devices/live poll: the plan's rate, as last reported by the server. */
+    @Volatile var pollSec: Long = LIVE_POLL_SEC
+        private set
+
     fun applyLive(res: LiveResponse, channels: List<LiveChannel>) {
         val next = res.values.associate {
             "${it.sourceId}/${it.field}" to LiveValue(it.value, it.ts, it.staleAfterSec, it.deviceOnline, it.valueType, it.unit)
         }
         names = res.values.associate { "${it.sourceId}/${it.field}" to it.name.ifEmpty { it.field } }
+        pollSec = res.refreshSec.toLong().coerceIn(MIN_POLL_SEC, MAX_POLL_SEC)
         _values.value = next
         // Append newer readings to charted series, trimmed to each chart's window.
         val windows = channels.filter { it.historyMinutes != null }.associate { it.key to it.historyMinutes!! }
@@ -119,7 +124,10 @@ class LiveStore {
     }
 
     companion object {
+        /** Default when the server does not say (servers before plan-defined refresh). */
         const val LIVE_POLL_SEC = 15L
+        const val MIN_POLL_SEC = 10L
+        const val MAX_POLL_SEC = 300L
         const val HISTORY_POLL_SEC = 300L
     }
 }

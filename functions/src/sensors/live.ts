@@ -9,11 +9,13 @@ import {
   HISTORY_MAX_POINTS,
   downsample,
   isSensorOnline,
+  liveRefreshSec,
   paths,
   readingBucketIds,
   type DeviceDoc,
   type DeviceHistoryResponse,
   type DeviceLiveResponse,
+  type EntitlementsDoc,
   type LiveValueDto,
   type OrgDoc,
   type ReadingBucketDoc,
@@ -42,6 +44,22 @@ async function boundChannels(deps: Deps, req: ApiRequest): Promise<{ orgId: stri
   return { orgId: device.orgId, channels };
 }
 
+/** The org's live refresh rate, cached per instance (plan changes apply within a few minutes). */
+const REFRESH_CACHE_MS = 5 * 60_000;
+const refreshCache = new Map<string, { at: number; sec: number }>();
+
+async function refreshSecFor(deps: Deps, orgId: string): Promise<number> {
+  const at = deps.now();
+  const hit = refreshCache.get(orgId);
+  if (hit && at - hit.at < REFRESH_CACHE_MS) return hit.sec;
+  const ent = (await deps.db.doc(paths.orgEntitlements(orgId)).get()).data() as EntitlementsDoc | undefined;
+  const sec = liveRefreshSec(ent?.limits ?? {});
+  refreshCache.set(orgId, { at, sec });
+  return sec;
+}
+
+export const resetRefreshCache = () => refreshCache.clear();
+
 async function getAllMap<T>(db: Firestore, paths: string[]): Promise<Map<string, T>> {
   if (paths.length === 0) return new Map();
   const snaps = await db.getAll(...paths.map((p) => db.doc(p)));
@@ -54,9 +72,10 @@ export async function deviceLive(deps: Deps, req: ApiRequest): Promise<ApiResult
   const { orgId, channels } = bound;
   const at = deps.now();
   const deviceIds = [...new Set(channels.map((c) => c.sourceId))];
-  const [devices, docs] = await Promise.all([
+  const [devices, docs, refreshSec] = await Promise.all([
     getAllMap<SensorDeviceDoc>(deps.db, deviceIds.map((id) => paths.sensorDevice(orgId, id))),
     getAllMap<SensorChannelDoc>(deps.db, channels.map((c) => paths.sensorChannel(orgId, c.sourceId, c.field))),
+    refreshSecFor(deps, orgId),
   ]);
   const values: LiveValueDto[] = channels.map((c) => {
     const ch = docs.get(paths.sensorChannel(orgId, c.sourceId, c.field));
@@ -73,7 +92,7 @@ export async function deviceLive(deps: Deps, req: ApiRequest): Promise<ApiResult
       valueType: ch?.valueType ?? 'number',
     };
   });
-  const body: DeviceLiveResponse = { serverTime: at, values };
+  const body: DeviceLiveResponse = { serverTime: at, values, refreshSec };
   return { status: 200, body };
 }
 

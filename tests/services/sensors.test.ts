@@ -22,6 +22,7 @@ import { runMonitor } from '../../functions/src/ops/monitor';
 import { reviewOrgSignup, setOrgStatus } from '../../functions/src/orgs/review';
 import { submitOrgSignup } from '../../functions/src/orgs/signup';
 import * as screens from '../../functions/src/screens/screens';
+import { resetRefreshCache } from '../../functions/src/sensors/live';
 import * as sensors from '../../functions/src/sensors/sensors';
 import { advance, db, deps, expectCode, resetEmulator, superadmin, user } from './helpers';
 
@@ -276,6 +277,12 @@ describe('sensor widgets on screens', () => {
     expect(live.values).toEqual([
       { sourceId: sensorId, field: 'temp', name: 'Temperature', value: 3.9, ts: deps.now(), staleAfterSec: 600, deviceOnline: true, unit: '°C', valueType: 'number' },
     ]);
+    // The plan sets how often screens refresh (cached for a few minutes per org).
+    expect(live.refreshSec).toBe(15);
+    await db.doc(paths.orgEntitlements(orgId)).update({ 'limits.liveRefreshSec': 30 });
+    resetRefreshCache();
+    expect(((await player('/api/v1/devices/live')).body as DeviceLiveResponse).refreshSec).toBe(30);
+
     const history = (await player('/api/v1/devices/live/history')).body as DeviceHistoryResponse;
     expect(history.series[0]!.points.map(([, v]) => v)).toEqual([3.5, 3.9]);
 

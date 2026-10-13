@@ -39,11 +39,27 @@ export const LIMIT_KEYS = [
   'sensorDevices',
   'retentionDays',
   'apiCallsPerDay',
+  /** Seconds between live sensor refreshes on screens; null = as fast as allowed. */
+  'liveRefreshSec',
 ] as const;
 export type LimitKey = (typeof LIMIT_KEYS)[number];
 
 /** null = unlimited */
 export type Limits = Record<LimitKey, number | null>;
+
+/** Plans saved before liveRefreshSec existed keep this rate. */
+export const LIVE_REFRESH_DEFAULT_SEC = 15;
+/** Sensors may send a reading every 10 s (ingest token bucket), so refreshing faster shows nothing new. */
+export const LIVE_REFRESH_MIN_SEC = 10;
+export const LIVE_REFRESH_MAX_SEC = 300;
+
+/** How often screens refresh live sensor values under these limits. */
+export function liveRefreshSec(limits: Partial<Limits>): number {
+  const v = limits.liveRefreshSec;
+  if (v === undefined) return LIVE_REFRESH_DEFAULT_SEC;
+  if (v === null) return LIVE_REFRESH_MIN_SEC;
+  return Math.min(LIVE_REFRESH_MAX_SEC, Math.max(LIVE_REFRESH_MIN_SEC, v));
+}
 
 export interface FeatureOverrides {
   grant?: FeatureKey[];

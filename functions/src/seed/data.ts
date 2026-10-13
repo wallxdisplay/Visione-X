@@ -25,7 +25,7 @@ export const SEED_PLANS: Plan[] = [
     pricePerScreenMonthlyMinor: 0,
     annualDiscountBps: 0,
     trialDays: 14,
-    limits: { screens: 2, users: 3, storageGB: 2, sensorDevices: 2, retentionDays: 30, apiCallsPerDay: 0 },
+    limits: { screens: 2, users: 3, storageGB: 2, sensorDevices: 2, retentionDays: 30, apiCallsPerDay: 0, liveRefreshSec: 15 },
     featureKeys: [...CORE, 'widget.weather', 'widget.rss', 'sensor.esp32'],
     active: true,
     version: 1,
@@ -38,7 +38,7 @@ export const SEED_PLANS: Plan[] = [
     pricePerScreenMonthlyMinor: 29_900,
     annualDiscountBps: 1500,
     trialDays: 0,
-    limits: { screens: null, users: 5, storageGB: 10, sensorDevices: 0, retentionDays: 30, apiCallsPerDay: 0 },
+    limits: { screens: null, users: 5, storageGB: 10, sensorDevices: 0, retentionDays: 30, apiCallsPerDay: 0, liveRefreshSec: 15 },
     featureKeys: CORE,
     active: true,
     version: 1,
@@ -51,7 +51,7 @@ export const SEED_PLANS: Plan[] = [
     pricePerScreenMonthlyMinor: 59_900,
     annualDiscountBps: 1500,
     trialDays: 0,
-    limits: { screens: null, users: 25, storageGB: 50, sensorDevices: 50, retentionDays: 90, apiCallsPerDay: 0 },
+    limits: { screens: null, users: 25, storageGB: 50, sensorDevices: 50, retentionDays: 90, apiCallsPerDay: 0, liveRefreshSec: 15 },
     featureKeys: [
       ...CORE,
       'widget.weather',
@@ -72,7 +72,7 @@ export const SEED_PLANS: Plan[] = [
     pricePerScreenMonthlyMinor: null, // custom agreement
     annualDiscountBps: 0,
     trialDays: 0,
-    limits: { screens: null, users: null, storageGB: null, sensorDevices: null, retentionDays: 365, apiCallsPerDay: null },
+    limits: { screens: null, users: null, storageGB: null, sensorDevices: null, retentionDays: 365, apiCallsPerDay: null, liveRefreshSec: null },
     featureKeys: [
       ...CORE,
       'widget.weather',

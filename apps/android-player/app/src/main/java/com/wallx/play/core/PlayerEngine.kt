@@ -317,7 +317,7 @@ class PlayerEngine internal constructor(
                     Log.w(TAG, "Live data failed: ${e.message}")
                 }
             }
-            delay(LiveStore.LIVE_POLL_SEC * 1000)
+            delay(live.pollSec * 1000)
         }
     }
 

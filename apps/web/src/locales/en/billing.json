@@ -216,6 +216,7 @@
     "storageGB": "Storage (GB)",
     "sensorDevices": "Sensor devices",
     "retentionDays": "Data retention (days)",
-    "apiCallsPerDay": "API calls / day"
+    "apiCallsPerDay": "API calls / day",
+    "liveRefreshSec": "Live sensor refresh (seconds; ∞ = every 10 s)"
   }
 }

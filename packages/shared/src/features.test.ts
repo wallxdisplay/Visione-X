@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveEntitlements, withinLimit, type Limits } from './features';
+import { liveRefreshSec, resolveEntitlements, withinLimit, type Limits } from './features';
 
 const limits: Limits = {
   screens: 5,
@@ -8,6 +8,7 @@ const limits: Limits = {
   sensorDevices: 0,
   retentionDays: 30,
   apiCallsPerDay: null,
+  liveRefreshSec: 15,
 };
 
 describe('resolveEntitlements', () => {
@@ -45,5 +46,15 @@ describe('withinLimit', () => {
   it('treats null as unlimited', () => {
     expect(withinLimit(limits, 'apiCallsPerDay', 1_000_000)).toBe(true);
     expect(withinLimit(limits, 'screens', 6)).toBe(false);
+  });
+});
+
+describe('liveRefreshSec', () => {
+  it('uses the plan value within bounds; unlimited is the fastest allowed; old plans keep 15 s', () => {
+    expect(liveRefreshSec({ liveRefreshSec: 30 })).toBe(30);
+    expect(liveRefreshSec({ liveRefreshSec: 2 })).toBe(10);
+    expect(liveRefreshSec({ liveRefreshSec: 9999 })).toBe(300);
+    expect(liveRefreshSec({ liveRefreshSec: null })).toBe(10);
+    expect(liveRefreshSec({})).toBe(15);
   });
 });

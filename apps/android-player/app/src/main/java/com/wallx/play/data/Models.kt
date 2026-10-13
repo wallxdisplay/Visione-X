@@ -216,7 +216,7 @@ data class LiveValueDto(
 )
 
 @Serializable
-data class LiveResponse(val serverTime: Long = 0, val values: List<LiveValueDto> = emptyList())
+data class LiveResponse(val serverTime: Long = 0, val values: List<LiveValueDto> = emptyList(), val refreshSec: Int = 15)
 
 @Serializable
 data class HistorySeries(val sourceId: String, val field: String, val points: List<List<Double>> = emptyList())

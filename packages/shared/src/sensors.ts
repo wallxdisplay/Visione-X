@@ -307,6 +307,8 @@ export interface LiveValueDto {
 export interface DeviceLiveResponse {
   serverTime: number;
   values: LiveValueDto[];
+  /** Seconds until the next poll (the plan's liveRefreshSec). */
+  refreshSec: number;
 }
 
 /** GET /api/v1/devices/live/history — [epoch ms, value] points, oldest first. */
