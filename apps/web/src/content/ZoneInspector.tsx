@@ -1,41 +1,19 @@
-import { Button, SelectField, TextAreaField, TextField } from '@wallx-play/ui';
-import type { TextStyle, Widget, Zone, ZoneContent } from '@wallx-play/layout-spec';
+import { Button, SelectField, TextField } from '@wallx-play/ui';
+import type { Widget, Zone, ZoneContent } from '@wallx-play/layout-spec';
 import type { MediaDoc, PlaylistDoc } from '@wallx-play/shared';
 import { ArrowDown, ArrowUp, Copy, Trash2 } from 'lucide-react';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { timezoneOptions } from '../lib/format';
 import { MediaPicker } from './MediaPicker';
 import { MediaThumb } from './MediaThumb';
-import { DataWidgetEditor } from './DataWidgetEditor';
-import { SensorWidgetEditor } from './SensorWidgetEditor';
-import {
-  DATA_WIDGET_TYPES,
-  SENSOR_WIDGET_TYPES,
-  defaultDataWidget,
-  defaultSensorWidget,
-  defaultWidget,
-  type ChannelChoice,
-  type DataWidgetType,
-  type EditableWidgetType,
-  type SensorWidgetType,
-} from './widgetDefaults';
+import { defaultDataWidget, defaultSensorWidget, defaultWidget } from './widgetDefaults';
+import { isDataChoice, isSensorChoice, WidgetEditor, widgetChoices, widgetChoicesHint, type WidgetChoice } from './WidgetEditor';
+import type { WidgetSources } from './widgetSources';
 
-type ContentChoice = 'empty' | 'media' | 'playlist' | EditableWidgetType | SensorWidgetType | DataWidgetType;
+type ContentChoice = 'empty' | 'media' | 'playlist' | WidgetChoice;
 
 function choiceOf(content: ZoneContent): ContentChoice {
-  if (content.kind === 'widget') return content.widget.type as EditableWidgetType | SensorWidgetType | DataWidgetType;
-  return content.kind;
-}
-
-const isSensorChoice = (c: string): c is SensorWidgetType => (SENSOR_WIDGET_TYPES as string[]).includes(c);
-const isDataChoice = (c: string): c is DataWidgetType => (DATA_WIDGET_TYPES as string[]).includes(c);
-
-/** A weather place or RSS feed the org has set up (Integrations). */
-export interface DataSourceChoice {
-  id: string;
-  name: string;
-  type: DataWidgetType;
+  return content.kind === 'widget' ? (content.widget.type as WidgetChoice) : content.kind;
 }
 
 const pct = (v: number) => Math.round(v * 1000) / 10;
@@ -47,8 +25,7 @@ export function ZoneInspector({
   playlists,
   timezone,
   readOnly,
-  sensors,
-  dataSources,
+  sources,
   autoPickMedia = false,
   onChange,
   onRemove,
@@ -60,10 +37,8 @@ export function ZoneInspector({
   playlists: PlaylistDoc[];
   timezone: string;
   readOnly: boolean;
-  /** Sensor channels to bind; null when the plan has no sensors (widgets are not offered). */
-  sensors: ChannelChoice[] | null;
-  /** Data sources per widget type the plan includes; a type missing from the map is not offered. */
-  dataSources: Partial<Record<DataWidgetType, DataSourceChoice[]>>;
+  /** Sensor channels and data sources widgets may show. */
+  sources: WidgetSources;
   /** Open the media picker immediately (zone was just added as a media zone). */
   autoPickMedia?: boolean;
   onChange: (zone: Zone) => void;
@@ -73,9 +48,9 @@ export function ZoneInspector({
 }) {
   const { t } = useTranslation();
   const [picking, setPicking] = useState(autoPickMedia);
-  const timezones = useMemo(timezoneOptions, []);
   const choice = choiceOf(zone.content);
   const zonePlaylists = playlists.filter((p) => p.layoutIds.length === 0);
+  const { sensors, dataSources } = sources;
 
   const setContent = (content: ZoneContent) => onChange({ ...zone, content });
   const setWidget = (widget: Widget) => setContent({ kind: 'widget', widget });
@@ -104,70 +79,6 @@ export function ZoneInspector({
     next.y = Math.min(next.y, 1 - next.h);
     onChange(next);
   }
-
-  // `mode`: full text styling, colours + size (sensor values), or colours only (gauges, charts).
-  const styleEditor = (
-    style: TextStyle | undefined,
-    update: (s: TextStyle) => void,
-    defaultScale: number,
-    mode: 'full' | 'size' | 'colors' = 'full',
-  ) => (
-    <>
-      <div className="wxp-form__row">
-        <label className="wxp-field">
-          <span className="wxp-field__label">{t('studio.color')}</span>
-          <input type="color" className="color-input" value={style?.color ?? '#FFFFFF'} disabled={readOnly} onChange={(e) => update({ ...style, color: e.target.value.toUpperCase() })} />
-        </label>
-        <label className="wxp-field">
-          <span className="wxp-field__label">{t('studio.background')}</span>
-          <span className="color-row">
-            <input
-              type="color"
-              className="color-input"
-              value={style?.background ?? '#000000'}
-              disabled={readOnly}
-              onChange={(e) => update({ ...style, background: e.target.value.toUpperCase() })}
-            />
-            {style?.background ? (
-              <Button size="sm" variant="tertiary" disabled={readOnly} onClick={() => update({ ...style, background: undefined })}>
-                {t('studio.transparent')}
-              </Button>
-            ) : null}
-          </span>
-        </label>
-      </div>
-      {mode !== 'colors' ? (
-      <label className="wxp-field">
-        <span className="wxp-field__label">
-          {t('studio.textSize')} <span className="wxp-muted">{Math.round((style?.fontScale ?? defaultScale) * 100)}%</span>
-        </span>
-        <input
-          type="range"
-          min={2}
-          max={100}
-          value={Math.round((style?.fontScale ?? defaultScale) * 100)}
-          disabled={readOnly}
-          onChange={(e) => update({ ...style, fontScale: Number(e.target.value) / 100 })}
-        />
-      </label>
-      ) : null}
-      {mode === 'full' ? (
-      <div className="wxp-form__row">
-        <SelectField
-          label={t('studio.align')}
-          options={['start', 'center', 'end'].map((a) => ({ value: a, label: t(`studio.alignOptions.${a}`) }))}
-          value={style?.align ?? 'center'}
-          disabled={readOnly}
-          onChange={(e) => update({ ...style, align: e.target.value as TextStyle['align'] })}
-        />
-        <label className="checkbox-row">
-          <input type="checkbox" checked={!!style?.bold} disabled={readOnly} onChange={(e) => update({ ...style, bold: e.target.checked })} />
-          {t('studio.bold')}
-        </label>
-      </div>
-      ) : null}
-    </>
-  );
 
   const c = zone.content;
   return (
@@ -209,35 +120,16 @@ export function ZoneInspector({
       <SelectField
         label={t('studio.content')}
         disabled={readOnly}
-        options={(['empty', 'media', 'playlist', 'text', 'clock', 'qr', 'table', 'web', ...(sensors ? SENSOR_WIDGET_TYPES : []), ...DATA_WIDGET_TYPES.filter((d) => dataSources[d])] as ContentChoice[]).map((v) => ({
-          value: v,
-          label: t(`studio.contentTypes.${v}`),
-          disabled: (isSensorChoice(v) && !sensors?.length) || (isDataChoice(v) && !dataSources[v]?.length),
-        }))}
-        hint={
-          sensors && !sensors.length
-            ? t('sensorWidgets.noChannels')
-            : DATA_WIDGET_TYPES.some((d) => dataSources[d] && !dataSources[d]!.length)
-              ? t('dataWidgets.noSources')
-              : undefined
-        }
+        options={[
+          ...(['empty', 'media', 'playlist'] as const).map((v) => ({ value: v, label: t(`studio.contentTypes.${v}`) })),
+          ...widgetChoices(sources).map((o) => ({ value: o.type, label: t(`studio.contentTypes.${o.type}`), disabled: o.disabled })),
+        ]}
+        hint={widgetChoicesHint(sources, t)}
         value={choice}
         onChange={(e) => changeChoice(e.target.value as ContentChoice)}
       />
 
-      {c.kind === 'widget' && (c.widget.type === 'weather' || c.widget.type === 'rss') ? (
-        <DataWidgetEditor widget={c.widget} sources={dataSources[c.widget.type] ?? []} readOnly={readOnly} onChange={setWidget} styleEditor={styleEditor} />
-      ) : null}
-
-      {c.kind === 'widget' && isSensorChoice(c.widget.type) ? (
-        <SensorWidgetEditor
-          widget={c.widget as Parameters<typeof SensorWidgetEditor>[0]['widget']}
-          channels={sensors ?? []}
-          readOnly={readOnly}
-          onChange={setWidget}
-          styleEditor={styleEditor}
-        />
-      ) : null}
+      {c.kind === 'widget' ? <WidgetEditor widget={c.widget} sources={sources} readOnly={readOnly} compact onChange={setWidget} /> : null}
 
       {c.kind === 'media' ? (
         <>
@@ -280,104 +172,6 @@ export function ZoneInspector({
         )
       ) : null}
 
-      {c.kind === 'widget' && c.widget.type === 'text' ? (
-        <>
-          <TextAreaField
-            label={t('studio.text')}
-            hint={t('studio.textHint')}
-            value={c.widget.text}
-            disabled={readOnly}
-            maxLength={2000}
-            onChange={(e) => setWidget({ ...c.widget, text: e.target.value } as Widget)}
-          />
-          {styleEditor(c.widget.style, (style) => setWidget({ ...c.widget, style } as Widget), 0.4)}
-        </>
-      ) : null}
-
-      {c.kind === 'widget' && c.widget.type === 'clock' ? (
-        <>
-          <SelectField
-            label={t('studio.clockFormat')}
-            disabled={readOnly}
-            options={['time', 'date', 'datetime'].map((f) => ({ value: f, label: t(`studio.clockFormats.${f}`) }))}
-            value={c.widget.format}
-            onChange={(e) => setWidget({ ...c.widget, format: e.target.value } as Widget)}
-          />
-          <SelectField
-            label={t('studio.timezone')}
-            disabled={readOnly}
-            options={timezones}
-            value={c.widget.timezone}
-            onChange={(e) => setWidget({ ...c.widget, timezone: e.target.value } as Widget)}
-          />
-          <label className="checkbox-row">
-            <input
-              type="checkbox"
-              checked={c.widget.seconds}
-              disabled={readOnly}
-              onChange={(e) => setWidget({ ...c.widget, seconds: e.target.checked } as Widget)}
-            />
-            {t('studio.showSeconds')}
-          </label>
-          {styleEditor(c.widget.style, (style) => setWidget({ ...c.widget, style } as Widget), 0.45)}
-        </>
-      ) : null}
-
-      {c.kind === 'widget' && c.widget.type === 'qr' ? (
-        <>
-          <TextField
-            label={t('studio.qrValue')}
-            hint={t('studio.qrHint')}
-            value={c.widget.value}
-            disabled={readOnly}
-            maxLength={1000}
-            onChange={(e) => setWidget({ ...c.widget, value: e.target.value } as Widget)}
-          />
-          <div className="wxp-form__row">
-            <label className="wxp-field">
-              <span className="wxp-field__label">{t('studio.color')}</span>
-              <input type="color" className="color-input" value={c.widget.foreground} disabled={readOnly} onChange={(e) => setWidget({ ...c.widget, foreground: e.target.value.toUpperCase() } as Widget)} />
-            </label>
-            <label className="wxp-field">
-              <span className="wxp-field__label">{t('studio.background')}</span>
-              <input type="color" className="color-input" value={c.widget.background} disabled={readOnly} onChange={(e) => setWidget({ ...c.widget, background: e.target.value.toUpperCase() } as Widget)} />
-            </label>
-          </div>
-        </>
-      ) : null}
-
-      {c.kind === 'widget' && c.widget.type === 'table' ? (
-        <TableEditor
-          widget={c.widget}
-          readOnly={readOnly}
-          onChange={(w) => setWidget(w)}
-          styleEditor={(s, u) => styleEditor(s, u, 0.06)}
-        />
-      ) : null}
-
-      {c.kind === 'widget' && c.widget.type === 'web' ? (
-        <>
-          <TextField
-            label={t('studio.url')}
-            hint={t('studio.urlHint')}
-            type="url"
-            value={c.widget.url}
-            disabled={readOnly}
-            onChange={(e) => setWidget({ ...c.widget, url: e.target.value } as Widget)}
-          />
-          <TextField
-            label={t('studio.refresh')}
-            type="number"
-            min={30}
-            value={c.widget.refreshSec ?? ''}
-            disabled={readOnly}
-            onChange={(e) =>
-              setWidget({ ...c.widget, refreshSec: e.target.value ? Math.max(30, Number(e.target.value)) : undefined } as Widget)
-            }
-          />
-        </>
-      ) : null}
-
       <MediaPicker
         open={picking}
         media={media}
@@ -389,43 +183,5 @@ export function ZoneInspector({
         }}
       />
     </div>
-  );
-}
-
-function TableEditor({
-  widget,
-  readOnly,
-  onChange,
-  styleEditor,
-}: {
-  widget: Extract<Widget, { type: 'table' }>;
-  readOnly: boolean;
-  onChange: (w: Widget) => void;
-  styleEditor: (s: TextStyle | undefined, u: (s: TextStyle) => void) => ReactNode;
-}) {
-  const { t } = useTranslation();
-  const asText = (w: typeof widget) =>
-    [w.columns.join(' | '), ...w.rows.map((r) => r.map((c) => (typeof c === 'string' ? c : '')).join(' | '))].join('\n');
-  const [text, setText] = useState(() => asText(widget));
-
-  function apply(value: string) {
-    setText(value);
-    const lines = value.split('\n').map((l) => l.split('|').map((c) => c.trim()));
-    const [columns = [''], ...rows] = lines;
-    onChange({
-      ...widget,
-      columns: columns.slice(0, 10).map((c) => c.slice(0, 80)),
-      rows: rows
-        .filter((r) => r.some(Boolean))
-        .slice(0, 50)
-        .map((r) => r.slice(0, columns.length).map((c) => c.slice(0, 200))),
-    });
-  }
-
-  return (
-    <>
-      <TextAreaField label={t('studio.tableData')} hint={t('studio.tableHint')} value={text} disabled={readOnly} rows={6} onChange={(e) => apply(e.target.value)} />
-      {styleEditor(widget.style, (style) => onChange({ ...widget, style }))}
-    </>
   );
 }

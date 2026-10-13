@@ -99,6 +99,18 @@ Remaining one-time steps (console):
 5. Enable MFA for platform staff (Identity Platform) before onboarding real customers.
 6. In Google Cloud console → APIs & Services → Credentials, restrict the browser API key to the
    `wallx-play.web.app` / `wallx-play.firebaseapp.com` referrers.
+7. **App Check** (web app, reCAPTCHA Enterprise), rolled out in three steps:
+   1. Firebase console → App Check → Apps → the web app → **reCAPTCHA Enterprise** → create a
+      key for `wallx-play.web.app` and `wallx-play.firebaseapp.com` and save. Put its **site key**
+      (public, not a secret) in `apps/web/.env.production` as `VITE_APPCHECK_SITE_KEY=…`, then
+      build and deploy hosting. Without the key, or with the emulators, App Check is off.
+   2. Monitor for a few days: App Check → APIs shows verified vs unverified requests for
+      Firestore and Storage, and callables log `appCheck.missing` in Cloud Logging for calls
+      without a valid token. Old browser tabs keep the previous build until reloaded.
+   3. Enforce once unverified traffic is gone: App Check → APIs → **Enforce** for Cloud Firestore
+      and Cloud Storage, and for callables add `APP_CHECK_ENFORCE=true` to
+      `functions/.env.wallx-play` and redeploy functions. Players are not affected: they use the
+      device API (`api` function), which authenticates devices with their own credentials.
 
 **Weather provider (phase 6).** Open-Meteo's free API is non-commercial, so production needs a
 commercial key. Once purchased: `npx firebase functions:secrets:set OPEN_METEO_API_KEY --project prod`,

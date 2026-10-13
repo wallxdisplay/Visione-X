@@ -12,6 +12,8 @@ export interface LiveValue {
   staleAfterSec: number;
   /** False when the sensor device itself stopped reporting. */
   deviceOnline: boolean;
+  /** The channel's unit, e.g. "°C" (shown by table cells). */
+  unit?: string;
 }
 
 export type LiveState = 'ok' | 'stale' | 'offline' | 'nodata';

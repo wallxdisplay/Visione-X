@@ -50,6 +50,8 @@ export interface MemberDoc {
   uid: string;
   email: string;
   role: SystemOrgRole | 'custom';
+  /** The org role (orgs/{orgId}/roles) when role === 'custom'. */
+  customRoleId?: string;
   permissions: OrgPermission[];
   siteScope: string[];
   status: 'active' | 'disabled';
@@ -57,11 +59,25 @@ export interface MemberDoc {
   invitedBy: string | null;
 }
 
+/** orgs/{orgId}/roles/{roleId}: a custom role; members holding it carry a copy of `permissions`. */
+export interface RoleDoc {
+  id: string;
+  name: string;
+  description: string;
+  permissions: OrgPermission[];
+  createdAt: number;
+  createdBy: string;
+  updatedAt: number;
+  updatedBy: string;
+}
+
 /** orgs/{orgId}/invites/{inviteId}; the token itself is never stored, only its hash. */
 export interface InviteDoc {
   id: string;
   email: string;
-  role: SystemOrgRole;
+  role: SystemOrgRole | 'custom';
+  /** The org role when role === 'custom'; its permissions are copied on accept. */
+  customRoleId?: string;
   tokenHash: string;
   status: 'pending' | 'accepted' | 'revoked' | 'expired';
   invitedBy: string;

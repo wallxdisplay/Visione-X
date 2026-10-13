@@ -21,3 +21,11 @@ export const BASE_OPTIONS = {
   cpu: 'gcf_gen1',
   maxInstances: 10,
 } as const;
+
+/**
+ * App Check on callables (the web app; players use the device API instead). Off until
+ * APP_CHECK_ENFORCE=true is set in functions/.env.wallx-play and functions are redeployed.
+ * Before that, callables log requests without a valid App Check token ("appCheck.missing"),
+ * so enforcing can wait until real traffic shows tokens (docs/DEVELOPMENT.md).
+ */
+export const ENFORCE_APP_CHECK = process.env.APP_CHECK_ENFORCE === 'true';

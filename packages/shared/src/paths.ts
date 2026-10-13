@@ -16,6 +16,8 @@ export const paths = {
   orgUsage: (orgId: string) => `orgs/${orgId}/usage/current`,
   members: (orgId: string) => `orgs/${orgId}/members`,
   member: (orgId: string, uid: string) => `orgs/${orgId}/members/${uid}`,
+  roles: (orgId: string) => `orgs/${orgId}/roles`,
+  role: (orgId: string, roleId: string) => `orgs/${orgId}/roles/${roleId}`,
   invites: (orgId: string) => `orgs/${orgId}/invites`,
   invite: (orgId: string, inviteId: string) => `orgs/${orgId}/invites/${inviteId}`,
   /** Global lookup from token hash → invite, so accepting needs only the token. */

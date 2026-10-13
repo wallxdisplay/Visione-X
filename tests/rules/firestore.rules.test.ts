@@ -103,6 +103,7 @@ describe('phase 1 collections', () => {
       });
       await setDoc(doc(db, 'orgs/org1/invites/i1'), { email: 'x@example.com', status: 'pending' });
       await setDoc(doc(db, 'orgs/org1/sites/hq'), { name: 'HQ' });
+      await setDoc(doc(db, 'orgs/org1/roles/r1'), { name: 'Store manager', permissions: ['screen.view'] });
       await setDoc(doc(db, 'orgs/org1/billing/subscription'), { planId: 'trial' });
       await setDoc(doc(db, 'users/alice'), { memberships: {} });
       await setDoc(doc(db, 'signupRequests/r1'), { requestedBy: 'alice', status: 'pending' });
@@ -140,6 +141,12 @@ describe('phase 1 collections', () => {
     const db = env.authenticatedContext('own').firestore();
     await assertSucceeds(getDoc(doc(db, 'orgs/org1/sites/hq')));
     await assertFails(setDoc(doc(db, 'orgs/org1/sites/new'), { name: 'X' }));
+  });
+
+  it('custom roles are readable by members, not outsiders, and never client-writable', async () => {
+    await assertSucceeds(getDoc(doc(env.authenticatedContext('ed').firestore(), 'orgs/org1/roles/r1')));
+    await assertFails(getDoc(doc(env.authenticatedContext('bob').firestore(), 'orgs/org1/roles/r1')));
+    await assertFails(setDoc(doc(env.authenticatedContext('own').firestore(), 'orgs/org1/roles/r2'), { name: 'X', permissions: [] }));
   });
 
   it('invite tokens and audit heads are never client-readable', async () => {

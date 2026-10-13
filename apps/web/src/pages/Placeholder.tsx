@@ -12,8 +12,12 @@ export function Placeholder({ item }: { item: NavItem }) {
       <div className="wxp-card">
         <EmptyState
           icon={<Construction size={24} aria-hidden />}
-          title={t('placeholder.title', { phase: item.phase })}
-          description={t('placeholder.description', { phase: item.phase })}
+          title={typeof item.phase === 'number' ? t('placeholder.title', { phase: item.phase }) : t('placeholder.releaseTitle', { release: item.phase })}
+          description={
+            typeof item.phase === 'number'
+              ? t('placeholder.description', { phase: item.phase })
+              : t('placeholder.releaseDescription', { release: item.phase })
+          }
         />
       </div>
     </>

@@ -75,6 +75,7 @@ WallX Play/
 **Platform roles** (custom claim `platformRole`): `superadmin`, `support`, `billing`, `ops`, `auditor`, each a set of granular permissions (`org.approve`, `org.suspend`, `billing.override`, `support.access.grant`, `device.command`, …).
 
 **Org roles** (`orgs/{orgId}/members/{uid}`): `owner`, `admin`, `editor`, `approver`, `viewer` + custom roles. Optional scope to sites/groups. Claims hold only `{orgIds}`; permissions are read from the member doc in Rules/Functions.
+Custom roles (`orgs/{orgId}/roles/{roleId}`, up to 20, managed on the Team page by `member.manage`) are named permission sets: anything an admin has, never `billing.manage`. Members holding one carry a copy of its permissions, rewritten in the same transaction when the role changes; a role in use cannot be deleted.
 
 **Effective access = entitlement (plan ∩ admin overrides ∩ org status) AND role permission AND scope.**
 

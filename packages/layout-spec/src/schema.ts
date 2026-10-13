@@ -89,7 +89,11 @@ export const Widget = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('table'),
     columns: z.array(z.string().max(80)).min(1).max(10),
-    rows: z.array(z.array(z.union([z.string().max(200), DataBinding]))).max(50),
+    /**
+     * Rows of cells: text or a live value. Each row is an object because Firestore cannot
+     * store an array directly inside an array.
+     */
+    rows: z.array(z.object({ cells: z.array(z.union([z.string().max(200), DataBinding])).max(10) })).max(50),
     style: TextStyle,
   }),
   z.object({ type: z.literal('web'), url: HttpsUrl, refreshSec: z.number().int().min(30).optional() }),

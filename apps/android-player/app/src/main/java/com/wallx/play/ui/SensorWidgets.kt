@@ -50,6 +50,7 @@ import com.wallx.play.core.LiveValue
 import com.wallx.play.data.str
 import kotlinx.coroutines.delay
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.doubleOrNull
@@ -117,6 +118,36 @@ private fun liveOf(ctx: RenderContext, b: Binding?): Pair<LiveValue?, LiveState>
     val now = rememberTicker(ctx)
     val v = b?.let { values[it.key] }
     return v to Live.state(v, now, b?.staleOverrideSec)
+}
+
+/** One table cell as drawn: plain text, or a live sensor value (dimmed when stale/offline). */
+data class TableCell(val text: String, val dim: Boolean = false)
+
+/** A sensor value in a table cell: value and unit, "—" without data (same as the web renderer). */
+fun liveCell(v: LiveValue?, state: LiveState, decimals: Int?): TableCell {
+    val value = v?.value
+    if (value == null || state == LiveState.NODATA) return TableCell("—")
+    val unit = if (v.unit.isNotEmpty()) " ${v.unit}" else ""
+    return TableCell(Live.format(value, decimals) + unit, dim = state != LiveState.OK)
+}
+
+/** Table rows with bound cells resolved to live values. Without live data, bound cells show "—". */
+@Composable
+fun tableCells(rows: List<List<JsonElement>>, ctx: RenderContext?): List<List<TableCell>> {
+    if (ctx == null) {
+        return rows.map { row -> row.map { (it as? JsonPrimitive)?.content?.let(::TableCell) ?: TableCell("—") } }
+    }
+    val values by ctx.live.values.collectAsState()
+    val now = rememberTicker(ctx)
+    return rows.map { row ->
+        row.map { cell ->
+            (cell as? JsonPrimitive)?.content?.let(::TableCell) ?: run {
+                val b = binding(cell as? JsonObject)
+                val v = b?.let { values[it.key] }
+                liveCell(v, Live.state(v, now, b?.staleOverrideSec), b?.decimals)
+            }
+        }
+    }
 }
 
 private fun Dp.min(other: Dp) = if (this < other) this else other

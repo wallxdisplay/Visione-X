@@ -285,4 +285,22 @@ describe('sensor widgets on screens', () => {
     await sensors.deleteSensorChannel(deps, alice, { orgId, sensorDeviceId: sensorId, channelId: 'door' });
     expect((await device()).channelCount).toBe(1);
   });
+
+  it('treats sensor values in table cells like sensor widgets', async () => {
+    const cell = { source: 'sensor' as const, sourceId: sensorId, field: 'temp' };
+    const table = (c: typeof cell) => ({ type: 'table', columns: ['Room', 'Temp'], rows: [{ cells: ['Cold room', c] }], style: {} });
+    const playlist = (c: typeof cell) => ({
+      orgId, name: 'Temps', items: [{ id: 't', content: { kind: 'widget', widget: table(c) }, durationSec: 15, transition: 'none' }],
+    }) as Parameters<typeof layouts.savePlaylist>[2];
+
+    await expectCode(layouts.savePlaylist(deps, alice, playlist({ ...cell, field: 'nope' })), 'invalid-argument');
+    await layouts.savePlaylist(deps, alice, playlist(cell));
+    // In use by the playlist's table: the channel cannot be deleted.
+    await expectCode(sensors.deleteSensorChannel(deps, alice, { orgId, sensorDeviceId: sensorId, channelId: 'temp' }), 'failed-precondition');
+
+    // Without sensors in the plan, a table may not show sensor values (plain tables still work).
+    await db.doc(paths.orgEntitlements(orgId)).update({ features: ['media.basic', 'widget.core'] });
+    await expectCode(layouts.savePlaylist(deps, alice, playlist(cell)), 'permission-denied');
+    await layouts.savePlaylist(deps, alice, { ...playlist(cell), items: [{ id: 't', content: { kind: 'widget', widget: { type: 'table', columns: ['A'], rows: [{ cells: ['1'] }], style: {} } }, durationSec: 15, transition: 'none' }] } as Parameters<typeof layouts.savePlaylist>[2]);
+  });
 });

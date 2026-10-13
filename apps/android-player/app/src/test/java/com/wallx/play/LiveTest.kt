@@ -19,7 +19,9 @@ import com.wallx.play.data.LiveValueDto
 import com.wallx.play.data.Manifest
 import com.wallx.play.data.json
 import com.wallx.play.ui.RenderContext
+import com.wallx.play.ui.TableCell
 import com.wallx.play.ui.WidgetView
+import com.wallx.play.ui.liveCell
 import com.wallx.play.ui.niceTicks
 import kotlinx.serialization.json.JsonObject
 import org.junit.Assert.assertEquals
@@ -111,5 +113,25 @@ class LiveTest {
     fun showsNoDataWithoutAValue() {
         compose.setContent { Box(Modifier.size(400.dp, 300.dp)) { WidgetView(sensorValue(), ctx(LiveStore(), now)) } }
         compose.onNodeWithText("No data").assertExists()
+    }
+
+    @Test
+    fun tableCellsShowLiveValuesWithUnits() {
+        val store = LiveStore()
+        store.applyLive(LiveResponse(now, listOf(LiveValueDto("d1", "temp", "Temperature", 3.94, now, 600, true, "°C"))), emptyList())
+        val table = json.decodeFromString<JsonObject>(
+            """{"type":"table","columns":["Room","Temp"],"rows":[{"cells":["Cold room",{"source":"sensor","sourceId":"d1","field":"temp"}]},{"cells":["Freezer",{"source":"sensor","sourceId":"d2","field":"temp"}]}],"style":{}}""",
+        )
+        compose.setContent { Box(Modifier.size(400.dp, 300.dp)) { WidgetView(table, ctx(store, now)) } }
+        compose.onNodeWithText("Cold room").assertExists()
+        compose.onNodeWithText("3.9 °C").assertExists()
+        compose.onNodeWithText("—").assertExists() // d2 has no data
+    }
+
+    @Test
+    fun staleTableCellsAreDimmed() {
+        val v = LiveValue(4.0, now - 20 * 60_000, 600, true, unit = "°C")
+        assertEquals(TableCell("4 °C", dim = true), liveCell(v, Live.state(v, now), null))
+        assertEquals(TableCell("—"), liveCell(null, LiveState.NODATA, null))
     }
 }

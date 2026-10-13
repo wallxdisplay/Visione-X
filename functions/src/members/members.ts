@@ -1,11 +1,10 @@
 import { createHash, randomBytes } from 'node:crypto';
-import type { Transaction } from 'firebase-admin/firestore';
+import { FieldValue, type Transaction } from 'firebase-admin/firestore';
 import { HttpsError } from 'firebase-functions/v2/https';
 import type { z } from 'zod';
 import {
   INVITE_TTL_DAYS,
   paths,
-  SYSTEM_ORG_ROLE_PERMISSIONS,
   withinLimit,
   type AcceptInviteInput,
   type InviteDoc,
@@ -27,6 +26,7 @@ import {
 import type { Actor, Deps } from '../lib/context';
 import { readEntitlements } from '../lib/entitlements';
 import { setMembership } from '../lib/profiles';
+import { resolveRole } from './roles';
 
 const DAY_MS = 86_400_000;
 
@@ -72,6 +72,7 @@ export async function inviteMember(
       throw new HttpsError('permission-denied', 'Only owners can invite another owner.');
     }
     await checkSiteScope(tx, db, input.orgId, input.role, siteScope);
+    const granted = await resolveRole(tx, db, input.orgId, input.role, input.customRoleId);
 
     const entitlements = await readEntitlements(tx, db, input.orgId);
     const [members, pendingInvites, existingMember, existingInvite] = await Promise.all([
@@ -99,6 +100,7 @@ export async function inviteMember(
       id: inviteRef.id,
       email: input.email,
       role: input.role,
+      ...(granted.customRoleId ? { customRoleId: granted.customRoleId } : {}),
       tokenHash,
       status: 'pending',
       invitedBy: actor.uid,
@@ -114,7 +116,7 @@ export async function inviteMember(
       orgId: input.orgId,
       action: 'member.invited',
       target: { type: 'invite', id: inviteRef.id },
-      data: { email: input.email, role: input.role, siteScope },
+      data: { email: input.email, role: input.role, ...(granted.customRoleId ? { customRoleId: granted.customRoleId, roleName: granted.roleName } : {}), siteScope },
     });
   });
 
@@ -150,12 +152,15 @@ export async function acceptInvite(
     requireOrgActive(org);
     const existing = await getMember(tx, db, orgId, actor.uid);
     if (existing) throw new HttpsError('already-exists', 'You are already a member of this organization.');
+    // A custom role is resolved now, so later edits to it apply; a deleted role cannot be accepted.
+    const granted = await resolveRole(tx, db, orgId, invite.role, invite.customRoleId);
 
     const member: MemberDoc = {
       uid: actor.uid,
       email,
-      role: invite.role,
-      permissions: [...SYSTEM_ORG_ROLE_PERMISSIONS[invite.role]],
+      role: granted.role,
+      ...(granted.customRoleId ? { customRoleId: granted.customRoleId } : {}),
+      permissions: granted.permissions,
       siteScope: invite.siteScope ?? [],
       status: 'active',
       joinedAt: at,
@@ -227,7 +232,7 @@ export async function updateMemberRole(
     requireOrgActive(org);
     const target = await getMember(tx, db, input.orgId, input.uid);
     if (!target) throw new HttpsError('not-found', 'Member not found.');
-    if (target.role === input.role) return;
+    if (target.role === input.role && target.customRoleId === input.customRoleId) return;
     if ((target.role === 'owner' || input.role === 'owner') && me.role !== 'owner') {
       throw new HttpsError('permission-denied', 'Only owners can grant or change the owner role.');
     }
@@ -235,9 +240,12 @@ export async function updateMemberRole(
       throw new HttpsError('failed-precondition', 'An organization must keep at least one owner.');
     }
 
+    const granted = await resolveRole(tx, db, input.orgId, input.role, input.customRoleId);
+
     tx.update(db.doc(paths.member(input.orgId, input.uid)), {
-      role: input.role,
-      permissions: [...SYSTEM_ORG_ROLE_PERMISSIONS[input.role]],
+      role: granted.role,
+      customRoleId: granted.customRoleId ?? FieldValue.delete(),
+      permissions: granted.permissions,
       // Owners always have every site.
       ...(input.role === 'owner' ? { siteScope: [] } : {}),
     });
@@ -254,7 +262,7 @@ export async function updateMemberRole(
       orgId: input.orgId,
       action: 'member.role.changed',
       target: { type: 'member', id: input.uid },
-      data: { email: target.email, before: target.role, after: input.role },
+      data: { email: target.email, before: target.role, after: input.role, ...(granted.customRoleId ? { customRoleId: granted.customRoleId, roleName: granted.roleName } : {}) },
     });
   });
 }

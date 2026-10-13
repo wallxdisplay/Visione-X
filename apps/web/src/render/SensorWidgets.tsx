@@ -76,6 +76,20 @@ function bandOf(thresholds: readonly Threshold[], v: number) {
   return color ? thresholds.find((t) => t.color === color) : undefined;
 }
 
+/** A sensor value in a table cell: value and unit, "—" without data, dimmed when stale/offline. */
+export function LiveCell({ binding, orgId }: { binding: DataBinding; orgId?: string }) {
+  const { value, state } = useLive(orgId, binding);
+  if (state === 'loading') return <>…</>;
+  const v = value?.value;
+  if (v == null || state === 'nodata') return <>—</>;
+  return (
+    <span className="wxp-tabular" style={state === 'ok' ? undefined : { opacity: 0.55 }}>
+      {formatLiveValue(v, binding.decimals)}
+      {value?.unit ? ` ${value.unit}` : ''}
+    </span>
+  );
+}
+
 export function SensorValueView({ widget, orgId }: { widget: W<'sensorValue'>; orgId?: string }) {
   const { value, state } = useLive(orgId, widget.binding);
   const v = value?.value;

@@ -76,6 +76,7 @@ export function useLiveValue(orgId: string | undefined, binding: DataBinding | u
     ts: c.latest?.ts ?? null,
     staleAfterSec: c.staleAfterSec,
     deviceOnline: !!d && d.status === 'active' && isSensorOnline(d),
+    unit: c.unit,
   };
 }
 

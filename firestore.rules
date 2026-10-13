@@ -105,6 +105,12 @@ service cloud.firestore {
         allow write: if false;
       }
 
+      // Custom roles: names and permission lists, shown wherever roles are (Team page).
+      match /roles/{roleId} {
+        allow read: if isActiveMember(orgId) || isPlatformStaff();
+        allow write: if false;
+      }
+
       match /sites/{siteId} {
         allow read: if isActiveMember(orgId) || isPlatformStaff();
         allow write: if false;

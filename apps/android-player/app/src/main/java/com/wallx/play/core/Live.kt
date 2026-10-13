@@ -17,6 +17,8 @@ data class LiveValue(
     val staleAfterSec: Int,
     val deviceOnline: Boolean,
     val valueType: String = "number",
+    /** The channel's unit, e.g. "°C" (shown by table cells). */
+    val unit: String = "",
 )
 
 enum class LiveState { OK, STALE, OFFLINE, NODATA }
@@ -83,7 +85,7 @@ class LiveStore {
 
     fun applyLive(res: LiveResponse, channels: List<LiveChannel>) {
         val next = res.values.associate {
-            "${it.sourceId}/${it.field}" to LiveValue(it.value, it.ts, it.staleAfterSec, it.deviceOnline, it.valueType)
+            "${it.sourceId}/${it.field}" to LiveValue(it.value, it.ts, it.staleAfterSec, it.deviceOnline, it.valueType, it.unit)
         }
         names = res.values.associate { "${it.sourceId}/${it.field}" to it.name.ifEmpty { it.field } }
         _values.value = next

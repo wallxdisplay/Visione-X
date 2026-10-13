@@ -1,6 +1,6 @@
 import { collection, orderBy, query, where } from 'firebase/firestore';
 import { Alert, Button, Dialog, PageHeader, SelectField, TextField } from '@wallx-play/ui';
-import { MAX_SITE_SCOPE, paths, SYSTEM_ORG_ROLES, type InviteDoc, type MemberDoc, type SystemOrgRole } from '@wallx-play/shared';
+import { MAX_SITE_SCOPE, paths, SYSTEM_ORG_ROLES, type InviteDoc, type MemberDoc } from '@wallx-play/shared';
 import { UserPlus } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -8,6 +8,7 @@ import { useAuth } from '../../auth/AuthProvider';
 import { call, errorMessage } from '../../lib/api';
 import { db } from '../../lib/firebase';
 import { formatDate, roleLabel } from '../../lib/format';
+import { CustomRoles, parseRoleValue, roleName, roleValue, useRoles } from './CustomRoles';
 import { useQueryData } from '../../lib/hooks';
 import { useOrg } from '../../org/OrgProvider';
 import { useSites } from '../../content/data';
@@ -61,7 +62,8 @@ export function Team() {
 
   const [inviteOpen, setInviteOpen] = useState(false);
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState<SystemOrgRole>('editor');
+  /** Select value: a system role or "custom:<roleId>". */
+  const [role, setRole] = useState<string>('editor');
   const [link, setLink] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -69,13 +71,18 @@ export function Team() {
   const [siteScope, setSiteScope] = useState<string[]>([]);
   const [scoping, setScoping] = useState<{ member: MemberDoc; sites: string[] } | null>(null);
   const sites = useSites(orgId);
+  const customRoles = useRoles(orgId);
   const siteNames = (ids: string[] | undefined) =>
     ids?.length ? ids.map((id) => sites.data.find((s) => s.id === id)?.name ?? id).join(', ') : t('team.allSites');
 
-  const roleOptions = SYSTEM_ORG_ROLES.filter((r) => r !== 'owner' || me?.role === 'owner').map((r) => ({
-    value: r,
-    label: roleLabel(r),
-  }));
+  const roleOptions = [
+    ...SYSTEM_ORG_ROLES.filter((r) => r !== 'owner' || me?.role === 'owner').map((r) => ({ value: r as string, label: roleLabel(r) })),
+    ...customRoles.data.map((r) => ({ value: roleValue('custom', r.id), label: r.name })),
+  ];
+  const chosenCustom = customRoles.data.find((r) => roleValue('custom', r.id) === role);
+  const roleHint = chosenCustom
+    ? chosenCustom.description || t('customRoles.permissionCount', { count: chosenCustom.permissions.length })
+    : t(`roles.${role}Hint`);
 
   async function run(action: () => Promise<unknown>) {
     setBusy(true);
@@ -93,7 +100,7 @@ export function Team() {
 
   async function sendInvite() {
     await run(async () => {
-      const res = await call<{ token: string }>('inviteMember', { orgId, email, role, siteScope: role === 'owner' ? [] : siteScope });
+      const res = await call<{ token: string }>('inviteMember', { orgId, email, ...parseRoleValue(role), siteScope: role === 'owner' ? [] : siteScope });
       setLink(`${window.location.origin}/invite/${res.token}`);
     });
   }
@@ -153,10 +160,10 @@ export function Team() {
                         className="wxp-input"
                         style={{ width: 160 }}
                         aria-label={t('team.roleFor', { email: m.email })}
-                        value={m.role}
+                        value={roleValue(m.role, m.customRoleId)}
                         disabled={busy}
                         onChange={(e) =>
-                          void run(() => call('updateMemberRole', { orgId, uid: m.uid, role: e.target.value }))
+                          void run(() => call('updateMemberRole', { orgId, uid: m.uid, ...parseRoleValue(e.target.value) }))
                         }
                       >
                         {roleOptions.map((o) => (
@@ -166,7 +173,7 @@ export function Team() {
                         ))}
                       </select>
                     ) : (
-                      roleLabel(m.role)
+                      roleName(customRoles.data, m.role, m.customRoleId)
                     )}
                   </td>
                   <td>
@@ -210,7 +217,7 @@ export function Team() {
                 {liveInvites.map((i) => (
                   <tr key={i.id}>
                     <td>{i.email}</td>
-                    <td>{roleLabel(i.role)}</td>
+                    <td>{roleName(customRoles.data, i.role, i.customRoleId)}</td>
                     <td>{siteNames(i.siteScope)}</td>
                     <td className="wxp-tabular">{formatDate(i.expiresAt)}</td>
                     <td className="wxp-actions">
@@ -276,8 +283,8 @@ export function Team() {
               label={t('team.role')}
               options={roleOptions}
               value={role}
-              onChange={(e) => setRole(e.target.value as SystemOrgRole)}
-              hint={t(`roles.${role}Hint`)}
+              onChange={(e) => setRole(e.target.value)}
+              hint={roleHint}
             />
             {role !== 'owner' ? <SitePicker sites={sites.data} value={siteScope} onChange={setSiteScope} /> : null}
           </>
@@ -332,6 +339,8 @@ export function Team() {
         {error ? <Alert tone="danger">{error}</Alert> : null}
         {scoping ? <SitePicker sites={sites.data} value={scoping.sites} onChange={(v) => setScoping({ ...scoping, sites: v })} /> : null}
       </Dialog>
+
+      <CustomRoles orgId={orgId} roles={customRoles.data} members={members.data} manage={manage} />
 
       {manage ? (
         <p className="wxp-muted" style={{ marginTop: 16 }}>

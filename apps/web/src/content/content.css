@@ -799,6 +799,55 @@
   gap: var(--space-5);
   align-items: start;
 }
+.playlist-editor__add-widget {
+  width: auto;
+  min-height: 32px;
+  padding-block: 4px;
+  font-size: var(--text-sm, 0.875rem);
+}
+.widget-item__preview-row {
+  display: flex;
+  justify-content: center;
+}
+.widget-item__preview {
+  position: relative;
+  flex: 0 0 auto;
+  width: min(100%, 480px);
+  aspect-ratio: 16 / 9;
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.widget-item__preview > .r-canvas {
+  position: absolute;
+  inset: 0;
+}
+/* Table widget grid editor (WidgetEditor.tsx). */
+.table-grid__scroll {
+  overflow-x: auto;
+  max-width: 100%;
+}
+.table-grid table {
+  border-collapse: collapse;
+}
+.table-grid th,
+.table-grid td {
+  padding: 2px;
+  vertical-align: middle;
+}
+.table-grid__cell {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.table-grid__cell .wxp-input {
+  min-width: 120px;
+  min-height: 32px;
+  padding-block: 4px;
+}
+.table-grid th .wxp-input {
+  font-weight: 600;
+}
 .playlist-editor__preview {
   position: sticky;
   top: calc(var(--topbar-height) + 16px);
@@ -944,11 +993,15 @@
     grid-column: 1 / -1;
     max-height: none;
   }
+}
+/* Items need ~700px next to the sidebar; below that the preview goes under the list. */
+@media (max-width: 1439px) {
   .playlist-editor__body {
     grid-template-columns: 1fr;
   }
   .playlist-editor__preview {
     position: static;
+    max-width: 640px;
   }
 }
 @media (max-width: 767px) {
@@ -1048,4 +1101,30 @@
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: var(--space-1) var(--space-3);
   padding-left: var(--space-6);
+}
+
+/* Team page: custom roles (pages/customer/CustomRoles.tsx). */
+.team__section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-6, 32px);
+}
+.team__section-head .section-title {
+  margin: 0;
+}
+.role-perms {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-4);
+  margin: var(--space-3) 0;
+}
+.role-perms__group {
+  border: var(--border-default);
+  border-radius: var(--radius-card);
+  padding: var(--space-3);
+  margin: 0;
+  display: grid;
+  gap: 6px;
 }

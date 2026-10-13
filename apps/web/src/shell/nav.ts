@@ -30,8 +30,11 @@ export interface NavItem {
   labelKey: string;
   path: string;
   icon: LucideIcon;
-  /** Delivery phase from docs/ARCHITECTURE.md §17 — used by placeholder pages. */
-  phase: number;
+  /**
+   * When it ships, for placeholder pages: a delivery phase (docs/ARCHITECTURE.md §17) or a later
+   * release from the feature table (§16).
+   */
+  phase: number | 'v1.1';
 }
 
 export interface NavGroup {
@@ -66,8 +69,8 @@ export const customerNav: NavGroup[] = [
   {
     labelKey: 'nav.groups.insights',
     items: [
-      { labelKey: 'nav.reports', path: '/reports', icon: FileClock, phase: 4 },
-      { labelKey: 'nav.analytics', path: '/analytics', icon: BarChart3, phase: 4 },
+      { labelKey: 'nav.reports', path: '/reports', icon: FileClock, phase: 'v1.1' },
+      { labelKey: 'nav.analytics', path: '/analytics', icon: BarChart3, phase: 'v1.1' },
     ],
   },
   {
@@ -100,7 +103,7 @@ export const adminNav: NavGroup[] = [
       { labelKey: 'nav.admin.devices', path: '/admin/devices', icon: Activity, phase: 4 },
       { labelKey: 'nav.admin.features', path: '/admin/features', icon: SlidersHorizontal, phase: 6 },
       { labelKey: 'nav.admin.billing', path: '/admin/billing', icon: CreditCard, phase: 6 },
-      { labelKey: 'nav.admin.integrations', path: '/admin/integrations', icon: KeyRound, phase: 5 },
+      { labelKey: 'nav.admin.integrations', path: '/admin/integrations', icon: KeyRound, phase: 'v1.1' },
     ],
   },
   {

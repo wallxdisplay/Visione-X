@@ -136,3 +136,13 @@ export const ORG_WIDE_PERMISSIONS: readonly OrgPermission[] = [
 export function inSiteScope(scope: readonly string[] | undefined, siteId: string | null | undefined): boolean {
   return !scope || scope.length === 0 || (!!siteId && scope.includes(siteId));
 }
+
+// ---------------------------------------------------------------- custom roles
+
+/**
+ * Org-defined roles (orgs/{orgId}/roles/{roleId}). Members holding one get a copy of its
+ * permissions (MemberDoc.permissions), kept in sync when the role changes. A custom role can
+ * grant anything an admin has; billing stays with owners.
+ */
+export const CUSTOM_ROLE_PERMISSIONS: readonly OrgPermission[] = SYSTEM_ORG_ROLE_PERMISSIONS.admin;
+export const MAX_CUSTOM_ROLES = 20;

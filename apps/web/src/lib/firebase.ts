@@ -1,4 +1,5 @@
 import { initializeApp, type FirebaseApp } from 'firebase/app';
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check';
 import { connectAuthEmulator, getAuth } from 'firebase/auth';
 import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore';
 import { connectFunctionsEmulator, getFunctions } from 'firebase/functions';
@@ -16,6 +17,12 @@ const app: FirebaseApp = initializeApp({
   storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET || 'demo-wallx-play.appspot.com',
   appId: env.VITE_FIREBASE_APP_ID,
 });
+
+// App Check (reCAPTCHA Enterprise) shows Firebase that requests come from this web app, before
+// any other service starts. Off without a site key and with the emulators (docs/DEVELOPMENT.md).
+if (env.VITE_APPCHECK_SITE_KEY && !useEmulators) {
+  initializeAppCheck(app, { provider: new ReCaptchaEnterpriseProvider(env.VITE_APPCHECK_SITE_KEY), isTokenAutoRefreshEnabled: true });
+}
 
 export const auth = getAuth(app);
 export const db = getFirestore(app);

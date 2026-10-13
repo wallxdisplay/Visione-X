@@ -15,6 +15,8 @@ import {
   SavePlanInput,
   SetCancellationInput,
   SetEntitlementOverridesInput,
+  SaveRoleInput,
+  DeleteRoleInput,
   SetMemberSitesInput,
   SetFeatureReleaseInput,
   UpdateSubscriptionInput,
@@ -67,6 +69,7 @@ import * as schedules from './content/schedules';
 import { getDeps } from './lib/admin';
 import type { Actor, Deps } from './lib/context';
 import * as members from './members/members';
+import * as roles from './members/roles';
 import { reviewOrgSignup as reviewSvc, setOrgStatus as setOrgStatusSvc } from './orgs/review';
 import * as settings from './orgs/settings';
 import * as signup from './orgs/signup';
@@ -77,7 +80,7 @@ import * as sensors from './sensors/sensors';
 import * as billing from './billing/billing';
 import * as plans from './billing/plans';
 import * as integrations from './integrations/dataSources';
-import { BASE_OPTIONS } from './options';
+import { BASE_OPTIONS, ENFORCE_APP_CHECK } from './options';
 
 export function actorFrom(request: CallableRequest): Actor {
   const auth = request.auth;
@@ -97,7 +100,11 @@ function callable<S extends z.ZodTypeAny, R>(
   schema: S,
   handler: (deps: Deps, actor: Actor, input: z.infer<S>) => Promise<R>,
 ) {
-  return onCall({ ...BASE_OPTIONS, memory: '256MiB' }, async (request) => {
+  return onCall({ ...BASE_OPTIONS, memory: '256MiB', enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
+    // Monitor mode: count calls that would be refused once App Check is enforced.
+    if (!request.app && !ENFORCE_APP_CHECK && process.env.FUNCTIONS_EMULATOR !== 'true') {
+      logger.info('appCheck.missing', { function: process.env.FUNCTION_TARGET });
+    }
     const actor = actorFrom(request);
     const parsed = schema.safeParse(request.data);
     if (!parsed.success) {
@@ -126,6 +133,8 @@ export const revokeInvite = callable(RevokeInviteInput, members.revokeInvite);
 export const updateMemberRole = callable(UpdateMemberRoleInput, members.updateMemberRole);
 export const removeMember = callable(RemoveMemberInput, members.removeMember);
 export const setMemberSites = callable(SetMemberSitesInput, members.setMemberSites);
+export const saveRole = callable(SaveRoleInput, roles.saveRole);
+export const deleteRole = callable(DeleteRoleInput, roles.deleteRole);
 export const setPlatformRole = callable(SetPlatformRoleInput, setPlatformRoleSvc);
 
 // Content (phase 2)

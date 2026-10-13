@@ -16,10 +16,7 @@ export function defaultWidget(type: EditableWidgetType, timezone: string): Widge
       return {
         type: 'table',
         columns: ['Item', 'Price'],
-        rows: [
-          ['Masala chai', '₹30'],
-          ['Filter coffee', '₹45'],
-        ],
+        rows: [{ cells: ['Masala chai', '₹30'] }, { cells: ['Filter coffee', '₹45'] }],
         style: { color: '#FFFFFF', fontScale: 0.08 },
       };
     case 'web':

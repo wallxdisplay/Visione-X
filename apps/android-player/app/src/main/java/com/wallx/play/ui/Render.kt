@@ -276,7 +276,7 @@ fun WidgetView(widget: JsonObject, ctx: RenderContext? = null) {
                     bmp?.let { Image(it.asImageBitmap(), null, Modifier.fillMaxSize(), filterQuality = FilterQuality.None) }
                 }
             }
-            "table" -> TableWidget(widget, h)
+            "table" -> TableWidget(widget, h, ctx)
             "sensorValue" -> ctx?.let { SensorValueWidget(widget, it) }
             "gauge" -> ctx?.let { GaugeWidget(widget, it) }
             "chart" -> ctx?.let { ChartWidget(widget, it) }
@@ -341,13 +341,13 @@ private fun ClockWidget(widget: JsonObject, h: Dp, w: Dp) {
 }
 
 @Composable
-private fun TableWidget(widget: JsonObject, h: Dp) {
+private fun TableWidget(widget: JsonObject, h: Dp, ctx: RenderContext?) {
     val s = Style(widget["style"] as? JsonObject)
     val size = fontSize(s.fontScale ?: 0.06, h, h)
     val columns = (widget["columns"] as? JsonArray)?.map { (it as? JsonPrimitive)?.content ?: "" } ?: emptyList()
-    val rows = (widget["rows"] as? JsonArray)?.map { row ->
-        (row as? JsonArray)?.map { (it as? JsonPrimitive)?.content ?: "…" } ?: emptyList()
-    } ?: emptyList()
+    // Rows are {"cells": [...]} objects (Firestore cannot nest arrays).
+    val raw = (widget["rows"] as? JsonArray)?.map { ((it as? JsonObject)?.get("cells") as? JsonArray).orEmpty() } ?: emptyList()
+    val rows = tableCells(raw, ctx)
     Column(
         Modifier.fillMaxSize().background(s.background ?: Color.Transparent).padding(6.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -357,7 +357,10 @@ private fun TableWidget(widget: JsonObject, h: Dp) {
         }
         rows.forEach { row ->
             Row(Modifier.fillMaxWidth()) {
-                columns.indices.forEach { i -> Text(row.getOrElse(i) { "" }, Modifier.weight(1f), color = s.color, fontSize = size) }
+                columns.indices.forEach { i ->
+                    val cell = row.getOrElse(i) { TableCell("") }
+                    Text(cell.text, Modifier.weight(1f), color = if (cell.dim) s.color.copy(alpha = 0.55f) else s.color, fontSize = size)
+                }
             }
         }
     }

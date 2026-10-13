@@ -1,7 +1,7 @@
-import { Alert, Button, Dialog, SelectField, Spinner, TextAreaField, TextField } from '@wallx-play/ui';
+import { Alert, Button, Dialog, Spinner } from '@wallx-play/ui';
 import type { PlaylistItem, Widget } from '@wallx-play/layout-spec';
 import { paths, type MediaDoc, type PlaylistDoc } from '@wallx-play/shared';
-import { ArrowDown, ArrowLeft, ArrowUp, Clock, GripVertical, Image as ImageIcon, LayoutTemplate, Play, QrCode, Save, Trash2, Type } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowUp, GripVertical, Image as ImageIcon, LayoutTemplate, Play, Save, Trash2, Type } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useBlocker, useParams } from 'react-router';
@@ -10,11 +10,13 @@ import { MediaThumb } from '../../content/MediaThumb';
 import { formatDuration, newId } from '../../content/data';
 import { PreviewOverlay } from '../../content/PreviewOverlay';
 import { useRenderLibrary } from '../../content/useLibrary';
-import { defaultWidget } from '../../content/widgetDefaults';
+import { defaultDataWidget, defaultSensorWidget, defaultWidget } from '../../content/widgetDefaults';
+import { isDataChoice, isSensorChoice, WidgetEditor, widgetChoices, widgetChoicesHint, type WidgetChoice } from '../../content/WidgetEditor';
+import { useWidgetSources, type WidgetSources } from '../../content/widgetSources';
 import { call, errorMessage } from '../../lib/api';
 import { useDoc } from '../../lib/hooks';
 import { useOrg } from '../../org/OrgProvider';
-import { PlaylistPlayer, RenderLibraryProvider } from '../../render/Render';
+import { PlaylistPlayer, RenderLibraryProvider, WidgetView, type RenderLibrary } from '../../render/Render';
 
 const DEFAULT_IMAGE_SEC = 10;
 
@@ -25,6 +27,7 @@ export function PlaylistEditor() {
   const readOnly = !can('playlist.edit');
   const saved = useDoc<PlaylistDoc>(paths.playlist(orgId, playlistId));
   const { library, media, layouts } = useRenderLibrary(orgId);
+  const sources = useWidgetSources();
 
   const [name, setName] = useState('');
   const [items, setItems] = useState<PlaylistItem[] | null>(null);
@@ -75,13 +78,14 @@ export function PlaylistEditor() {
     ]);
   };
 
-  const addWidget = (type: 'text' | 'clock' | 'qr') => {
-    const item: PlaylistItem = {
-      id: newId(),
-      content: { kind: 'widget', widget: defaultWidget(type, org?.timezone ?? 'Asia/Kolkata') },
-      durationSec: DEFAULT_IMAGE_SEC,
-      transition: 'fade',
-    };
+  const addWidget = (type: WidgetChoice) => {
+    const widget = isSensorChoice(type)
+      ? sources.sensors?.[0] && defaultSensorWidget(type, sources.sensors[0])
+      : isDataChoice(type)
+        ? sources.dataSources[type]?.[0] && defaultDataWidget(type, sources.dataSources[type]![0]!.id)
+        : defaultWidget(type, org?.timezone ?? 'Asia/Kolkata');
+    if (!widget) return;
+    const item: PlaylistItem = { id: newId(), content: { kind: 'widget', widget }, durationSec: DEFAULT_IMAGE_SEC, transition: 'fade' };
     update([...items, item]);
     setEditing(item);
   };
@@ -153,6 +157,7 @@ export function PlaylistEditor() {
       <div className="playlist-editor__body">
         <section>
           {!readOnly ? (
+            <>
             <div className="wxp-toolbar">
               <Button size="sm" onClick={() => setPicker(true)}>
                 <ImageIcon size={14} aria-hidden /> {t('playlists.addMedia')}
@@ -160,16 +165,22 @@ export function PlaylistEditor() {
               <Button size="sm" onClick={() => setLayoutPicker(true)}>
                 <LayoutTemplate size={14} aria-hidden /> {t('playlists.addLayout')}
               </Button>
-              <Button size="sm" onClick={() => addWidget('text')}>
-                <Type size={14} aria-hidden /> {t('studio.contentTypes.text')}
-              </Button>
-              <Button size="sm" onClick={() => addWidget('clock')}>
-                <Clock size={14} aria-hidden /> {t('studio.contentTypes.clock')}
-              </Button>
-              <Button size="sm" onClick={() => addWidget('qr')}>
-                <QrCode size={14} aria-hidden /> {t('studio.contentTypes.qr')}
-              </Button>
+              <select
+                className="wxp-input playlist-editor__add-widget"
+                aria-label={t('playlists.addWidget')}
+                value=""
+                onChange={(e) => e.target.value && addWidget(e.target.value as WidgetChoice)}
+              >
+                <option value="">{t('playlists.addWidget')}</option>
+                {widgetChoices(sources).map((o) => (
+                  <option key={o.type} value={o.type} disabled={o.disabled}>
+                    {t(`studio.contentTypes.${o.type}`)}
+                  </option>
+                ))}
+              </select>
             </div>
+            {widgetChoicesHint(sources, t) ? <p className="wxp-field__hint" style={{ marginTop: -4 }}>{widgetChoicesHint(sources, t)}</p> : null}
+            </>
           ) : null}
           {items.length === 0 ? (
             <div className="wxp-card">
@@ -304,6 +315,8 @@ export function PlaylistEditor() {
       {editing && editing.content.kind === 'widget' ? (
         <WidgetItemDialog
           widget={editing.content.widget}
+          sources={sources}
+          library={library}
           onClose={() => setEditing(null)}
           onSave={(widget) => {
             update(items.map((x) => (x.id === editing.id ? { ...x, content: { kind: 'widget', widget } } : x)));
@@ -317,13 +330,26 @@ export function PlaylistEditor() {
   );
 }
 
-/** Quick editor for full-screen widget items in a playlist. */
-function WidgetItemDialog({ widget, onClose, onSave }: { widget: Widget; onClose: () => void; onSave: (w: Widget) => void }) {
+/** Editor for a full-screen widget item, with a live preview. */
+function WidgetItemDialog({
+  widget,
+  sources,
+  library,
+  onClose,
+  onSave,
+}: {
+  widget: Widget;
+  sources: WidgetSources;
+  library: RenderLibrary;
+  onClose: () => void;
+  onSave: (w: Widget) => void;
+}) {
   const { t } = useTranslation();
   const [draft, setDraft] = useState<Widget>(widget);
   return (
     <Dialog
       open
+      size="lg"
       title={t(`studio.contentTypes.${widget.type}`)}
       onClose={onClose}
       footer={
@@ -333,20 +359,17 @@ function WidgetItemDialog({ widget, onClose, onSave }: { widget: Widget; onClose
         </>
       }
     >
-      {draft.type === 'text' ? (
-        <TextAreaField label={t('studio.text')} value={draft.text} maxLength={2000} onChange={(e) => setDraft({ ...draft, text: e.target.value })} />
-      ) : null}
-      {draft.type === 'clock' ? (
-        <SelectField
-          label={t('studio.clockFormat')}
-          options={['time', 'date', 'datetime'].map((f) => ({ value: f, label: t(`studio.clockFormats.${f}`) }))}
-          value={draft.format}
-          onChange={(e) => setDraft({ ...draft, format: e.target.value as 'time' | 'date' | 'datetime' })}
-        />
-      ) : null}
-      {draft.type === 'qr' ? (
-        <TextField label={t('studio.qrValue')} value={draft.value} maxLength={1000} onChange={(e) => setDraft({ ...draft, value: e.target.value })} />
-      ) : null}
+      <RenderLibraryProvider value={library}>
+        {/* Wrappers give the dialog's grid a real height; the canvas is size-contained for cqh/cqw. */}
+        <div className="widget-item__preview-row">
+          <div className="widget-item__preview" aria-label={t('studio.preview')}>
+            <div className="r-canvas">
+              <WidgetView widget={draft} />
+            </div>
+          </div>
+        </div>
+      </RenderLibraryProvider>
+      <WidgetEditor widget={draft} sources={sources} readOnly={false} onChange={setDraft} />
       <p className="wxp-muted">{t('playlists.widgetHint')}</p>
     </Dialog>
   );

@@ -3,7 +3,7 @@
  * schemas, but the server always re-validates: client validation is UX only.
  */
 import { z } from 'zod';
-import { MAX_SITE_SCOPE, SYSTEM_ORG_ROLES } from './permissions';
+import { MAX_SITE_SCOPE, ORG_PERMISSIONS, SYSTEM_ORG_ROLES } from './permissions';
 import { PLATFORM_ROLES } from './permissions';
 import { GSTIN } from './schemas';
 
@@ -75,10 +75,16 @@ export const InvitableRole = z.enum(SYSTEM_ORG_ROLES);
 /** Sites a member is limited to; empty = all sites. */
 const SiteScope = z.array(id).max(MAX_SITE_SCOPE).default([]);
 
-export const InviteMemberInput = z.object({
+/** A system role, or 'custom' with the org role to give. */
+const MemberRole = z.union([InvitableRole, z.literal('custom')]);
+const roleChoice = <T extends z.ZodRawShape>(shape: T) =>
+  z
+    .object({ ...shape, role: MemberRole, customRoleId: id.optional() })
+    .refine((v) => (v.role === 'custom') === !!v.customRoleId, { path: ['customRoleId'], message: 'Choose a custom role' });
+
+export const InviteMemberInput = roleChoice({
   orgId: id,
   email: z.string().trim().toLowerCase().email(),
-  role: InvitableRole,
   siteScope: SiteScope,
 });
 
@@ -90,7 +96,17 @@ export const AcceptInviteInput = z.object({
 
 export const RevokeInviteInput = z.object({ orgId: id, inviteId: id });
 
-export const UpdateMemberRoleInput = z.object({ orgId: id, uid: id, role: InvitableRole });
+export const UpdateMemberRoleInput = roleChoice({ orgId: id, uid: id });
+
+export const SaveRoleInput = z.object({
+  orgId: id,
+  roleId: id.optional(),
+  name: trimmed(2, 40),
+  description: z.string().trim().max(200).default(''),
+  permissions: z.array(z.enum(ORG_PERMISSIONS)).min(1).max(ORG_PERMISSIONS.length),
+});
+
+export const DeleteRoleInput = z.object({ orgId: id, roleId: id });
 
 export const RemoveMemberInput = z.object({ orgId: id, uid: id });
 
@@ -170,4 +186,6 @@ export const CALLABLES = {
   testRssFeed: 'testRssFeed',
   previewDataSource: 'previewDataSource',
   setMemberSites: 'setMemberSites',
+  saveRole: 'saveRole',
+  deleteRole: 'deleteRole',
 } as const;

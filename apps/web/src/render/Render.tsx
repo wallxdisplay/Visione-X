@@ -10,7 +10,7 @@ import QRCode from 'qrcode';
 import { createContext, useContext, useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStorageUrl } from '../content/data';
-import { ChartView, GaugeView, SensorValueView, StatusView } from './SensorWidgets';
+import { ChartView, GaugeView, LiveCell, SensorValueView, StatusView } from './SensorWidgets';
 import { RssView, WeatherView } from './DataWidgets';
 import './render.css';
 
@@ -142,8 +142,8 @@ export function WidgetView({ widget }: { widget: Widget }) {
               {widget.rows.map((row, r) => (
                 <tr key={r}>
                   {widget.columns.map((_, c) => {
-                    const cell = row[c];
-                    return <td key={c}>{typeof cell === 'string' ? cell : cell ? '…' : ''}</td>;
+                    const cell = row.cells[c];
+                    return <td key={c}>{typeof cell === 'string' ? cell : cell ? <LiveCell binding={cell} orgId={orgId} /> : ''}</td>;
                   })}
                 </tr>
               ))}

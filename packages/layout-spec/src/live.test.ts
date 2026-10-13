@@ -79,6 +79,12 @@ describe('sensor widgets', () => {
     ]);
     expect(liveChannelsOf([], [])).toEqual([]);
   });
+
+  it('collects sensor values shown in table cells', () => {
+    const table = Widget.parse({ type: 'table', columns: ['Room', 'Temp'], rows: [{ cells: ['Cold room', binding('t')] }, { cells: ['Office', 'n/a'] }] });
+    const playlist = { items: [{ id: 'i', durationSec: 10, transition: 'none' as const, content: { kind: 'widget' as const, widget: table } }] };
+    expect(liveChannelsOf([], [playlist])).toEqual([{ sourceId: 'dev1', field: 't', historyMinutes: null }]);
+  });
 });
 
 describe('weather conditions', () => {

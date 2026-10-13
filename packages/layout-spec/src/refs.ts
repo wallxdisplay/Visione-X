@@ -40,6 +40,8 @@ export function widgetBindings(widget: Widget): Array<{ binding: DataBinding; hi
       return [{ binding: widget.binding, historyMinutes: null }];
     case 'chart':
       return widget.bindings.map((binding) => ({ binding, historyMinutes: widget.windowMinutes }));
+    case 'table':
+      return widget.rows.flatMap((row) => row.cells.flatMap((cell) => (typeof cell === 'string' ? [] : [{ binding: cell, historyMinutes: null }])));
     default:
       return [];
   }

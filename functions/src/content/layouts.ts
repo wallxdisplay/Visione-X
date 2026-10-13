@@ -37,7 +37,8 @@ function checkWidgets(refs: ContentRefs, entitlements: EntitlementsDoc) {
     }
   }
   if (refs.widgetTypes.length > 0) requireFeature(entitlements, 'widget.core', 'Widgets');
-  if (refs.widgetTypes.some((t) => (SENSOR_WIDGETS as readonly string[]).includes(t))) {
+  // Sensor widgets, or any widget showing a sensor value (e.g. a table cell).
+  if (refs.sensors.length > 0 || refs.widgetTypes.some((t) => (SENSOR_WIDGETS as readonly string[]).includes(t))) {
     requireFeature(entitlements, 'sensor.esp32', 'Sensor widgets');
   }
   if (refs.widgetTypes.includes('weather')) requireFeature(entitlements, 'widget.weather', 'The weather widget');
