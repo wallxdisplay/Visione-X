@@ -8,6 +8,7 @@ import { AdminFeatures } from './pages/admin/AdminFeatures';
 import { AdminOverview } from './pages/admin/AdminOverview';
 import { OrgBilling } from './pages/admin/OrgBilling';
 import { Billing } from './pages/billing/Billing';
+import { Integrations } from './pages/integrations/Integrations';
 import { ApprovalReview } from './pages/admin/ApprovalReview';
 import { Approvals } from './pages/admin/Approvals';
 import { AuditLogs } from './pages/admin/AuditLogs';
@@ -49,6 +50,7 @@ const PAGES: Record<string, ReactNode> = {
   '/sensors': <Sensors />,
   '/alerts': <Alerts />,
   '/billing': <Billing />,
+  '/integrations': <Integrations />,
   '/team': <Team />,
   '/sites': <Sites />,
   '/settings': <OrgSettings />,

@@ -81,6 +81,8 @@ interface ContentMeta {
   layoutIds: string[];
   /** Sensor devices bound by widgets (absent on content saved before phase 5). */
   sensorDeviceIds?: string[];
+  /** Data sources (weather, RSS) used by widgets (absent before phase 6). */
+  dataSourceIds?: string[];
   createdBy: string;
   createdAt: number;
   updatedBy: string;

@@ -79,3 +79,13 @@ export function defaultSensorWidget(type: SensorWidgetType, c: ChannelChoice): W
       };
   }
 }
+
+export type DataWidgetType = 'weather' | 'rss';
+export const DATA_WIDGET_TYPES: DataWidgetType[] = ['weather', 'rss'];
+
+/** Starting configuration for a weather or RSS widget showing data source `id`. */
+export function defaultDataWidget(type: DataWidgetType, dataSourceId: string): Widget {
+  return type === 'weather'
+    ? { type, dataSourceId, layout: 'current', style: { color: '#FFFFFF' } }
+    : { type, dataSourceId, itemDurationSec: 8, showFeedTitle: true, style: { color: '#FFFFFF', fontScale: 0.14, bold: true } };
+}

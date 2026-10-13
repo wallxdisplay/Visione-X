@@ -2,6 +2,7 @@ import type { Firestore } from 'firebase-admin/firestore';
 import {
   Manifest,
   SPEC_VERSION,
+  dataSourcesOf,
   liveChannelsOf,
   type Layout,
   type PlaylistItem,
@@ -154,6 +155,7 @@ export function assembleManifest(src: ManifestSources): Manifest {
     emergency,
     assets,
     liveChannels: liveChannelsOf(layouts, playlists),
+    dataSources: dataSourcesOf(layouts, playlists),
   });
 }
 

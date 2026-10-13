@@ -12,6 +12,7 @@ import {
 } from '../devices/deviceApi';
 import { ingest } from '../sensors/ingest';
 import { deviceLive, deviceLiveHistory } from '../sensors/live';
+import { deviceData } from '../integrations/dataSources';
 
 export type RouteResult = ApiResult;
 
@@ -33,6 +34,7 @@ const ROUTES: Record<string, Handler> = {
   'POST /v1/devices/commands/result': deviceCommandResult,
   'GET /v1/devices/live': deviceLive,
   'GET /v1/devices/live/history': deviceLiveHistory,
+  'GET /v1/devices/data': deviceData,
   'POST /v1/ingest': ingest,
 };
 

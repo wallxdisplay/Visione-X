@@ -82,6 +82,9 @@ class PlayerEngine internal constructor(
     /** Live sensor values for the widgets of the playing manifest. */
     val live = LiveStore()
 
+    /** Weather / RSS values for the widgets of the playing manifest. */
+    val data = DataStore()
+
     /** Set by the renderer so heartbeats can report what is on screen. */
     @Volatile var nowPlaying: Playing? = null
 
@@ -116,6 +119,7 @@ class PlayerEngine internal constructor(
         loop = scope.launch { pollLoop() }
         scope.launch { heartbeatLoop() }
         scope.launch { liveLoop() }
+        scope.launch { dataLoop() }
     }
 
     private suspend fun pollLoop() {
@@ -304,6 +308,33 @@ class PlayerEngine internal constructor(
                 }
             }
             delay(LiveStore.LIVE_POLL_SEC * 1000)
+        }
+    }
+
+    /** Refreshes weather / RSS values while the playing manifest uses data sources. */
+    private suspend fun dataLoop() {
+        delay(3_000)
+        var lastIds = emptySet<String>()
+        while (currentCoroutineContextActive()) {
+            val ids = (_ui.value as? UiState.Playing)?.manifest?.dataSources.orEmpty().map { it.id }.toSet()
+            val auth = device.auth
+            var wait = DataStore.POLL_SEC * 1000
+            if (ids.isNotEmpty() && auth != null) {
+                if (ids != lastIds) data.retain(ids)
+                try {
+                    data.apply(api.data(auth))
+                    lastIds = ids
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Log.w(TAG, "Data sources failed: ${e.message}")
+                    wait = 60_000 // retry sooner after a failure
+                }
+            } else if (ids.isEmpty()) {
+                lastIds = emptySet()
+                wait = 15_000 // pick up a new manifest with data sources quickly
+            }
+            delay(wait)
         }
     }
 

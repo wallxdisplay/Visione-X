@@ -57,6 +57,7 @@ import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
 import coil.decode.GifDecoder
 import coil.ImageLoader
+import com.wallx.visionex.player.core.DataStore
 import com.wallx.visionex.player.core.LiveStore
 import com.wallx.visionex.player.core.MediaLibrary
 import com.wallx.visionex.player.data.Layout
@@ -88,6 +89,8 @@ class RenderContext(
     val live: LiveStore = LiveStore(),
     /** Current time (server-corrected on a real player). */
     val now: () -> Long = System::currentTimeMillis,
+    /** Weather / RSS values for data widgets. */
+    val data: DataStore = DataStore(),
 ) {
     val layouts = manifest.layouts.associateBy { it.id }
     val playlists = manifest.playlists.associateBy { it.id }
@@ -278,6 +281,8 @@ fun WidgetView(widget: JsonObject, ctx: RenderContext? = null) {
             "gauge" -> ctx?.let { GaugeWidget(widget, it) }
             "chart" -> ctx?.let { ChartWidget(widget, it) }
             "status" -> ctx?.let { StatusWidget(widget, it) }
+            "weather" -> ctx?.let { WeatherWidget(widget, it) }
+            "rss" -> ctx?.let { RssWidget(widget, it) }
             "web" -> WebWidget(widget.str("url") ?: "", (widget["refreshSec"] as? JsonPrimitive)?.doubleOrNull?.toLong())
             else -> Box(Modifier.fillMaxSize().background(Color(0xFF111827)))
         }

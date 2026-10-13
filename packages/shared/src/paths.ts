@@ -58,6 +58,10 @@ export const paths = {
   /** Global lookup from API key hash → sensor device (server-only). */
   sensorKey: (keyHash: string) => `sensorKeys/${keyHash}`,
   sensorKeys: () => 'sensorKeys',
+  dataSources: (orgId: string) => `orgs/${orgId}/dataSources`,
+  dataSource: (orgId: string, id: string) => `orgs/${orgId}/dataSources/${id}`,
+  /** Server-only cache of provider results (weather by place, RSS by feed). */
+  providerCache: (key: string) => `providerCache/${key}`,
   alerts: (orgId: string) => `orgs/${orgId}/alerts`,
   alert: (orgId: string, id: string) => `orgs/${orgId}/alerts/${id}`,
   signupRequests: () => 'signupRequests',

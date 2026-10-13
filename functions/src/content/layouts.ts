@@ -14,6 +14,7 @@ import {
   paths,
   type DeleteLayoutInput,
   type DeletePlaylistInput,
+  type DataSourceDoc,
   type EntitlementsDoc,
   type LayoutDoc,
   type MediaDoc,
@@ -39,6 +40,19 @@ function checkWidgets(refs: ContentRefs, entitlements: EntitlementsDoc) {
   if (refs.widgetTypes.some((t) => (SENSOR_WIDGETS as readonly string[]).includes(t))) {
     requireFeature(entitlements, 'sensor.esp32', 'Sensor widgets');
   }
+  if (refs.widgetTypes.includes('weather')) requireFeature(entitlements, 'widget.weather', 'The weather widget');
+  if (refs.widgetTypes.includes('rss')) requireFeature(entitlements, 'widget.rss', 'The RSS widget');
+}
+
+/** Weather and RSS widgets must point at a data source of the same type in this org (reads only). */
+async function checkDataSources(tx: Transaction, db: Firestore, orgId: string, content: Array<{ widget: Widget }>) {
+  const wanted = content.flatMap(({ widget }) => (widget.type === 'weather' || widget.type === 'rss' ? [{ id: widget.dataSourceId, type: widget.type }] : []));
+  const snaps = await Promise.all(wanted.map((w) => tx.get(db.doc(paths.dataSource(orgId, w.id)))));
+  snaps.forEach((snap, i) => {
+    const ds = snap.data() as DataSourceDoc | undefined;
+    if (!ds) throw new HttpsError('invalid-argument', 'A weather or RSS widget points at a data source that no longer exists.');
+    if (ds.type !== wanted[i]!.type) throw new HttpsError('invalid-argument', `“${ds.name}” is not a ${wanted[i]!.type} data source.`);
+  });
 }
 
 /** Sensor widgets must point at channels that exist in this org (reads only). */
@@ -98,6 +112,7 @@ export async function saveLayout(
     if (existing && !existing.exists) throw new HttpsError('not-found', 'Layout not found.');
     await checkMedia(tx, db, input.orgId, refs.mediaIds);
     await checkSensors(tx, db, input.orgId, widgetsOf(input.layout.zones), refs);
+    await checkDataSources(tx, db, input.orgId, widgetsOf(input.layout.zones));
 
     // A playlist shown inside a zone may not itself contain layouts (no nesting/cycles).
     const playlists = await Promise.all(refs.playlistIds.map((id) => tx.get(db.doc(paths.playlist(input.orgId, id)))));
@@ -122,6 +137,7 @@ export async function saveLayout(
       playlistIds: refs.playlistIds,
       layoutIds: [],
       sensorDeviceIds: sensorDeviceIds(refs),
+      dataSourceIds: refs.dataSourceIds,
       ...meta(actor, at, existing?.data() as LayoutDoc | undefined),
     };
     tx.set(ref, doc);
@@ -190,6 +206,7 @@ export async function savePlaylist(
     if (existing && !existing.exists) throw new HttpsError('not-found', 'Playlist not found.');
     await checkMedia(tx, db, input.orgId, refs.mediaIds);
     await checkSensors(tx, db, input.orgId, widgetsOf(input.items), refs);
+    await checkDataSources(tx, db, input.orgId, widgetsOf(input.items));
 
     const layouts = await Promise.all(refs.layoutIds.map((id) => tx.get(db.doc(paths.layout(input.orgId, id)))));
     if (layouts.some((s) => !s.exists)) throw new HttpsError('invalid-argument', 'A selected layout no longer exists.');
@@ -214,6 +231,7 @@ export async function savePlaylist(
       playlistIds: [],
       layoutIds: refs.layoutIds,
       sensorDeviceIds: sensorDeviceIds(refs),
+      dataSourceIds: refs.dataSourceIds,
       ...meta(actor, at, existing?.data() as PlaylistDoc | undefined),
     };
     tx.set(ref, doc);

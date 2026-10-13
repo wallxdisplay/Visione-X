@@ -10,6 +10,10 @@ export interface Deps {
   /** Default Storage bucket (media binaries). */
   bucket: Bucket;
   now: () => number;
+  /** Outbound HTTP (integrations); tests pass a fake. Defaults to global fetch. */
+  fetch?: typeof fetch;
+  /** DNS lookup used by the SSRF guard; tests pass a fake. Defaults to node:dns. */
+  lookup?: (host: string) => Promise<string[]>;
 }
 
 export interface Actor {

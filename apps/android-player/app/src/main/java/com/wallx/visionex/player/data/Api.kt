@@ -33,6 +33,9 @@ class Api(private val base: String, val http: OkHttpClient = defaultClient()) {
     /** Recent readings for chart widgets ([epoch ms, value] points). */
     suspend fun liveHistory(auth: String): HistoryResponse = get("/devices/live/history", auth)
 
+    /** Current values of the weather / RSS data sources the published content shows. */
+    suspend fun data(auth: String): DeviceDataResponse = get("/devices/data", auth)
+
     suspend fun commandResult(auth: String, body: CommandResult) {
         request(
             Request.Builder().url("$base/devices/commands/result").post(json.encodeToString(body).toRequestBody(jsonType)),

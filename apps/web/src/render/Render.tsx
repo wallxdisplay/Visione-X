@@ -11,6 +11,7 @@ import { createContext, useContext, useEffect, useState, type CSSProperties, typ
 import { useTranslation } from 'react-i18next';
 import { useStorageUrl } from '../content/data';
 import { ChartView, GaugeView, SensorValueView, StatusView } from './SensorWidgets';
+import { RssView, WeatherView } from './DataWidgets';
 import './render.css';
 
 export interface RenderLibrary {
@@ -111,6 +112,10 @@ export function WidgetView({ widget }: { widget: Widget }) {
       return <ChartView widget={widget} orgId={orgId} />;
     case 'status':
       return <StatusView widget={widget} orgId={orgId} />;
+    case 'weather':
+      return <WeatherView widget={widget} orgId={orgId} />;
+    case 'rss':
+      return <RssView widget={widget} orgId={orgId} />;
     case 'text':
       return (
         <div className="r-fill r-text" style={textStyle(widget.style, 0.4)}>
@@ -159,7 +164,7 @@ export function WidgetView({ widget }: { widget: Widget }) {
         />
       );
     default:
-      return <div className="r-fill r-center r-placeholder">{t('render.laterWidget', { type: widget.type })}</div>;
+      return <div className="r-fill r-center r-placeholder">{t('render.laterWidget', { type: (widget as { type: string }).type })}</div>;
   }
 }
 

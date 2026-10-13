@@ -4,7 +4,19 @@
     "missingMedia": "Media file not found",
     "missingPlaylist": "Playlist not found",
     "emptyPlaylist": "This playlist is empty",
-    "sensor": { "nodata": "No data", "stale": "Stale", "offline": "Sensor offline" }
+    "sensor": { "nodata": "No data", "stale": "Stale", "offline": "Sensor offline" },
+    "data": { "nodata": "No data yet", "stale": "Not updated recently" },
+    "weather": {
+      "clear": "Clear",
+      "partly": "Partly cloudy",
+      "cloudy": "Cloudy",
+      "fog": "Fog",
+      "drizzle": "Drizzle",
+      "rain": "Rain",
+      "snow": "Snow",
+      "storm": "Thunderstorm",
+      "feels": "Feels like {{t}}"
+    }
   },
   "library": {
     "description": "Images, videos and audio for your screens. Your plan includes {{limit}} GB of storage.",

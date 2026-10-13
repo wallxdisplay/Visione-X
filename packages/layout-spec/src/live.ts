@@ -55,3 +55,40 @@ export function gaugeFraction(value: number, min: number, max: number): number {
   if (!(max > min)) return 0;
   return Math.min(1, Math.max(0, (value - min) / (max - min)));
 }
+
+export type WeatherCondition = 'clear' | 'partly' | 'cloudy' | 'fog' | 'drizzle' | 'rain' | 'snow' | 'storm';
+
+/** WMO weather code (Open-Meteo `weather_code`) → a small set of conditions with an icon. */
+export function weatherCondition(code: number): WeatherCondition {
+  if (code === 0) return 'clear';
+  if (code <= 2) return 'partly';
+  if (code === 3) return 'cloudy';
+  if (code === 45 || code === 48) return 'fog';
+  if (code >= 51 && code <= 57) return 'drizzle';
+  if ((code >= 61 && code <= 67) || (code >= 80 && code <= 82)) return 'rain';
+  if ((code >= 71 && code <= 77) || code === 85 || code === 86) return 'snow';
+  if (code >= 95) return 'storm';
+  return 'cloudy';
+}
+
+/** Symbol per condition (night variant for clear / partly cloudy). Same on the player. */
+export function weatherIcon(condition: WeatherCondition, isDay = true): string {
+  switch (condition) {
+    case 'clear':
+      return isDay ? '☀️' : '🌙';
+    case 'partly':
+      return isDay ? '⛅' : '☁️';
+    case 'cloudy':
+      return '☁️';
+    case 'fog':
+      return '🌫️';
+    case 'drizzle':
+      return '🌦️';
+    case 'rain':
+      return '🌧️';
+    case 'snow':
+      return '❄️';
+    case 'storm':
+      return '⛈️';
+  }
+}

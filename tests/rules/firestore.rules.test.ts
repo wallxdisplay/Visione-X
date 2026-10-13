@@ -219,6 +219,24 @@ describe('billing (phase 6)', () => {
   });
 });
 
+describe('integrations (phase 6)', () => {
+  beforeEach(async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await setDoc(doc(db, 'orgs/org1/dataSources/ds1'), { name: 'Pune', type: 'weather' });
+      await setDoc(doc(db, 'providerCache/w_18.52_73.86'), { weather: {} });
+    });
+  });
+
+  it('members read data sources; nobody writes them or reads the provider cache', async () => {
+    const alice = env.authenticatedContext('alice').firestore();
+    await assertSucceeds(getDoc(doc(alice, 'orgs/org1/dataSources/ds1')));
+    await assertFails(setDoc(doc(alice, 'orgs/org1/dataSources/ds2'), { name: 'X' }));
+    await assertFails(getDoc(doc(env.authenticatedContext('mallory').firestore(), 'orgs/org1/dataSources/ds1')));
+    await assertFails(getDoc(doc(env.authenticatedContext('root', { platformRole: 'superadmin' }).firestore(), 'providerCache/w_18.52_73.86')));
+  });
+});
+
 describe('platform data', () => {
   it('active plans are public, inactive ones are not', async () => {
     const db = env.unauthenticatedContext().firestore();

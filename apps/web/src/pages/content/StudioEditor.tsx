@@ -9,8 +9,9 @@ import { newId } from '../../content/data';
 import { PreviewOverlay } from '../../content/PreviewOverlay';
 import { useRenderLibrary } from '../../content/useLibrary';
 import { useAllChannels } from '../../content/sensors';
-import { defaultSensorWidget, defaultWidget, type ChannelChoice, type EditableWidgetType } from '../../content/widgetDefaults';
-import { ZoneInspector } from '../../content/ZoneInspector';
+import { useDataSources } from '../../content/dataSources';
+import { defaultSensorWidget, defaultWidget, type ChannelChoice, type DataWidgetType, type EditableWidgetType } from '../../content/widgetDefaults';
+import { ZoneInspector, type DataSourceChoice } from '../../content/ZoneInspector';
 import { call, errorMessage } from '../../lib/api';
 import { fieldErrors } from '../../lib/format';
 import { useDoc } from '../../lib/hooks';
@@ -85,6 +86,13 @@ export function StudioEditor() {
         : null,
     [sensorsOn, sensorChannels.options],
   );
+  const weatherOn = !!entitlements?.features.includes('widget.weather');
+  const rssOn = !!entitlements?.features.includes('widget.rss');
+  const sources = useDataSources(orgId, weatherOn || rssOn);
+  const dataSourceChoices = useMemo<Partial<Record<DataWidgetType, DataSourceChoice[]>>>(() => {
+    const pick = (type: DataWidgetType) => sources.data.filter((d) => d.type === type).map((d) => ({ id: d.id, name: d.name, type }));
+    return { ...(weatherOn ? { weather: pick('weather') } : {}), ...(rssOn ? { rss: pick('rss') } : {}) };
+  }, [sources.data, weatherOn, rssOn]);
   const readOnly = !can('layout.edit');
   const saved = useDoc<LayoutDoc>(paths.layout(orgId, layoutId));
   const { library, media, playlists } = useRenderLibrary(orgId);
@@ -442,6 +450,7 @@ export function StudioEditor() {
               timezone={org?.timezone ?? 'Asia/Kolkata'}
               readOnly={readOnly}
               sensors={channelChoices}
+              dataSources={dataSourceChoices}
               autoPickMedia={pickFor === zone.id}
               onChange={(z) => updateZone(z)}
               onRemove={() => removeZone(zone.id)}

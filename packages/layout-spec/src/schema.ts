@@ -93,8 +93,21 @@ export const Widget = z.discriminatedUnion('type', [
     style: TextStyle,
   }),
   z.object({ type: z.literal('web'), url: HttpsUrl, refreshSec: z.number().int().min(30).optional() }),
-  z.object({ type: z.literal('weather'), dataSourceId: z.string(), style: TextStyle }),
-  z.object({ type: z.literal('rss'), dataSourceId: z.string(), itemDurationSec: z.number().int(), style: TextStyle }),
+  z.object({
+    type: z.literal('weather'),
+    dataSourceId: BindingId,
+    /** Current conditions only, or with a 3-day forecast. */
+    layout: z.enum(['current', 'forecast']).default('current'),
+    style: TextStyle,
+  }),
+  z.object({
+    type: z.literal('rss'),
+    dataSourceId: BindingId,
+    /** Seconds each headline stays on screen. */
+    itemDurationSec: z.number().int().min(3).max(120).default(8),
+    showFeedTitle: z.boolean().default(true),
+    style: TextStyle,
+  }),
   z.object({
     type: z.literal('sensorValue'),
     binding: DataBinding,
@@ -148,11 +161,16 @@ export const AVAILABLE_WIDGETS = [
   'qr',
   'table',
   'web',
+  'weather',
+  'rss',
   'sensorValue',
   'gauge',
   'chart',
   'status',
 ] as const satisfies readonly WidgetType[];
+
+/** Widgets that show data-source content (weather, RSS), fetched by the server. */
+export const DATA_WIDGETS = ['weather', 'rss'] as const satisfies readonly WidgetType[];
 
 /** Widgets that show live sensor values (need the sensor feature in the plan). */
 export const SENSOR_WIDGETS = ['sensorValue', 'gauge', 'chart', 'status'] as const satisfies readonly WidgetType[];
@@ -269,6 +287,10 @@ export const LiveChannel = z.object({
 });
 export type LiveChannel = z.infer<typeof LiveChannel>;
 
+/** A data source (weather, RSS) the content shows; values come from /devices/data. */
+export const ManifestDataSource = z.object({ id: z.string(), type: z.enum(['weather', 'rss']) });
+export type ManifestDataSource = z.infer<typeof ManifestDataSource>;
+
 export const Manifest = z.object({
   specVersion: z.literal(SPEC_VERSION),
   orgId: z.string(),
@@ -286,5 +308,7 @@ export const Manifest = z.object({
   assets: z.array(ManifestAsset),
   /** Live values the player polls from /devices/live (empty when nothing is bound). */
   liveChannels: z.array(LiveChannel).default([]),
+  /** Data sources the player fetches from /devices/data (empty when none are used). */
+  dataSources: z.array(ManifestDataSource).default([]),
 });
 export type Manifest = z.infer<typeof Manifest>;

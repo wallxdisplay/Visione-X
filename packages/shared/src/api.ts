@@ -158,4 +158,9 @@ export const CALLABLES = {
   setFeatureRelease: 'setFeatureRelease',
   setEntitlementOverrides: 'setEntitlementOverrides',
   migrateSubscriptions: 'migrateSubscriptions',
+  saveDataSource: 'saveDataSource',
+  deleteDataSource: 'deleteDataSource',
+  geocodePlace: 'geocodePlace',
+  testRssFeed: 'testRssFeed',
+  previewDataSource: 'previewDataSource',
 } as const;

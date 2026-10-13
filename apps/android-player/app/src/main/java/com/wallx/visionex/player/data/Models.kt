@@ -34,6 +34,8 @@ data class Manifest(
     val assets: List<Asset>,
     /** Sensor channels the content shows; values come from /devices/live (phase 5). */
     val liveChannels: List<LiveChannel> = emptyList(),
+    /** Weather / RSS data sources the content shows; values come from /devices/data (phase 6). */
+    val dataSources: List<ManifestDataSource> = emptyList(),
 )
 
 @Serializable
@@ -80,6 +82,9 @@ data class Emergency(val id: String, val playlistId: String, val expiresAt: Long
 data class LiveChannel(val sourceId: String, val field: String, val historyMinutes: Int? = null) {
     val key get() = "$sourceId/$field"
 }
+
+@Serializable
+data class ManifestDataSource(val id: String, val type: String)
 
 @Serializable
 data class Asset(val mediaId: String, val url: String, val sha256: String, val bytes: Long, val mimeType: String)
@@ -193,3 +198,42 @@ data class HistorySeries(val sourceId: String, val field: String, val points: Li
 
 @Serializable
 data class HistoryResponse(val serverTime: Long = 0, val series: List<HistorySeries> = emptyList())
+
+// ---------------------------------------------------------------- data sources (phase 6)
+
+@Serializable
+data class WeatherNow(
+    val tempC: Double,
+    val feelsLikeC: Double? = null,
+    val humidity: Double? = null,
+    val windKmh: Double? = null,
+    val code: Int,
+    val isDay: Boolean = true,
+)
+
+@Serializable
+data class WeatherDay(val date: String, val code: Int, val maxC: Double, val minC: Double)
+
+@Serializable
+data class WeatherData(val current: WeatherNow, val daily: List<WeatherDay> = emptyList(), val timezone: String = "UTC")
+
+@Serializable
+data class RssItem(val title: String, val publishedAt: Long? = null)
+
+@Serializable
+data class RssData(val feedTitle: String = "", val items: List<RssItem> = emptyList())
+
+@Serializable
+data class DataSourceValue(
+    val id: String,
+    val type: String,
+    val name: String = "",
+    val ok: Boolean = false,
+    val error: String? = null,
+    val fetchedAt: Long? = null,
+    val weather: WeatherData? = null,
+    val rss: RssData? = null,
+)
+
+@Serializable
+data class DeviceDataResponse(val serverTime: Long = 0, val sources: List<DataSourceValue> = emptyList())

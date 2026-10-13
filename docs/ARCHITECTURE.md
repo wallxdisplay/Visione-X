@@ -211,6 +211,13 @@ Rules: deny-by-default; anything money-, limit-, status- or audit-related is Fun
 - **Customers** (`billing.manage`, i.e. owners) see `/billing`: plan, usage, price, paid period and payments. They can send requests (`orgs/{org}/billingRequests`: add screens, change plan, renew, cancel). Billing staff resolve requests from `/admin/billing`, and the customer is notified.
 - **Plans and release status.** Super Admin (`plan.manage`) edits plans and feature release status at `/admin/features`. `org.limits.edit` sets per-org entitlement overrides. Each of these recomputes the affected organizations' entitlements.
 
+**As built (phase 6, integrations: weather and RSS):**
+- **Data sources** live at `orgs/{org}/dataSources/{id}`, of type `weather` (place name + coordinates, found with Open-Meteo geocoding) or `rss` (feed URL + number of headlines). Creating one needs `integration.manage` and the `widget.weather` / `widget.rss` plan feature. A source cannot be deleted while a layout or playlist uses it.
+- **Fetching** happens only on the server. Results are cached centrally in `providerCache/{key}` (server-only, with a TTL policy): weather per place rounded to about 1 km for 15 minutes, RSS per feed URL for 10 minutes. On a provider error the last good result is served (marked not up to date) for up to 24 hours, and retries back off for 2 minutes.
+- **RSS safety.** Feeds are reduced to plain-text headlines (tags stripped, entities decoded, length-capped). They are never rendered as HTML. Every request hop, including redirects, is resolved and refused if it points at private, loopback, link-local or metadata addresses. Requests use standard ports only, a 1 MB cap and an 8 s timeout.
+- **Weather licence.** Open-Meteo's free API is non-commercial, so it is used only in the emulator and local development. In production the provider requires a commercial API key (`OPEN_METEO_API_KEY`). Without it, weather requests fail with "not configured" rather than calling the free API. Attribution "Weather data by Open-Meteo.com" is shown in the app.
+- **Widgets.** `weather` (current conditions, or with a 3-day forecast) and `rss` (headline carousel, seconds per headline, optional feed name). Saving checks the feature and that the source exists with the right type. The manifest lists `dataSources`, and the player fetches `GET /devices/data` every 5 minutes, keeping the last values offline. Web previews use the `previewDataSource` callable through the same cache.
+
 ## 11. Super Admin (`/admin`)
 Platform overview · Organization approvals (approve/reject/request info) · Organizations · Users & roles · Screens & players · Features & limits · Plans & billing · Integrations & API · Support access (time-boxed, scoped, customer-visible, no secrets) · Tickets · Notifications · Security alerts · Backup & recovery (scheduled Firestore exports) · Platform analytics · Audit logs · Platform settings.
 
@@ -264,7 +271,7 @@ Feature catalogue stores `releaseStatus` (what WallX has built) separately from 
 | 3 ✅ (real-box test pending) | Android player | Pairing/authorization, boot-start, kiosk, HDMI playback, offline cache, rendering |
 | 4 ✅ | Publish & monitor | Manifest compiler, sync, bulk publish, emergency override, heartbeats, remote commands, diagnostics |
 | 5 ✅ (real ESP32 test pending) | Sensors | Ingest API, ESP32 firmware sample, channels, thresholds, data widgets, alerts |
-| 6 (billing round ✅) | Billing & beyond | Manual billing (subscriptions, payments, restricted mode, admin billing tools) ✅; next: integrations, Hindi/Marathi, reseller groundwork; Razorpay later. Invoices: external app |
+| 6 (billing ✅, integrations ✅) | Billing & beyond | Manual billing ✅; weather + RSS integrations ✅ (weather needs a commercial Open-Meteo key in prod); next: Hindi/Marathi, reseller groundwork; Razorpay later. Invoices: external app |
 
 ## 18. Still to confirm
 1. Real Firebase **project ID** and **Hosting site ID** (display name "Visione-X" is not the ID), and whether Firestore already exists (region).

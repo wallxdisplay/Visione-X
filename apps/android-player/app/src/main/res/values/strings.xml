@@ -16,4 +16,7 @@
     <string name="sensor_nodata">No data</string>
     <string name="sensor_stale">Stale</string>
     <string name="sensor_offline">Sensor offline</string>
+    <string name="data_nodata">No data yet</string>
+    <string name="data_stale">Not updated recently</string>
+    <string name="weather_feels">Feels like %1$s</string>
 </resources>

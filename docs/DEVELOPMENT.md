@@ -100,6 +100,12 @@ Remaining one-time steps (console):
 6. In Google Cloud console → APIs & Services → Credentials, restrict the browser API key to the
    `visione-x.web.app` / `visione-x.firebaseapp.com` referrers.
 
+**Weather provider (phase 6).** Open-Meteo's free API is non-commercial, so production needs a
+commercial key. Once purchased: `npx firebase functions:secrets:set OPEN_METEO_API_KEY --project prod`,
+then bind the secret to the `api`, `previewDataSource` and `geocodePlace` functions (add
+`secrets: ['OPEN_METEO_API_KEY']` to their options) and redeploy. Until then weather sources show
+"not configured" in production; RSS works without any key.
+
 Secrets (Razorpay key secret, webhook secret, provider keys) go into Secret Manager via
 `npx firebase functions:secrets:set NAME` — never into `.env` files that the web app reads.
 

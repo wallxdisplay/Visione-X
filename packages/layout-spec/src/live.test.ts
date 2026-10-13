@@ -80,3 +80,11 @@ describe('sensor widgets', () => {
     expect(liveChannelsOf([], [])).toEqual([]);
   });
 });
+
+describe('weather conditions', () => {
+  it('maps WMO codes to conditions and icons', async () => {
+    const { weatherCondition, weatherIcon } = await import('./index');
+    expect([0, 2, 3, 45, 53, 63, 81, 73, 95].map(weatherCondition)).toEqual(['clear', 'partly', 'cloudy', 'fog', 'drizzle', 'rain', 'rain', 'snow', 'storm']);
+    expect(weatherIcon('clear', false)).toBe('🌙');
+  });
+});

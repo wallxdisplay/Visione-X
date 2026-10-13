@@ -7,24 +7,36 @@ import { useTranslation } from 'react-i18next';
 import { timezoneOptions } from '../lib/format';
 import { MediaPicker } from './MediaPicker';
 import { MediaThumb } from './MediaThumb';
+import { DataWidgetEditor } from './DataWidgetEditor';
 import { SensorWidgetEditor } from './SensorWidgetEditor';
 import {
+  DATA_WIDGET_TYPES,
   SENSOR_WIDGET_TYPES,
+  defaultDataWidget,
   defaultSensorWidget,
   defaultWidget,
   type ChannelChoice,
+  type DataWidgetType,
   type EditableWidgetType,
   type SensorWidgetType,
 } from './widgetDefaults';
 
-type ContentChoice = 'empty' | 'media' | 'playlist' | EditableWidgetType | SensorWidgetType;
+type ContentChoice = 'empty' | 'media' | 'playlist' | EditableWidgetType | SensorWidgetType | DataWidgetType;
 
 function choiceOf(content: ZoneContent): ContentChoice {
-  if (content.kind === 'widget') return content.widget.type as EditableWidgetType | SensorWidgetType;
+  if (content.kind === 'widget') return content.widget.type as EditableWidgetType | SensorWidgetType | DataWidgetType;
   return content.kind;
 }
 
 const isSensorChoice = (c: string): c is SensorWidgetType => (SENSOR_WIDGET_TYPES as string[]).includes(c);
+const isDataChoice = (c: string): c is DataWidgetType => (DATA_WIDGET_TYPES as string[]).includes(c);
+
+/** A weather place or RSS feed the org has set up (Integrations). */
+export interface DataSourceChoice {
+  id: string;
+  name: string;
+  type: DataWidgetType;
+}
 
 const pct = (v: number) => Math.round(v * 1000) / 10;
 
@@ -36,6 +48,7 @@ export function ZoneInspector({
   timezone,
   readOnly,
   sensors,
+  dataSources,
   autoPickMedia = false,
   onChange,
   onRemove,
@@ -49,6 +62,8 @@ export function ZoneInspector({
   readOnly: boolean;
   /** Sensor channels to bind; null when the plan has no sensors (widgets are not offered). */
   sensors: ChannelChoice[] | null;
+  /** Data sources per widget type the plan includes; a type missing from the map is not offered. */
+  dataSources: Partial<Record<DataWidgetType, DataSourceChoice[]>>;
   /** Open the media picker immediately (zone was just added as a media zone). */
   autoPickMedia?: boolean;
   onChange: (zone: Zone) => void;
@@ -75,6 +90,9 @@ export function ZoneInspector({
       const current = w && 'binding' in w ? w.binding : w?.type === 'chart' ? w.bindings[0] : null;
       const channel = sensors?.find((s) => current && s.sensorDeviceId === current.sourceId && s.channelId === current.field) ?? sensors?.[0];
       if (channel) setWidget(defaultSensorWidget(next, channel));
+    } else if (isDataChoice(next)) {
+      const first = dataSources[next]?.[0];
+      if (first) setWidget(defaultDataWidget(next, first.id));
     } else setWidget(defaultWidget(next, timezone));
   }
 
@@ -191,15 +209,25 @@ export function ZoneInspector({
       <SelectField
         label={t('studio.content')}
         disabled={readOnly}
-        options={(['empty', 'media', 'playlist', 'text', 'clock', 'qr', 'table', 'web', ...(sensors ? SENSOR_WIDGET_TYPES : [])] as ContentChoice[]).map((v) => ({
+        options={(['empty', 'media', 'playlist', 'text', 'clock', 'qr', 'table', 'web', ...(sensors ? SENSOR_WIDGET_TYPES : []), ...DATA_WIDGET_TYPES.filter((d) => dataSources[d])] as ContentChoice[]).map((v) => ({
           value: v,
           label: t(`studio.contentTypes.${v}`),
-          disabled: isSensorChoice(v) && !sensors?.length,
+          disabled: (isSensorChoice(v) && !sensors?.length) || (isDataChoice(v) && !dataSources[v]?.length),
         }))}
-        hint={sensors && !sensors.length ? t('sensorWidgets.noChannels') : undefined}
+        hint={
+          sensors && !sensors.length
+            ? t('sensorWidgets.noChannels')
+            : DATA_WIDGET_TYPES.some((d) => dataSources[d] && !dataSources[d]!.length)
+              ? t('dataWidgets.noSources')
+              : undefined
+        }
         value={choice}
         onChange={(e) => changeChoice(e.target.value as ContentChoice)}
       />
+
+      {c.kind === 'widget' && (c.widget.type === 'weather' || c.widget.type === 'rss') ? (
+        <DataWidgetEditor widget={c.widget} sources={dataSources[c.widget.type] ?? []} readOnly={readOnly} onChange={setWidget} styleEditor={styleEditor} />
+      ) : null}
 
       {c.kind === 'widget' && isSensorChoice(c.widget.type) ? (
         <SensorWidgetEditor

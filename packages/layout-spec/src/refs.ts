@@ -1,4 +1,4 @@
-import type { DataBinding, LayoutBody, LiveChannel, PlaylistItem, Widget } from './schema';
+import type { DataBinding, LayoutBody, LiveChannel, ManifestDataSource, PlaylistItem, Widget } from './schema';
 
 /** A sensor channel a widget shows: sensor device id + channel key. */
 export interface SensorRef {
@@ -13,6 +13,13 @@ export interface ContentRefs {
   widgetTypes: Widget['type'][];
   /** Sensor channels bound by widgets (deduplicated). */
   sensors: SensorRef[];
+  /** Data sources (weather, RSS) used by widgets. */
+  dataSourceIds: string[];
+}
+
+/** The data source a widget shows, if any. */
+export function widgetDataSource(widget: Widget): ManifestDataSource | null {
+  return widget.type === 'weather' || widget.type === 'rss' ? { id: widget.dataSourceId, type: widget.type } : null;
 }
 
 const uniq = <T>(xs: T[]) => [...new Set(xs)];
@@ -49,6 +56,7 @@ export function layoutRefs(layout: Pick<LayoutBody, 'zones'>): ContentRefs {
   const playlistIds: string[] = [];
   const widgetTypes: Widget['type'][] = [];
   const sensors: SensorRef[] = [];
+  const dataSourceIds: string[] = [];
   for (const zone of layout.zones) {
     const c = zone.content;
     if (c.kind === 'media') mediaIds.push(c.mediaId);
@@ -56,6 +64,8 @@ export function layoutRefs(layout: Pick<LayoutBody, 'zones'>): ContentRefs {
     if (c.kind === 'widget') {
       widgetTypes.push(c.widget.type);
       sensors.push(...sensorRefsOf(c.widget));
+      const ds = widgetDataSource(c.widget);
+      if (ds) dataSourceIds.push(ds.id);
     }
   }
   return {
@@ -64,6 +74,7 @@ export function layoutRefs(layout: Pick<LayoutBody, 'zones'>): ContentRefs {
     layoutIds: [],
     widgetTypes: uniq(widgetTypes),
     sensors: uniqRefs(sensors),
+    dataSourceIds: uniq(dataSourceIds),
   };
 }
 
@@ -72,6 +83,7 @@ export function playlistRefs(items: PlaylistItem[]): ContentRefs {
   const layoutIds: string[] = [];
   const widgetTypes: Widget['type'][] = [];
   const sensors: SensorRef[] = [];
+  const dataSourceIds: string[] = [];
   for (const item of items) {
     const c = item.content;
     if (c.kind === 'media') mediaIds.push(c.mediaId);
@@ -79,6 +91,8 @@ export function playlistRefs(items: PlaylistItem[]): ContentRefs {
     if (c.kind === 'widget') {
       widgetTypes.push(c.widget.type);
       sensors.push(...sensorRefsOf(c.widget));
+      const ds = widgetDataSource(c.widget);
+      if (ds) dataSourceIds.push(ds.id);
     }
   }
   return {
@@ -87,6 +101,7 @@ export function playlistRefs(items: PlaylistItem[]): ContentRefs {
     layoutIds: uniq(layoutIds),
     widgetTypes: uniq(widgetTypes),
     sensors: uniqRefs(sensors),
+    dataSourceIds: uniq(dataSourceIds),
   };
 }
 
@@ -111,4 +126,21 @@ export function liveChannelsOf(
     out.set(key, { sourceId: binding.sourceId, field: binding.field, historyMinutes: history });
   }
   return [...out.values()].sort((a, b) => refKey(a).localeCompare(refKey(b)));
+}
+
+/** Data sources a manifest's content shows (deduplicated, sorted by id). */
+export function dataSourcesOf(
+  layouts: Array<Pick<LayoutBody, 'zones'>>,
+  playlists: Array<{ items: PlaylistItem[] }>,
+): ManifestDataSource[] {
+  const widgets: Widget[] = [
+    ...layouts.flatMap((l) => l.zones.flatMap((z) => (z.content.kind === 'widget' ? [z.content.widget] : []))),
+    ...playlists.flatMap((p) => p.items.flatMap((i) => (i.content.kind === 'widget' ? [i.content.widget] : []))),
+  ];
+  const out = new Map<string, ManifestDataSource>();
+  for (const w of widgets) {
+    const ds = widgetDataSource(w);
+    if (ds) out.set(ds.id, ds);
+  }
+  return [...out.values()].sort((a, b) => a.id.localeCompare(b.id));
 }

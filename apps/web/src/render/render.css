@@ -207,3 +207,88 @@
 .r-sensor--chart .r-sensor__label {
   font-size: min(8cqh, 6cqw);
 }
+
+/* ---- weather and RSS widgets ---- */
+.r-weather {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4cqh;
+  padding: 5cqh 5cqw;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+.r-weather__now {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4cqw;
+}
+.r-weather__icon {
+  font-size: min(45cqh, 30cqw);
+  line-height: 1;
+}
+.r-weather--forecast .r-weather__icon {
+  font-size: min(28cqh, 22cqw);
+}
+.r-weather__place {
+  font-size: min(10cqh, 7cqw);
+  font-weight: 600;
+  opacity: 0.8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.r-weather__temp {
+  font-size: min(36cqh, 24cqw);
+  font-weight: 700;
+  line-height: 1;
+}
+.r-weather--forecast .r-weather__temp {
+  font-size: min(22cqh, 18cqw);
+}
+.r-weather__cond {
+  font-size: min(9cqh, 6cqw);
+  opacity: 0.85;
+}
+.r-weather__days {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2cqw;
+  font-size: min(8cqh, 5.5cqw);
+  text-align: center;
+}
+.r-weather__day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1cqh;
+}
+.r-weather__min {
+  opacity: 0.65;
+}
+.r-rss {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2cqh;
+  padding: 4cqh 4cqw;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+.r-rss__feed {
+  font-size: min(14cqh, 5cqw);
+  font-weight: 600;
+  opacity: 0.75;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.r-rss__title {
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}

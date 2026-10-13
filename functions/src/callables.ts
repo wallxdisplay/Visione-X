@@ -4,6 +4,10 @@ import { z } from 'zod';
 import {
   AcceptInviteInput,
   AcknowledgeAlertInput,
+  DataSourceRefInput,
+  GeocodeInput,
+  SaveDataSourceInput,
+  TestRssInput,
   AdjustBillingDatesInput,
   RecordPaymentInput,
   RequestBillingChangeInput,
@@ -71,6 +75,7 @@ import * as emergency from './ops/emergency';
 import * as sensors from './sensors/sensors';
 import * as billing from './billing/billing';
 import * as plans from './billing/plans';
+import * as integrations from './integrations/dataSources';
 import { BASE_OPTIONS } from './options';
 
 export function actorFrom(request: CallableRequest): Actor {
@@ -170,3 +175,10 @@ export const savePlan = callable(SavePlanInput, plans.savePlan);
 export const setFeatureRelease = callable(SetFeatureReleaseInput, plans.setFeatureRelease);
 export const setEntitlementOverrides = callable(SetEntitlementOverridesInput, plans.setEntitlementOverrides);
 export const migrateSubscriptions = callable(z.object({}), billing.migrateSubscriptions);
+
+// Integrations (phase 6): weather and RSS data sources.
+export const saveDataSource = callable(SaveDataSourceInput, integrations.saveDataSource);
+export const deleteDataSource = callable(DataSourceRefInput, integrations.deleteDataSource);
+export const geocodePlace = callable(GeocodeInput, integrations.geocodePlace);
+export const testRssFeed = callable(TestRssInput, integrations.testRssFeed);
+export const previewDataSource = callable(DataSourceRefInput, integrations.previewDataSource);
