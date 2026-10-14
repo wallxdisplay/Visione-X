@@ -179,6 +179,12 @@ service cloud.firestore {
           allow read: if (isActiveMember(orgId) && inSiteScope(orgId, siteOf(orgId, 'screens', screenId))) || isDeviceStaff();
           allow write: if false;
         }
+
+        // Diagnostics history (errors, offline/online, updates), written by Functions.
+        match /events/{eventId} {
+          allow read: if (hasPerm(orgId, 'screen.view') && inSiteScope(orgId, siteOf(orgId, 'screens', screenId))) || isDeviceStaff();
+          allow write: if false;
+        }
       }
 
       // Sensors (phase 5). API keys live in the server-only sensorKeys collection, never here.

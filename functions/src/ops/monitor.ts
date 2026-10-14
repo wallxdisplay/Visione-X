@@ -4,6 +4,7 @@ import { COMMAND_EXPIRY_MS, OFFLINE_AFTER_MS, REGION, type EmergencyDoc, type Sc
 import { getDeps } from '../lib/admin';
 import type { Deps } from '../lib/context';
 import { notify } from '../lib/notify';
+import { recordScreenEvents } from '../reports/events';
 import { endEmergency } from './emergency';
 import { runSensorMonitor } from '../sensors/monitor';
 import { runBillingMonitor } from '../billing/monitor';
@@ -49,6 +50,13 @@ export async function runMonitor(
       notify(batch, db, orgId, 'screen_offline', { screen: screen.name, lastSeen: screen.lastSeen ?? 0 }, '/screens', at);
     }
     await batch.commit();
+    // Diagnostics history: when it went silent (orgs without screen diagnostics keep nothing).
+    for (const doc of offline.docs) {
+      const screen = doc.data() as ScreenDoc;
+      await recordScreenEvents(deps, doc.ref.parent.parent!.id, doc.id, screen.siteId ?? null, [
+        { type: 'offline', at: screen.lastSeen ?? at, message: null },
+      ]);
+    }
   }
 
   const expired = await db.collectionGroup('emergencies').where('active', '==', true).where('expiresAt', '<=', at).get();

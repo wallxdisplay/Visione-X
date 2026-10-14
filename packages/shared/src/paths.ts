@@ -59,6 +59,8 @@ export const paths = {
   emergencies: (orgId: string) => `orgs/${orgId}/emergencies`,
   emergency: (orgId: string, id: string) => `orgs/${orgId}/emergencies/${id}`,
   commands: (orgId: string, screenId: string) => `orgs/${orgId}/screens/${screenId}/commands`,
+  /** Diagnostics history of a screen: errors, offline/online, player updates (reports.ts, TTL). */
+  screenEvents: (orgId: string, screenId: string) => `orgs/${orgId}/screens/${screenId}/events`,
   command: (orgId: string, screenId: string, id: string) => `orgs/${orgId}/screens/${screenId}/commands/${id}`,
   notifications: (orgId: string) => `orgs/${orgId}/notifications`,
   approvals: (orgId: string) => `orgs/${orgId}/approvals`,

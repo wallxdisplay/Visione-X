@@ -132,6 +132,7 @@ class PlayerEngine internal constructor(
         scope.launch { liveLoop() }
         scope.launch { dataLoop() }
         scope.launch { playsLoop() }
+        scope.launch { uptimeLoop() }
     }
 
     private suspend fun pollLoop() {
@@ -375,7 +376,7 @@ class PlayerEngine internal constructor(
         repeat(5) {
             val batch = plays.nextBatch() ?: return
             try {
-                api.plays(auth, PlayUpload(batch.id, batch.buckets))
+                api.plays(auth, PlayUpload(batch.id, batch.buckets, batch.uptime))
                 plays.acknowledge(batch.id)
             } catch (e: ApiException) {
                 // A refused batch (malformed, or the box is no longer a screen) would never pass.
@@ -388,6 +389,14 @@ class PlayerEngine internal constructor(
                 Log.w(TAG, "Play upload failed: ${e.message}")
                 return
             }
+        }
+    }
+
+/** Every minute: the player is running, and online if its last server contact worked. */
+    private suspend fun uptimeLoop() {
+        while (currentCoroutineContextActive()) {
+            delay(60_000)
+            plays.addUptime(60, _status.value.online)
         }
     }
 
@@ -406,6 +415,7 @@ class PlayerEngine internal constructor(
                             manifestVersion = manifests.load()?.version,
                             errors = ErrorLog.recent(context),
                             update = updater.status.value,
+                            vitals = runCatching { Diagnostics.vitals(context) }.getOrNull(),
                         ),
                     )
                     ErrorLog.clear(context)

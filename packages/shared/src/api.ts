@@ -187,6 +187,7 @@ export const CALLABLES = {
   testRssFeed: 'testRssFeed',
   previewDataSource: 'previewDataSource',
   playbackReport: 'playbackReport',
+  screenAnalytics: 'screenAnalytics',
   setMemberSites: 'setMemberSites',
   saveRole: 'saveRole',
   deleteRole: 'deleteRole',

@@ -113,6 +113,7 @@ class PlayerEngineTest {
         val engine = PlayerEngine(context, server.url("/api/v1").toString().trimEnd('/'), playClock = { clock })
         engine.tick() // registers the box
         engine.plays.end(engine.plays.start("media", "m1"))
+        engine.plays.addUptime(60, online = true)
         engine.uploadPlays()
         assertTrue("the hour is not finished yet", playUploads.isEmpty())
 
@@ -126,6 +127,7 @@ class PlayerEngineTest {
         val ids = playUploads.map { Regex("\"batchId\":\"([A-Za-z0-9]+)\"").find(it)!!.groupValues[1] }
         assertEquals("the retry carries the same batch id", ids[0], ids[1])
         assertTrue(playUploads[1].contains("\"id\":\"m1\"") && playUploads[1].contains("\"plays\":1"))
+        assertTrue("uptime travels with the plays", playUploads[1].contains("\"uptime\":[{") && playUploads[1].contains("\"on\":60"))
     }
 
     @Test

@@ -53,7 +53,20 @@ export interface ScreenHealth {
   errors: string[];
   /** A player update in progress, as last reported. */
   update?: PlayerUpdateStatus | null;
+  /** Memory, uptime and network (players 0.14.0 and later). */
+  vitals?: DeviceVitals | null;
   reportedAt: number;
+}
+
+export const NETWORK_TYPES = ['ethernet', 'wifi', 'cellular', 'other', 'none'] as const;
+
+export interface DeviceVitals {
+  memAvailMb: number;
+  memTotalMb: number;
+  /** Minutes since the box was switched on, and since the player app started. */
+  deviceUptimeMin: number;
+  appUptimeMin: number;
+  network: (typeof NETWORK_TYPES)[number];
 }
 
 /** orgs/{orgId}/screens/{screenId} — readable by org members. */
@@ -140,6 +153,17 @@ export const HeartbeatBody = z.object({
   errors: z.array(z.string().max(300)).max(20),
   /** A player update in progress (absent from players before 0.9.0). */
   update: PlayerUpdateStatus.nullable().optional(),
+  /** Absent from players before 0.14.0. */
+  vitals: z
+    .object({
+      memAvailMb: z.number().int().min(0).max(1_000_000),
+      memTotalMb: z.number().int().min(0).max(1_000_000),
+      deviceUptimeMin: z.number().int().min(0),
+      appUptimeMin: z.number().int().min(0),
+      network: z.enum(NETWORK_TYPES),
+    })
+    .nullable()
+    .optional(),
 });
 
 export interface DeviceStateResponse {

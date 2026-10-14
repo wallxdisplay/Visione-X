@@ -24,6 +24,8 @@ import {
   type PlayCounts,
   type PlayKind,
   type PlayStatsDoc,
+  type UptimeBucket,
+  type UptimeCounts,
   type ScreenDoc,
 } from '@wallx-play/shared';
 import { authenticate, type ApiRequest, type ApiResult } from '../devices/deviceApi';
@@ -85,7 +87,9 @@ export async function devicePlays(deps: Deps, req: ApiRequest): Promise<ApiResul
   const at = now();
   const { orgId, screenId } = device;
   // Ignore what a long-offline box kept for weeks, and clocks set in the future.
-  const buckets = parsed.data.buckets.filter((b) => b.hour >= at - PLAY_MAX_AGE_DAYS * DAY && b.hour <= at + HOUR);
+  const fresh = (hour: number) => hour >= at - PLAY_MAX_AGE_DAYS * DAY && hour <= at + HOUR;
+  const buckets = parsed.data.buckets.filter((b) => fresh(b.hour));
+  const uptime = parsed.data.uptime.filter((u) => fresh(u.hour));
 
   const stored = await db.runTransaction(async (tx) => {
     const batchRef = db.doc(paths.playBatch(device.id, parsed.data.batchId));
@@ -97,25 +101,41 @@ export async function devicePlays(deps: Deps, req: ApiRequest): Promise<ApiResul
     ]);
     if (batch.exists) return (batch.get('stored') as boolean | undefined) ?? false; // a retry: already counted
     const entitlements = ent.data() as EntitlementsDoc | undefined;
-    const enabled = !!entitlements?.features.includes('report.proofOfPlay') && !!screen.exists;
-    tx.create(batchRef, { at, stored: enabled, buckets: buckets.length, expiresAt: new Date(at + BATCH_MEMORY_DAYS * DAY) });
+    const features = screen.exists ? (entitlements?.features ?? []) : [];
+    // Plays only with proof-of-play reports, uptime only with screen diagnostics.
+    const plays = features.includes('report.proofOfPlay') ? buckets : [];
+    const up = features.includes('screen.diagnostics') ? uptime : [];
+    const enabled = plays.length + up.length > 0;
+    tx.create(batchRef, { at, stored: enabled, buckets: buckets.length, uptime: uptime.length, expiresAt: new Date(at + BATCH_MEMORY_DAYS * DAY) });
     if (!enabled) return false;
     const timeZone = (org.data() as OrgDoc | undefined)?.timezone || 'Asia/Kolkata';
     const siteId = (screen.data() as ScreenDoc).siteId ?? null;
     const keepDays = entitlements!.limits.retentionDays ?? 730;
-    for (const [date, day] of foldBuckets(buckets, timeZone)) {
+    const playDays = foldBuckets(plays, timeZone);
+    const upDays = foldUptime(up, timeZone);
+    for (const date of new Set([...playDays.keys(), ...upDays.keys()])) {
+      const day = playDays.get(date);
+      const u = upDays.get(date);
       // Merged increments: the first upload of the day creates the summary.
       tx.set(
         db.doc(paths.playStat(orgId, date, screenId)),
         {
-          date,
-          screenId,
-          siteId,
-          ...inc(day.total),
-          items: Object.fromEntries([...day.items].map(([k, c]) => [k, inc(c)])),
-          hours: Object.fromEntries([...day.hours].map(([k, c]) => [k, inc(c)])),
+          ...dayBase(date, screenId, siteId, keepDays),
+          ...(day
+            ? {
+                ...inc(day.total),
+                items: Object.fromEntries([...day.items].map(([k, c]) => [k, inc(c)])),
+                hours: Object.fromEntries([...day.hours].map(([k, c]) => [k, inc(c)])),
+              }
+            : {}),
+          ...(u
+            ? {
+                onSeconds: FieldValue.increment(u.total.on),
+                onlineSeconds: FieldValue.increment(u.total.online),
+                uptime: Object.fromEntries([...u.hours].map(([k, c]) => [k, { on: FieldValue.increment(c.on), online: FieldValue.increment(c.online) }])),
+              }
+            : {}),
           updatedAt: at,
-          expiresAt: new Date(Date.parse(`${date}T00:00:00Z`) + (keepDays + 1) * DAY),
         },
         { merge: true },
       );
@@ -123,6 +143,26 @@ export async function devicePlays(deps: Deps, req: ApiRequest): Promise<ApiResul
     return true;
   });
   return { status: 200, body: { ok: true, stored } };
+}
+
+/** Fields every daily summary carries (also written by screen events, see events.ts). */
+export function dayBase(date: string, screenId: string, siteId: string | null, keepDays: number) {
+  return { date, screenId, siteId, expiresAt: new Date(Date.parse(`${date}T00:00:00Z`) + (keepDays + 1) * DAY) };
+}
+
+/** Groups uptime hours into per-day increments (local hours and totals). */
+export function foldUptime(buckets: UptimeBucket[], timeZone: string): Map<string, { hours: Map<string, UptimeCounts>; total: UptimeCounts }> {
+  const days = new Map<string, { hours: Map<string, UptimeCounts>; total: UptimeCounts }>();
+  for (const b of buckets) {
+    if (b.on === 0 && b.online === 0) continue;
+    const { date, hour } = localDateHour(b.hour, timeZone);
+    let day = days.get(date);
+    if (!day) days.set(date, (day = { hours: new Map(), total: { on: 0, online: 0 } }));
+    const c = day.hours.get(hour) ?? { on: 0, online: 0 };
+    day.hours.set(hour, { on: c.on + b.on, online: c.online + b.online });
+    day.total = { on: day.total.on + b.on, online: day.total.online + b.online };
+  }
+  return days;
 }
 
 const daysBetween = (from: string, to: string) => Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / DAY) + 1;
@@ -156,7 +196,10 @@ export async function playbackReport(deps: Deps, actor: Actor, input: z.infer<ty
   const snap = await q.limit(MAX_DOCS + 1).get();
   if (snap.size > MAX_DOCS) throw new HttpsError('resource-exhausted', 'Too much data for one report: choose fewer days, a site or a screen.');
   const scope = member.siteScope ?? [];
-  const docs = snap.docs.map((d) => d.data() as PlayStatsDoc).filter((d) => !scope.length || (!!d.siteId && scope.includes(d.siteId)));
+  // Days that only carry uptime or diagnostics (no plays) are not part of this report.
+  const docs = snap.docs
+    .map((d) => d.data() as PlayStatsDoc)
+    .filter((d) => (d.plays ?? 0) > 0 && (!scope.length || (!!d.siteId && scope.includes(d.siteId))));
 
   const add = (a: PlayCounts, b: PlayCounts) => ({ plays: a.plays + (b.plays ?? 0), seconds: a.seconds + (b.seconds ?? 0) });
   const zero = (): PlayCounts => ({ plays: 0, seconds: 0 });

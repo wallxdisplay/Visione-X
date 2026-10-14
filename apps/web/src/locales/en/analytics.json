@@ -1,0 +1,57 @@
+{
+  "analytics": {
+    "description": "How reliably your screens run: time on and online, offline alerts and player errors, per day and per screen.",
+    "notInPlanTitle": "Screen analytics are not included in your plan",
+    "notInPlanBody": "Upgrade to a plan with screen diagnostics to see uptime, offline history and player errors for every screen.",
+    "running": "Running",
+    "online": "Online",
+    "offlineAlerts": "Offline alerts",
+    "errors": "Player errors",
+    "player": "Player",
+    "lastSeen": "Last seen",
+    "runningHint": "Share of the time the player app was running on the screen",
+    "onlineHint": "Share of the time the player could reach WallX Play",
+    "missing_one": "{{count}} screen has no uptime data yet. Uptime needs player 0.14.0 or newer.",
+    "missing_other": "{{count}} screens have no uptime data yet. Uptime needs player 0.14.0 or newer.",
+    "noUptime": "No uptime data yet. Uptime needs player 0.14.0 or newer.",
+    "daily": "Uptime per day",
+    "dayTip": "Running {{on}} · Online {{online}}",
+    "byScreen": "Screens",
+    "noScreens": "No screens in this view.",
+    "diagnostics": "Diagnostics",
+    "note": "Players send uptime every hour; the current hour arrives after it ends. Days are in {{tz}}. Screens are listed with the lowest uptime first.",
+    "dh": "{{d}} d {{h}} h",
+    "hm": "{{h}} h {{m}} min",
+    "m": "{{m}} min",
+    "networks": {
+      "ethernet": "Ethernet",
+      "wifi": "Wi-Fi",
+      "cellular": "Mobile data",
+      "other": "Other",
+      "none": "Not connected"
+    },
+    "events": {
+      "error": "Error",
+      "offline": "Offline",
+      "online": "Back online",
+      "updated": "Player updated"
+    },
+    "diag": {
+      "title": "Diagnostics: {{name}}",
+      "app": "Player",
+      "lastReport": "Last report",
+      "network": "Network",
+      "memory": "Memory",
+      "memoryValue": "{{free}} MB free of {{total}} MB",
+      "storage": "Storage",
+      "storageValue": "{{mb}} MB free",
+      "deviceUp": "Box on for",
+      "appUp": "Player running for",
+      "display": "Display",
+      "oldPlayer": "Memory, uptime and network appear once this screen runs player 0.14.0 or newer.",
+      "week": "Running time, last 7 days",
+      "history": "Recent events (30 days)",
+      "noEvents": "No events in the last 30 days."
+    }
+  }
+}

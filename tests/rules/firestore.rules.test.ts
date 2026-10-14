@@ -365,3 +365,17 @@ describe('staff two-step verification', () => {
     await assertSucceeds(getDoc(doc(env.authenticatedContext('root', staffToken('superadmin')).firestore(), 'orgs/org1')));
   });
 });
+
+describe('screen diagnostics history', () => {
+  it('members who see the screen and device staff read events; others cannot, nobody writes', async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'orgs/org1/screens/s1/events/e1'), { type: 'error', at: 1, message: 'x' });
+      await setDoc(doc(ctx.firestore(), 'orgs/org1/members/alice'), { role: 'owner', status: 'active', permissions: ['screen.view'], siteScope: [] });
+    });
+    await assertSucceeds(getDoc(doc(env.authenticatedContext('alice').firestore(), 'orgs/org1/screens/s1/events/e1')));
+    await assertSucceeds(getDoc(doc(env.authenticatedContext('ops', staffToken('ops')).firestore(), 'orgs/org1/screens/s1/events/e1')));
+    await assertFails(getDoc(doc(env.authenticatedContext('eve').firestore(), 'orgs/org1/screens/s1/events/e1')));
+    await assertFails(getDoc(doc(env.authenticatedContext('ops', staffToken('ops', null)).firestore(), 'orgs/org1/screens/s1/events/e1')));
+    await assertFails(setDoc(doc(env.authenticatedContext('alice').firestore(), 'orgs/org1/screens/s1/events/e2'), { type: 'error' }));
+  });
+});

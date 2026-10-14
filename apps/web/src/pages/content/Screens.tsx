@@ -11,6 +11,7 @@ import {
 import { Monitor, Plus, Send, Siren } from 'lucide-react';
 import { ApprovalsPanel } from './ApprovalsPanel';
 import { EmergencyDialog } from './EmergencyDialog';
+import { ScreenDiagnostics } from '../analytics/ScreenDiagnostics';
 import { ScreenCommands } from './ScreenCommands';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -45,7 +46,9 @@ function resolutionFor(form: ScreenForm) {
 
 export function Screens() {
   const { t } = useTranslation();
-  const { orgId, can, siteScope } = useOrg();
+  const { orgId, org, can, siteScope, entitlements } = useOrg();
+  const diagnosticsOn = !!entitlements?.features.includes('screen.diagnostics');
+  const [diagnosing, setDiagnosing] = useState<ScreenDoc | null>(null);
   const [params, setParams] = useSearchParams();
   const screens = useScreens(orgId, siteScope);
   const sites = useSites(orgId);
@@ -182,6 +185,11 @@ export function Screens() {
                           {t('screens.authorize')}
                         </Button>
                       ) : null}
+                      {s.status === 'authorized' && diagnosticsOn ? (
+                        <Button size="sm" variant="tertiary" onClick={() => setDiagnosing(s)}>
+                          {t('analytics.diagnostics')}
+                        </Button>
+                      ) : null}
                       {s.status === 'authorized' && can('content.publish') ? (
                         <Button size="sm" variant="tertiary" disabled={busy} onClick={() => void publish([s.id])}>
                           {t('screens.publish')}
@@ -201,6 +209,14 @@ export function Screens() {
 
       {adding !== null ? <ScreenDialog code={adding} onClose={() => setAdding(null)} /> : null}
       {emergencyOpen ? <EmergencyDialog screens={screens.data} onClose={() => setEmergencyOpen(false)} /> : null}
+      {diagnosing ? (
+        <ScreenDiagnostics
+          orgId={orgId}
+          screen={screens.data.find((s) => s.id === diagnosing.id) ?? diagnosing}
+          timezone={org?.timezone ?? 'Asia/Kolkata'}
+          onClose={() => setDiagnosing(null)}
+        />
+      ) : null}
       {editing ? (
         <ScreenDialog key={editing.id} screen={screens.data.find((s) => s.id === editing.id) ?? editing} onClose={() => setEditing(null)} />
       ) : null}

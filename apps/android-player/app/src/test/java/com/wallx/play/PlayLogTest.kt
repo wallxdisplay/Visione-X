@@ -2,6 +2,7 @@ package com.wallx.play
 
 import com.wallx.play.core.PlayLog
 import com.wallx.play.data.PlayBucketBody
+import com.wallx.play.data.UptimeBucketBody
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Rule
@@ -75,5 +76,22 @@ class PlayLogTest {
         log.clear()
         assertEquals(emptyList<PlayBucketBody>(), log.snapshot())
         assertEquals(false, file.exists())
+    }
+
+    @Test
+    fun uptimeSplitsAcrossHoursAndTravelsInBatches() {
+        val log = log()
+        now = h0 + 59 * 60_000L // minute 58–59, online
+        log.addUptime(60, online = true)
+        now = h0 + PlayLog.HOUR_MS + 30_000L // 59:30–00:30, offline: half in each hour
+        log.addUptime(60, online = false)
+        assertEquals(listOf(UptimeBucketBody(h0, 90, 60), UptimeBucketBody(h0 + PlayLog.HOUR_MS, 30, 0)), log.uptimeSnapshot())
+
+        now = h0 + PlayLog.HOUR_MS + 10 * 60_000L
+        val batch = log.nextBatch()!!
+        assertEquals(emptyList<PlayBucketBody>(), batch.buckets)
+        assertEquals(listOf(UptimeBucketBody(h0, 90, 60)), batch.uptime)
+        // Kept with the pending batch through a restart.
+        assertEquals(batch, log().nextBatch())
     }
 }

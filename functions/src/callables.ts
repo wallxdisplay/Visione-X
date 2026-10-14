@@ -72,6 +72,7 @@ import {
   UpdateOrgSettingsInput,
   UpsertSiteInput,
   PlaybackReportInput,
+  ScreenAnalyticsInput,
   type PlatformRole,
 } from '@wallx-play/shared';
 import { setPlatformRole as setPlatformRoleSvc } from './admin/platformUsers';
@@ -98,6 +99,7 @@ import * as billing from './billing/billing';
 import * as plans from './billing/plans';
 import * as integrations from './integrations/dataSources';
 import * as reports from './reports/plays';
+import * as analytics from './reports/analytics';
 import { BASE_OPTIONS, MAIL_SECRETS, WEATHER_SECRETS, enforceAppCheck } from './options';
 
 export function actorFrom(request: CallableRequest): Actor {
@@ -243,3 +245,4 @@ export const previewDataSource = callable(DataSourceRefInput, integrations.previ
 
 // Reports (v1.1)
 export const playbackReport = callable(PlaybackReportInput, reports.playbackReport, { memory: '512MiB', timeoutSeconds: 120 });
+export const screenAnalytics = callable(ScreenAnalyticsInput, analytics.screenAnalytics, { memory: '512MiB', timeoutSeconds: 120 });

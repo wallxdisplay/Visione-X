@@ -29,11 +29,22 @@ export const PlayBucket = z.object({
 });
 export type PlayBucket = z.infer<typeof PlayBucket>;
 
-/** POST /api/v1/devices/plays. `batchId` makes a retried upload count once. */
-export const PlayReportBody = z.object({
-  batchId: z.string().regex(/^[A-Za-z0-9_-]{8,64}$/),
-  buckets: z.array(PlayBucket).min(1).max(2000),
+/** Player running ("on") and in contact with WallX Play ("online") in one UTC hour (0.14.0+). */
+export const UptimeBucket = z.object({
+  hour: PlayBucket.shape.hour,
+  on: z.number().int().min(0).max(3600),
+  online: z.number().int().min(0).max(3600),
 });
+export type UptimeBucket = z.infer<typeof UptimeBucket>;
+
+/** POST /api/v1/devices/plays. `batchId` makes a retried upload count once. */
+export const PlayReportBody = z
+  .object({
+    batchId: z.string().regex(/^[A-Za-z0-9_-]{8,64}$/),
+    buckets: z.array(PlayBucket).max(2000),
+    uptime: z.array(UptimeBucket).max(2000).default([]),
+  })
+  .refine((b) => b.buckets.length + b.uptime.length > 0, 'Nothing to report');
 export type PlayReportBody = z.infer<typeof PlayReportBody>;
 
 /** Uploads older than this are dropped (a box that was offline for weeks). */
@@ -44,7 +55,16 @@ export interface PlayCounts {
   seconds: number;
 }
 
-/** orgs/{orgId}/playStats/{date}_{screenId}: one screen, one day in the org's time zone. */
+export interface UptimeCounts {
+  on: number;
+  online: number;
+}
+
+/**
+ * orgs/{orgId}/playStats/{date}_{screenId}: one screen, one day in the org's time zone. Plays
+ * are kept with proof-of-play reports in the plan; uptime, errors and offline counts with
+ * screen diagnostics.
+ */
 export interface PlayStatsDoc extends PlayCounts {
   /** YYYY-MM-DD in the organization's time zone. */
   date: string;
@@ -54,10 +74,33 @@ export interface PlayStatsDoc extends PlayCounts {
   items: Record<string, PlayCounts>;
   /** Keyed by local hour '00'…'23'. */
   hours: Record<string, PlayCounts>;
+  /** Seconds the player ran / was online, per local hour and in total. */
+  uptime?: Record<string, UptimeCounts>;
+  onSeconds?: number;
+  onlineSeconds?: number;
+  /** Player errors reported and offline alerts raised this day. */
+  errors?: number;
+  offline?: number;
   updatedAt: number;
   /** Firestore TTL: the plan's retention period after the day. */
   expiresAt: Date;
 }
+
+export const SCREEN_EVENT_TYPES = ['error', 'offline', 'online', 'updated'] as const;
+export type ScreenEventType = (typeof SCREEN_EVENT_TYPES)[number];
+
+/** orgs/{orgId}/screens/{screenId}/events/{id}: diagnostics history (screen diagnostics plan feature). */
+export interface ScreenEventDoc {
+  type: ScreenEventType;
+  at: number;
+  /** Error text, or "0.13.0 → 0.14.0" for an update. */
+  message: string | null;
+  /** Firestore TTL. */
+  expiresAt: Date;
+}
+
+/** Diagnostics history is kept this long. */
+export const SCREEN_EVENT_DAYS = 30;
 
 /** Longest report range in days. */
 export const PLAY_REPORT_MAX_DAYS = 92;
@@ -97,4 +140,41 @@ export function parsePlayKey(key: string): { kind: PlayKind; id: string } | null
   const i = key.indexOf('_');
   const kind = key.slice(0, i) as PlayKind;
   return i > 0 && (PLAY_KINDS as readonly string[]).includes(kind) ? { kind, id: key.slice(i + 1) } : null;
+}
+
+export const ScreenAnalyticsInput = z
+  .object({
+    orgId: id,
+    from: isoDate,
+    to: isoDate,
+    siteId: id.nullable().default(null),
+    screenId: id.nullable().default(null),
+  })
+  .refine((v) => v.from <= v.to, { message: 'The start date must be before the end date.', path: ['to'] });
+
+export interface ScreenAnalyticsRow {
+  /** Share (0–1) of the expected time the player was running / online; null without data. */
+  onShare: number | null;
+  onlineShare: number | null;
+  errors: number;
+  offline: number;
+  plays: number;
+}
+
+export interface ScreenAnalytics {
+  from: string;
+  to: string;
+  timezone: string;
+  totals: ScreenAnalyticsRow & { screens: number; screensWithData: number };
+  byDay: Array<ScreenAnalyticsRow & { date: string }>;
+  byScreen: Array<
+    ScreenAnalyticsRow & {
+      screenId: string;
+      name: string;
+      siteId: string | null;
+      status: string;
+      lastSeen: number | null;
+      appVersion: string | null;
+    }
+  >;
 }

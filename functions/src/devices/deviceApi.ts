@@ -7,6 +7,7 @@ import { createHash, randomBytes, randomInt, timingSafeEqual } from 'node:crypto
 import { notify } from '../lib/notify';
 import { completeCommand, takePendingCommands } from '../ops/commands';
 import { updateFor } from '../players/releases';
+import { parsePlayerError, recordScreenEvents, type NewScreenEvent } from '../reports/events';
 import {
   CommandResultBody,
   DEVICE_HEARTBEAT_SEC,
@@ -234,15 +235,25 @@ export async function deviceHeartbeat(deps: Deps, req: ApiRequest): Promise<ApiR
     'hardware.display': parsed.data.display,
     updatedAt: at,
   });
+  const events: NewScreenEvent[] = [];
+  let screen: ScreenDoc | undefined;
   if (device.orgId && device.screenId) {
     const screenRef = db.doc(paths.screen(device.orgId, device.screenId));
-    const screen = (await screenRef.get()).data() as ScreenDoc | undefined;
+    screen = (await screenRef.get()).data() as ScreenDoc | undefined;
     if (screen) {
       batch.update(screenRef, { lastSeen: at, health: { ...parsed.data, reportedAt: at }, offlineAlertedAt: null });
       // The monitor had raised an offline alert: tell the org it is back.
-      if (screen.offlineAlertedAt) notify(batch, db, device.orgId, 'screen_online', { screen: screen.name }, '/screens', at);
+      if (screen.offlineAlertedAt) {
+        notify(batch, db, device.orgId, 'screen_online', { screen: screen.name }, '/screens', at);
+        events.push({ type: 'online', at, message: null });
+      }
+      const before = screen.health?.appVersion;
+      if (before && before !== parsed.data.appVersion) events.push({ type: 'updated', at, message: `${before} → ${parsed.data.appVersion}` });
+      events.push(...parsed.data.errors.map((e) => parsePlayerError(e, at)));
     }
   }
   await batch.commit();
+  // Diagnostics history (only when something happened; never fails the heartbeat).
+  if (screen && events.length) await recordScreenEvents(deps, device.orgId!, device.screenId!, screen.siteId ?? null, events).catch(() => 0);
   return { status: 200, body: { ok: true, serverTime: at } };
 }

@@ -21,6 +21,32 @@ import java.util.TimeZone
 
 /** Snapshot for the "diagnostics" remote command. No secrets, no personal data. */
 object Diagnostics {
+    /** Memory, uptime and network for heartbeats. */
+    fun vitals(context: Context): com.wallx.play.data.Vitals {
+        val am = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        val mem = ActivityManager.MemoryInfo().also { am.getMemoryInfo(it) }
+        val now = SystemClock.elapsedRealtime()
+        return com.wallx.play.data.Vitals(
+            memAvailMb = mem.availMem / (1024 * 1024),
+            memTotalMb = mem.totalMem / (1024 * 1024),
+            deviceUptimeMin = now / 60_000,
+            appUptimeMin = (now - android.os.Process.getStartElapsedRealtime()).coerceAtLeast(0) / 60_000,
+            network = networkType(context),
+        )
+    }
+
+    /** ethernet / wifi / cellular / other / none. */
+    fun networkType(context: Context): String {
+        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val caps = cm.getNetworkCapabilities(cm.activeNetwork) ?: return "none"
+        return when {
+            caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> "ethernet"
+            caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> "wifi"
+            caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> "cellular"
+            else -> "other"
+        }
+    }
+
     @Suppress("DEPRECATION")
     fun collect(context: Context, manifestVersion: Int?, assetDir: File, serverTimeSkewMs: Long?): JsonObject {
         val am = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager

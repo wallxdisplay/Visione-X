@@ -1,0 +1,97 @@
+.analytics__vitals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-3);
+  margin: 0 0 var(--space-4);
+}
+.analytics__vitals dt {
+  font-size: 12px;
+}
+.analytics__vitals dd {
+  margin: 2px 0 0;
+}
+.analytics__subtitle {
+  font-size: 15px;
+  font-weight: 600;
+  margin: var(--space-4) 0 var(--space-2);
+}
+.analytics__days {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+.analytics__days li {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) 56px;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 13px;
+}
+.analytics__days--wide li {
+  grid-template-columns: 64px minmax(0, 1fr) 56px 56px;
+}
+.analytics__days li > :nth-child(n + 3) {
+  text-align: right;
+}
+.analytics__meter {
+  position: relative;
+  display: block;
+  height: 12px;
+  border-radius: 3px;
+  background: var(--color-neutral-soft);
+  overflow: hidden;
+}
+.analytics__meter > span {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  background: var(--color-success);
+}
+.analytics__meter > .analytics__meter-online {
+  top: auto;
+  bottom: 0;
+  height: 4px;
+  background: var(--color-primary);
+}
+.analytics__legend {
+  margin: var(--space-3) 0 0;
+  font-size: 13px;
+}
+.analytics__key {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin: 0 4px 0 var(--space-2);
+  border-radius: 2px;
+  background: var(--color-success);
+  vertical-align: middle;
+}
+.analytics__key:first-child {
+  margin-left: 0;
+}
+.analytics__key--online {
+  background: var(--color-primary);
+}
+.analytics__events {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+  max-height: 280px;
+  overflow-y: auto;
+}
+.analytics__events li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 13px;
+}
+.analytics__message {
+  flex-basis: 100%;
+  overflow-wrap: anywhere;
+}

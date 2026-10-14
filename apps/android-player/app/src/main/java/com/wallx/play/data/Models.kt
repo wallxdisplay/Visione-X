@@ -193,8 +193,16 @@ data class CommandResult(
 @Serializable
 data class PlayBucketBody(val hour: Long, val kind: String, val id: String, val plays: Int, val seconds: Long)
 
+/** Seconds the player ran ("on") and reached the server ("online") in one UTC hour. */
 @Serializable
-data class PlayUpload(val batchId: String, val buckets: List<PlayBucketBody>)
+data class UptimeBucketBody(val hour: Long, val on: Int, val online: Int)
+
+@Serializable
+data class PlayUpload(val batchId: String, val buckets: List<PlayBucketBody>, val uptime: List<UptimeBucketBody> = emptyList())
+
+/** Memory, uptime and network, sent with each heartbeat (0.14.0+). */
+@Serializable
+data class Vitals(val memAvailMb: Long, val memTotalMb: Long, val deviceUptimeMin: Long, val appUptimeMin: Long, val network: String)
 
 @Serializable
 data class Heartbeat(
@@ -205,6 +213,7 @@ data class Heartbeat(
     val manifestVersion: Int?,
     val errors: List<String>,
     val update: UpdateStatus? = null,
+    val vitals: Vitals? = null,
 )
 
 // ---------------------------------------------------------------- live sensor data (phase 5)

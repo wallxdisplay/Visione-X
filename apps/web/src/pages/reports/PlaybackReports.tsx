@@ -13,7 +13,7 @@ type Period = 'today' | 'yesterday' | 'last7' | 'last30' | 'thisMonth' | 'lastMo
 const PERIODS: Period[] = ['today', 'yesterday', 'last7', 'last30', 'thisMonth', 'lastMonth', 'custom'];
 
 /** Today's date (YYYY-MM-DD) in the organization's time zone. */
-function todayIn(timeZone: string): string {
+export function todayIn(timeZone: string): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 }
 
