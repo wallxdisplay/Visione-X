@@ -27,15 +27,17 @@ export const BASE_OPTIONS = {
  * APP_CHECK_ENFORCE=true is set in functions/.env.wallx-play and functions are redeployed.
  * Before that, callables log requests without a valid App Check token ("appCheck.missing"),
  * so enforcing can wait until real traffic shows tokens (docs/DEVELOPMENT.md).
+ *
+ * Read when a request arrives, not when the module loads: the deploy's function discovery runs
+ * without the .env values, so anything decided at load time never sees them.
  */
-export const ENFORCE_APP_CHECK = process.env.APP_CHECK_ENFORCE === 'true';
+export const enforceAppCheck = () => process.env.APP_CHECK_ENFORCE === 'true';
 
 /**
- * Secrets are bound only once they exist: deploying a function that names a missing secret
- * fails. After `npx firebase functions:secrets:set NAME`, the matching switch goes into
- * functions/.env.wallx-play and functions are redeployed (docs/DEVELOPMENT.md).
- *  - SMTP_USER=<sender address>  → SMTP_PASSWORD is mounted for functions that send email.
- *  - WEATHER_PROVIDER=google      → GOOGLE_MAPS_API_KEY is mounted for weather and air quality functions.
+ * Secret Manager secrets mounted into the functions that use them. Both must exist before a
+ * deploy (`npx firebase functions:secrets:set NAME`, docs/DEVELOPMENT.md); the code still skips
+ * email or Google weather when a value is empty. (Deciding this from .env values does not work:
+ * the deploy's function discovery runs without them.)
  */
-export const MAIL_SECRETS: string[] = process.env.SMTP_USER?.trim() ? ['SMTP_PASSWORD'] : [];
-export const WEATHER_SECRETS: string[] = process.env.WEATHER_PROVIDER === 'google' ? ['GOOGLE_MAPS_API_KEY'] : [];
+export const MAIL_SECRETS: string[] = ['SMTP_PASSWORD'];
+export const WEATHER_SECRETS: string[] = ['GOOGLE_MAPS_API_KEY'];

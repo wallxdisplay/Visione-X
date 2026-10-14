@@ -95,7 +95,7 @@ import * as sensors from './sensors/sensors';
 import * as billing from './billing/billing';
 import * as plans from './billing/plans';
 import * as integrations from './integrations/dataSources';
-import { BASE_OPTIONS, ENFORCE_APP_CHECK, MAIL_SECRETS, WEATHER_SECRETS } from './options';
+import { BASE_OPTIONS, MAIL_SECRETS, WEATHER_SECRETS, enforceAppCheck } from './options';
 
 export function actorFrom(request: CallableRequest): Actor {
   const auth = request.auth;
@@ -116,9 +116,12 @@ function callable<S extends z.ZodTypeAny, R>(
   handler: (deps: Deps, actor: Actor, input: z.infer<S>) => Promise<R>,
   options: { memory?: '256MiB' | '512MiB' | '1GiB'; timeoutSeconds?: number; secrets?: string[] } = {},
 ) {
-  return onCall({ ...BASE_OPTIONS, memory: '256MiB', enforceAppCheck: ENFORCE_APP_CHECK, ...options }, async (request) => {
-    // Monitor mode: count calls that would be refused once App Check is enforced.
-    if (!request.app && !ENFORCE_APP_CHECK && process.env.FUNCTIONS_EMULATOR !== 'true') {
+  // App Check is checked here rather than with onCall's enforceAppCheck, so the switch can live in
+  // functions/.env.wallx-play (see enforceAppCheck). The SDK still verifies any token it gets.
+  return onCall({ ...BASE_OPTIONS, memory: '256MiB', ...options }, async (request) => {
+    if (!request.app && process.env.FUNCTIONS_EMULATOR !== 'true') {
+      if (enforceAppCheck()) throw new HttpsError('unauthenticated', 'This app could not be verified. Reload the page and try again.');
+      // Monitor mode: count calls that would be refused once App Check is enforced.
       logger.info('appCheck.missing', { function: process.env.FUNCTION_TARGET });
     }
     const actor = actorFrom(request);

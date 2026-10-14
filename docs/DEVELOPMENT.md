@@ -142,9 +142,9 @@ place). One-time setup in the `wallx-play` Google Cloud project:
    *None* (it is used only by Cloud Functions), API restrictions *Restrict key* → Weather API and
    Geocoding API. Copy the key.
 3. `npx firebase functions:secrets:set GOOGLE_MAPS_API_KEY --project wallx-play` and paste it.
-4. Add `WEATHER_PROVIDER=google` to `functions/.env.wallx-play` and redeploy functions. That line
-   binds the secret to `api`, `previewDataSource` and `geocodePlace` (`WEATHER_SECRETS` in
-   `functions/src/options.ts`); binding a secret that does not exist yet would fail the deploy.
+4. Redeploy functions. The secret is mounted into `api`, `previewDataSource` and `geocodePlace`
+   (`WEATHER_SECRETS` in `functions/src/options.ts`). It must exist before any functions deploy,
+   also in a new project: a function that names a missing secret fails to deploy.
 
 Google's terms require the text "Google Maps" next to the weather (exactly that, never
 translated): the web renderer, the player and the Integrations page show it automatically. Without
@@ -152,7 +152,7 @@ the key, weather falls back to a commercial Open-Meteo key (`OPEN_METEO_API_KEY`
 and otherwise shows "not configured" in production. RSS works without any key.
 
 **Air quality (Google Air Quality API).** Air quality widgets use the same key and secret as weather
-(`GOOGLE_MAPS_API_KEY`, bound by `WEATHER_PROVIDER=google`); there is no free fallback, so without
+(`GOOGLE_MAPS_API_KEY`); there is no free fallback, so without
 the key air quality shows "not configured", also in the emulator. They ask for India's NAQI (CPCB)
 and fall back to Google's Universal AQI elsewhere. Results are cached 30 minutes per place (Google
 updates hourly); see the Air Quality API pricing page for the per-call price. One-time setup:
@@ -172,9 +172,13 @@ from a Gmail mailbox over SMTP (`functions/src/lib/email.ts`; about 500 recipien
 2. myaccount.google.com → Security → App passwords: create one named "WallX Play". Copy the
    16-character password.
 3. `npx firebase functions:secrets:set SMTP_PASSWORD --project wallx-play` and paste it.
-4. Add `SMTP_USER=wallxdisplay@gmail.com` to `functions/.env.wallx-play` and redeploy functions.
-   That line binds the secret to `inviteMember`, `reviewOrgSignup` and `emailNotification`
-   (`MAIL_SECRETS` in `functions/src/options.ts`).
+4. Add `SMTP_USER=wallxdisplay@gmail.com` (the sender) to `functions/.env.wallx-play` and redeploy
+   functions. The secret is mounted into `inviteMember`, `reviewOrgSignup` and `emailNotification`
+   (`MAIL_SECRETS` in `functions/src/options.ts`) and, like the weather key, must exist before
+   any functions deploy.
+
+`.env.wallx-play` values reach functions only at run time: the deploy's function discovery
+runs without them, so they must never decide function options (secrets, App Check, memory).
 
 Until then nothing is emailed (a log line says so) and everything else works: invitation links can
 be copied from Team. Alert emails go to the members whose permission handles the alert (screen
