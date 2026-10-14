@@ -8,6 +8,7 @@ import {
   CreditCard,
   FileClock,
   Gauge,
+  Handshake,
   HelpCircle,
   Images,
   KeyRound,
@@ -95,6 +96,7 @@ export const adminNav: NavGroup[] = [
     items: [
       { labelKey: 'nav.admin.approvals', path: '/admin/approvals', icon: ClipboardCheck, phase: 1 },
       { labelKey: 'nav.admin.orgs', path: '/admin/orgs', icon: Building2, phase: 1 },
+      { labelKey: 'nav.admin.resellers', path: '/admin/resellers', icon: Handshake, phase: 6 },
       { labelKey: 'nav.admin.users', path: '/admin/users', icon: Users, phase: 1 },
     ],
   },

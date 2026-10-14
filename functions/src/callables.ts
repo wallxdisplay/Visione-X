@@ -19,6 +19,14 @@ import {
   CreatePlayerReleaseInput,
   RegisterPlayerReleaseInput,
   SetPlayerRolloutInput,
+  UpdatePlatformSettingsInput,
+  GrantSupportAccessInput,
+  RequestSupportAccessInput,
+  EmergencySupportAccessInput,
+  RespondSupportRequestInput,
+  SupportGrantRefInput,
+  SaveAccountInput,
+  SetOrgAccountInput,
   DeleteRoleInput,
   SetMemberSitesInput,
   SetFeatureReleaseInput,
@@ -74,6 +82,9 @@ import type { Actor, Deps } from './lib/context';
 import * as members from './members/members';
 import * as roles from './members/roles';
 import * as playerReleases from './players/releases';
+import * as platformSettings from './platform/settings';
+import * as support from './support/access';
+import * as accounts from './accounts/accounts';
 import { reviewOrgSignup as reviewSvc, setOrgStatus as setOrgStatusSvc } from './orgs/review';
 import * as settings from './orgs/settings';
 import * as signup from './orgs/signup';
@@ -145,6 +156,21 @@ export const deleteRole = callable(DeleteRoleInput, roles.deleteRole);
 export const createPlayerReleaseUpload = callable(CreatePlayerReleaseInput, playerReleases.createPlayerReleaseUpload);
 export const registerPlayerRelease = callable(RegisterPlayerReleaseInput, playerReleases.registerPlayerRelease, { memory: '512MiB', timeoutSeconds: 120 });
 export const setPlayerRollout = callable(SetPlayerRolloutInput, playerReleases.setPlayerRollout);
+
+// Platform settings
+export const updatePlatformSettings = callable(UpdatePlatformSettingsInput, platformSettings.updatePlatformSettings);
+
+// Support access (time-boxed, customer-visible)
+export const grantSupportAccess = callable(GrantSupportAccessInput, support.grantSupportAccess);
+export const requestSupportAccess = callable(RequestSupportAccessInput, support.requestSupportAccess);
+export const emergencySupportAccess = callable(EmergencySupportAccessInput, support.emergencySupportAccess);
+export const respondSupportRequest = callable(RespondSupportRequestInput, support.respondSupportRequest);
+export const revokeSupportAccess = callable(SupportGrantRefInput, support.revokeSupportAccess);
+export const openSupportAccess = callable(SupportGrantRefInput, support.openSupportAccess);
+
+// Reseller accounts (groundwork)
+export const saveAccount = callable(SaveAccountInput, accounts.saveAccount);
+export const setOrgAccount = callable(SetOrgAccountInput, accounts.setOrgAccount);
 export const setPlatformRole = callable(SetPlatformRoleInput, setPlatformRoleSvc);
 
 // Content (phase 2)

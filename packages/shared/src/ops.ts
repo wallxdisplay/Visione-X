@@ -117,6 +117,8 @@ export const NOTIFICATION_TYPES = [
   'billing_restricted',
   'billing_payment_recorded',
   'billing_request_resolved',
+  'support_access_requested',
+  'support_access_granted',
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 

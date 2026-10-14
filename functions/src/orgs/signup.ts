@@ -2,6 +2,8 @@ import { HttpsError } from 'firebase-functions/v2/https';
 import type { z } from 'zod';
 import {
   paths,
+  signupsOpen,
+  type PlatformSettingsDoc,
   SYSTEM_ORG_ROLE_PERMISSIONS,
   type MemberDoc,
   type OrgDoc,
@@ -31,6 +33,10 @@ export async function submitOrgSignup(
   const at = now();
 
   await auditedTransaction(db, [orgId], async (tx, audit) => {
+    const settings = (await tx.get(db.doc(paths.platformSettings()))).data() as PlatformSettingsDoc | undefined;
+    if (!signupsOpen(settings)) {
+      throw new HttpsError('failed-precondition', 'New organization signups are paused at the moment. Please contact WallX support.');
+    }
     const open = await tx.get(
       db
         .collection(paths.signupRequests())

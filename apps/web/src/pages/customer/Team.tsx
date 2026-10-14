@@ -148,11 +148,12 @@ export function Team() {
           <tbody>
             {members.data.map((m) => {
               const isMe = m.uid === user?.uid;
-              const canEditRole = manage && !isMe && (m.role !== 'owner' || me?.role === 'owner');
+              const canEditRole = manage && !isMe && !m.support && (m.role !== 'owner' || me?.role === 'owner');
               return (
                 <tr key={m.uid}>
                   <td>
                     {m.email} {isMe ? <span className="wxp-muted">({t('team.you')})</span> : null}
+                    {m.support ? <div className="wxp-muted">{t('team.supportMember', { until: formatDate(m.support.expiresAt) })}</div> : null}
                   </td>
                   <td>
                     {canEditRole ? (
@@ -178,7 +179,7 @@ export function Team() {
                   </td>
                   <td>
                     {siteNames(m.siteScope)}
-                    {manage && !isMe && m.role !== 'owner' ? (
+                    {manage && !isMe && !m.support && m.role !== 'owner' ? (
                       <Button size="sm" variant="tertiary" onClick={() => setScoping({ member: m, sites: m.siteScope ?? [] })}>
                         {t('common.edit')}
                       </Button>
@@ -186,7 +187,7 @@ export function Team() {
                   </td>
                   <td className="wxp-tabular">{formatDate(m.joinedAt)}</td>
                   <td className="wxp-actions">
-                    {(manage && !isMe) || isMe ? (
+                    {(manage && !isMe && !m.support) || isMe ? (
                       <Button size="sm" variant="tertiary" onClick={() => setRemoving(m)}>
                         {isMe ? t('team.leave') : t('team.remove')}
                       </Button>

@@ -28,6 +28,15 @@ interface OrgState {
 
 const OrgContext = createContext<OrgState | null>(null);
 
+/** Makes `orgId` the organization the customer app opens next (e.g. after opening support access). */
+export function rememberOrg(orgId: string): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, orgId);
+  } catch {
+    /* storage unavailable */
+  }
+}
+
 function readStored(): string | null {
   try {
     return localStorage.getItem(STORAGE_KEY);

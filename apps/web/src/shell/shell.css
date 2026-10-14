@@ -355,3 +355,21 @@
 .standalone__panel li + li {
   margin-top: var(--space-2);
 }
+
+/* Language picker in the top bar */
+.language-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-ink-muted);
+}
+.language-picker select {
+  border: 0;
+  background: transparent;
+  color: var(--color-ink);
+  font: inherit;
+  font-size: 13px;
+  padding: 4px 2px;
+  cursor: pointer;
+  max-width: 88px;
+}

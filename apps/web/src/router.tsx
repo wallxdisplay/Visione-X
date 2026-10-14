@@ -6,6 +6,9 @@ import { AcceptInvite } from './pages/AcceptInvite';
 import { AdminBilling } from './pages/admin/AdminBilling';
 import { AdminDevices } from './pages/admin/AdminDevices';
 import { AdminPlayers } from './pages/admin/AdminPlayers';
+import { AdminSettings } from './pages/admin/AdminSettings';
+import { AdminSupport } from './pages/admin/AdminSupport';
+import { AdminResellers } from './pages/admin/AdminResellers';
 import { AdminFeatures } from './pages/admin/AdminFeatures';
 import { AdminOverview } from './pages/admin/AdminOverview';
 import { OrgBilling } from './pages/admin/OrgBilling';
@@ -34,6 +37,7 @@ import { Dashboard } from './pages/customer/Dashboard';
 import { OrgSettings } from './pages/customer/OrgSettings';
 import { Sites } from './pages/customer/Sites';
 import { Team } from './pages/customer/Team';
+import { Help } from './pages/customer/Help';
 import { NotFound } from './pages/NotFound';
 import { Onboarding } from './pages/onboarding/Onboarding';
 import { Placeholder } from './pages/Placeholder';
@@ -54,6 +58,7 @@ const PAGES: Record<string, ReactNode> = {
   '/billing': <Billing />,
   '/integrations': <Integrations />,
   '/team': <Team />,
+  '/help': <Help />,
   '/sites': <Sites />,
   '/settings': <OrgSettings />,
   '/admin': <AdminOverview />,
@@ -64,6 +69,9 @@ const PAGES: Record<string, ReactNode> = {
   '/admin/billing': <AdminBilling />,
   '/admin/devices': <AdminDevices />,
   '/admin/players': <AdminPlayers />,
+  '/admin/settings': <AdminSettings />,
+  '/admin/support': <AdminSupport />,
+  '/admin/resellers': <AdminResellers />,
   '/admin/features': <AdminFeatures />,
 };
 

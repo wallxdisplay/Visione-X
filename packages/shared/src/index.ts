@@ -13,3 +13,6 @@ export * from './sensors';
 export * from './billing';
 export * from './dataSources';
 export * from './players';
+export * from './platform';
+export * from './support';
+export * from './accounts';

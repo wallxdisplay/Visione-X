@@ -3,6 +3,7 @@ import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import type { Actor, Deps } from '../../functions/src/lib/context';
+import { authzClock } from '../../functions/src/lib/authz';
 import { seedPlatformData } from '../../functions/src/seed/seed';
 
 export const PROJECT_ID = 'demo-wallx-play';
@@ -15,6 +16,8 @@ export const bucket = getStorage(app).bucket(BUCKET);
 
 let clock = Date.UTC(2026, 9, 1, 9, 0, 0);
 export const deps: Deps = { db, auth, bucket, now: () => clock };
+// Membership expiry (support access) follows the same fake clock.
+authzClock.now = () => clock;
 export const advance = (ms: number) => {
   clock += ms;
 };

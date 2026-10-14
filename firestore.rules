@@ -37,7 +37,18 @@ service cloud.firestore {
     function isActiveMember(orgId) {
       return signedIn() && !isDevice()
         && exists(memberPath(orgId))
-        && get(memberPath(orgId)).data.status == 'active';
+        && activeRecord(get(memberPath(orgId)).data);
+    }
+
+    // WallX support staff hold a temporary member record that ends at support.expiresAt.
+    function activeRecord(member) {
+      return member.status == 'active'
+        && (member.get('support', null) == null || member.support.expiresAt > request.time.toMillis());
+    }
+
+    // Platform roles holding device.view (see PLATFORM_ROLE_PERMISSIONS): screen health and commands.
+    function isDeviceStaff() {
+      return platformRole() in ['superadmin', 'support', 'ops', 'auditor'];
     }
 
     // Member docs carry a denormalized `permissions` list written by Functions.
@@ -68,9 +79,21 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Reseller / dealer accounts (groundwork); written only by Cloud Functions.
+    match /accounts/{accountId} {
+      allow read: if isPlatformStaff();
+      allow write: if false;
+    }
+
     // Player app releases (device.view roles); written only by Cloud Functions.
     match /playerReleases/{releaseId} {
       allow read: if platformRole() in ['superadmin', 'support', 'ops', 'auditor'];
+      allow write: if false;
+    }
+
+    // Support contacts, notice banner, signups switch (written only by Cloud Functions).
+    match /platform/settings {
+      allow read: if signedIn();
       allow write: if false;
     }
 
@@ -132,43 +155,50 @@ service cloud.firestore {
         allow write: if false;
       }
 
-      // Content (phase 2): readable by any active member, written only by Functions.
+      // Content: readable by active members only, written only by Functions. WallX staff see it
+      // only through a support access grant (a temporary member record).
       match /{collection}/{docId} {
         allow read: if collection in ['media', 'folders', 'layouts', 'playlists', 'screenGroups', 'schedules',
                                       'emergencies', 'notifications', 'approvals', 'dataSources']
-          && (isActiveMember(orgId) || isPlatformStaff());
+          && isActiveMember(orgId);
         allow write: if false;
       }
 
       // Screens, limited to the member's sites; command history follows its screen.
       match /screens/{screenId} {
-        allow read: if (isActiveMember(orgId) && inSiteScope(orgId, resource.data.get('siteId', null))) || isPlatformStaff();
+        allow read: if (isActiveMember(orgId) && inSiteScope(orgId, resource.data.get('siteId', null))) || isDeviceStaff();
         allow write: if false;
 
         match /commands/{commandId} {
-          allow read: if (isActiveMember(orgId) && inSiteScope(orgId, siteOf(orgId, 'screens', screenId))) || isPlatformStaff();
+          allow read: if (isActiveMember(orgId) && inSiteScope(orgId, siteOf(orgId, 'screens', screenId))) || isDeviceStaff();
           allow write: if false;
         }
       }
 
       // Sensors (phase 5). API keys live in the server-only sensorKeys collection, never here.
       match /sensorDevices/{sensorId} {
-        allow read: if (hasPerm(orgId, 'sensor.view') && inSiteScope(orgId, resource.data.get('siteId', null))) || isPlatformStaff();
+        allow read: if hasPerm(orgId, 'sensor.view') && inSiteScope(orgId, resource.data.get('siteId', null));
         allow write: if false;
 
         match /channels/{channelId} {
-          allow read: if (hasPerm(orgId, 'sensor.view') && inSiteScope(orgId, siteOf(orgId, 'sensorDevices', sensorId))) || isPlatformStaff();
+          allow read: if hasPerm(orgId, 'sensor.view') && inSiteScope(orgId, siteOf(orgId, 'sensorDevices', sensorId));
           allow write: if false;
 
           match /readings/{bucketId} {
-            allow read: if (hasPerm(orgId, 'sensor.view') && inSiteScope(orgId, siteOf(orgId, 'sensorDevices', sensorId))) || isPlatformStaff();
+            allow read: if hasPerm(orgId, 'sensor.view') && inSiteScope(orgId, siteOf(orgId, 'sensorDevices', sensorId));
             allow write: if false;
           }
         }
       }
 
       match /alerts/{alertId} {
-        allow read: if (hasPerm(orgId, 'sensor.view') && inSiteScope(orgId, resource.data.get('siteId', null))) || isPlatformStaff();
+        allow read: if hasPerm(orgId, 'sensor.view') && inSiteScope(orgId, resource.data.get('siteId', null));
+        allow write: if false;
+      }
+
+      // Support access grants: visible to the whole organization and to support staff.
+      match /supportGrants/{grantId} {
+        allow read: if isActiveMember(orgId) || platformRole() in ['superadmin', 'support'];
         allow write: if false;
       }
 
@@ -196,7 +226,12 @@ service cloud.firestore {
 
     // ---------- platform staff with device.view: screens across organizations ----------
     match /{path=**}/screens/{screenId} {
-      allow read: if platformRole() in ['superadmin', 'support', 'ops', 'auditor'];
+      allow read: if isDeviceStaff();
+    }
+
+    // Support staff: all grants across organizations (Super Admin → Support access).
+    match /{path=**}/supportGrants/{grantId} {
+      allow read: if platformRole() in ['superadmin', 'support'];
     }
 
     // ---------- billing staff: lists across organizations ----------

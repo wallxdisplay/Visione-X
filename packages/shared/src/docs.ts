@@ -52,6 +52,8 @@ export interface MemberDoc {
   role: SystemOrgRole | 'custom';
   /** The org role (orgs/{orgId}/roles) when role === 'custom'. */
   customRoleId?: string;
+  /** WallX support staff with a temporary grant: not counted as a user, ends at expiresAt. */
+  support?: { grantId: string; expiresAt: number };
   permissions: OrgPermission[];
   siteScope: string[];
   status: 'active' | 'disabled';

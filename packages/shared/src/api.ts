@@ -191,4 +191,13 @@ export const CALLABLES = {
   createPlayerReleaseUpload: 'createPlayerReleaseUpload',
   registerPlayerRelease: 'registerPlayerRelease',
   setPlayerRollout: 'setPlayerRollout',
+  updatePlatformSettings: 'updatePlatformSettings',
+  grantSupportAccess: 'grantSupportAccess',
+  requestSupportAccess: 'requestSupportAccess',
+  emergencySupportAccess: 'emergencySupportAccess',
+  respondSupportRequest: 'respondSupportRequest',
+  revokeSupportAccess: 'revokeSupportAccess',
+  openSupportAccess: 'openSupportAccess',
+  saveAccount: 'saveAccount',
+  setOrgAccount: 'setOrgAccount',
 } as const;

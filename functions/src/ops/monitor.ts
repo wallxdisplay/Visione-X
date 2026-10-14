@@ -7,6 +7,7 @@ import { notify } from '../lib/notify';
 import { endEmergency } from './emergency';
 import { runSensorMonitor } from '../sensors/monitor';
 import { runBillingMonitor } from '../billing/monitor';
+import { expireSupportGrants } from '../support/access';
 
 /**
  * Periodic housekeeping across all orgs:
@@ -27,6 +28,7 @@ export async function runMonitor(
   channelsStale: number;
   billingTransitions: number;
   billingReminders: number;
+  supportExpired: number;
 }> {
   const { db, now } = deps;
   const at = now();
@@ -73,6 +75,7 @@ export async function runMonitor(
 
   const sensors = await runSensorMonitor(deps);
   const billing = await runBillingMonitor(deps);
+  const supportExpired = await expireSupportGrants(deps);
   return {
     offline: offline.size,
     emergencies: expired.size,
@@ -81,6 +84,7 @@ export async function runMonitor(
     channelsStale: sensors.stale,
     billingTransitions: billing.transitions,
     billingReminders: billing.reminders,
+    supportExpired,
   };
 }
 

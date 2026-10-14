@@ -282,6 +282,41 @@ describe('site scope', () => {
   });
 });
 
+describe('support access', () => {
+  beforeEach(async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await setDoc(doc(db, 'orgs/org1'), { name: 'Org', status: 'active' });
+      await setDoc(doc(db, 'orgs/org1/members/own'), { role: 'owner', status: 'active', permissions: ['member.view', 'member.manage'] });
+      await setDoc(doc(db, 'orgs/org1/members/sam'), { role: 'editor', status: 'active', permissions: ['media.view'], support: { grantId: 'g1', expiresAt: Date.now() + 3_600_000 } });
+      await setDoc(doc(db, 'orgs/org1/members/old'), { role: 'editor', status: 'active', permissions: ['media.view'], support: { grantId: 'g0', expiresAt: Date.now() - 1000 } });
+      await setDoc(doc(db, 'orgs/org1/media/m1'), { name: 'Menu' });
+      await setDoc(doc(db, 'orgs/org1/screens/s1'), { name: 'Lobby', siteId: null });
+      await setDoc(doc(db, 'orgs/org1/supportGrants/g1'), { orgId: 'org1', status: 'active' });
+    });
+  });
+
+  it('a support member reads content only until the grant expires', async () => {
+    await assertSucceeds(getDoc(doc(env.authenticatedContext('sam').firestore(), 'orgs/org1/media/m1')));
+    await assertFails(getDoc(doc(env.authenticatedContext('old').firestore(), 'orgs/org1/media/m1')));
+  });
+
+  it('staff without a grant cannot read customer content; device staff still see screens', async () => {
+    const supportStaff = env.authenticatedContext('sup', { platformRole: 'support' }).firestore();
+    await assertFails(getDoc(doc(supportStaff, 'orgs/org1/media/m1')));
+    await assertSucceeds(getDoc(doc(supportStaff, 'orgs/org1/screens/s1')));
+    await assertFails(getDoc(doc(env.authenticatedContext('bill', { platformRole: 'billing' }).firestore(), 'orgs/org1/screens/s1')));
+    await assertSucceeds(getDoc(doc(supportStaff, 'orgs/org1'))); // organization details stay visible
+  });
+
+  it('grants are visible to the organization and support staff, never client-writable', async () => {
+    await assertSucceeds(getDoc(doc(env.authenticatedContext('own').firestore(), 'orgs/org1/supportGrants/g1')));
+    await assertSucceeds(getDocs(query(collectionGroup(env.authenticatedContext('sup', { platformRole: 'support' }).firestore(), 'supportGrants'))));
+    await assertFails(getDoc(doc(env.authenticatedContext('ops', { platformRole: 'ops' }).firestore(), 'orgs/org1/supportGrants/g1')));
+    await assertFails(setDoc(doc(env.authenticatedContext('own').firestore(), 'orgs/org1/supportGrants/g2'), { status: 'active' }));
+  });
+});
+
 describe('platform data', () => {
   it('active plans are public, inactive ones are not', async () => {
     const db = env.unauthenticatedContext().firestore();

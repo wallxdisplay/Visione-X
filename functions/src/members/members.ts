@@ -29,6 +29,7 @@ import { setMembership } from '../lib/profiles';
 import { resolveRole } from './roles';
 
 const DAY_MS = 86_400_000;
+const SUPPORT_MANAGED = 'WallX support access is managed under Help & Support. End it there instead.';
 
 /** Owners are never limited to sites; every listed site must exist (reads only). */
 async function checkSiteScope(tx: Transaction, db: Deps['db'], orgId: string, role: MemberDoc['role'], siteScope: string[]) {
@@ -92,7 +93,9 @@ export async function inviteMember(
       throw new HttpsError('already-exists', 'An invitation is already pending for this email.');
     }
     const liveInvites = pendingInvites.docs.filter((d) => (d.data() as InviteDoc).expiresAt > at).length;
-    if (!withinLimit(entitlements.limits, 'users', members.size + liveInvites + 1)) {
+    // WallX support staff with a temporary grant are not users of the plan.
+    const users = members.docs.filter((d) => !(d.data() as MemberDoc).support).length;
+    if (!withinLimit(entitlements.limits, 'users', users + liveInvites + 1)) {
       throw new HttpsError('resource-exhausted', 'Your plan’s user limit has been reached.');
     }
 
@@ -232,6 +235,7 @@ export async function updateMemberRole(
     requireOrgActive(org);
     const target = await getMember(tx, db, input.orgId, input.uid);
     if (!target) throw new HttpsError('not-found', 'Member not found.');
+    if (target.support) throw new HttpsError('failed-precondition', SUPPORT_MANAGED);
     if (target.role === input.role && target.customRoleId === input.customRoleId) return;
     if ((target.role === 'owner' || input.role === 'owner') && me.role !== 'owner') {
       throw new HttpsError('permission-denied', 'Only owners can grant or change the owner role.');
@@ -281,6 +285,7 @@ export async function removeMember(
       : await requireOrgPermission(tx, db, actor, input.orgId, 'member.manage');
     const target = self ? me : await getMember(tx, db, input.orgId, input.uid);
     if (!me || !target) throw new HttpsError('not-found', 'Member not found.');
+    if (target.support && !self) throw new HttpsError('failed-precondition', SUPPORT_MANAGED);
     if (target.role === 'owner') {
       if (!self && me.role !== 'owner') {
         throw new HttpsError('permission-denied', 'Only owners can remove an owner.');
@@ -315,6 +320,7 @@ export async function setMemberSites(
     requireOrgActive(await getOrg(tx, db, input.orgId));
     const target = await getMember(tx, db, input.orgId, input.uid);
     if (!target) throw new HttpsError('not-found', 'Member not found.');
+    if (target.support) throw new HttpsError('failed-precondition', SUPPORT_MANAGED);
     await checkSiteScope(tx, db, input.orgId, target.role, input.siteScope);
     tx.update(db.doc(paths.member(input.orgId, input.uid)), { siteScope: input.siteScope });
     audit(input.orgId, {

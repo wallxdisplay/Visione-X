@@ -234,7 +234,7 @@ Platform overview · Organization approvals (approve/reject/request info) · Org
 Firestore-triggered event bus → in-app (`notifications`) + email provider (adapter) + FCM web push later. Events: org approval status, screen offline, publish failed, sensor threshold/stale, limit approaching, payment failed, invoice issued, emergency triggered, security alert.
 
 ## 14. Internationalization
-`i18next` with namespaced JSON resources; all UI strings externalized from the first commit; locale-aware dates/numbers (Intl, `en-IN`); fonts: Inter (UI) + Noto Sans Devanagari (content, bundled on player).
+`i18next` with JSON resources in `apps/web/src/locales/{en,hi,mr}`; all UI strings externalized. The language is chosen per browser (top bar) and Hindi/Marathi load on demand; missing keys fall back to English, and a unit test keeps every translation's keys and `{{placeholders}}` identical to English. Dates follow the language (`en-IN`, `hi-IN`, `mr-IN` with Latin digits). Screen content (clock, weather, charts) follows the player and stays English. Hindi and Marathi are machine-drafted and need review by native speakers. Fonts: Inter (UI) + Noto Sans Devanagari (content, bundled on player).
 
 ## 15. Scale & cost guardrails (target 5,000 screens)
 - Heartbeat 5 min ≈ 1.44 M writes/day at 5k screens — acceptable; online state derived from `lastSeen`, detail only on change.
@@ -272,7 +272,7 @@ Feature catalogue stores `releaseStatus` (what WallX has built) separately from 
 | 3 ✅ (real-box test pending) | Android player | Pairing/authorization, boot-start, kiosk, HDMI playback, offline cache, rendering |
 | 4 ✅ | Publish & monitor | Manifest compiler, sync, bulk publish, emergency override, heartbeats, remote commands, diagnostics |
 | 5 ✅ (real ESP32 test pending) | Sensors | Ingest API, ESP32 firmware sample, channels, thresholds, data widgets, alerts |
-| 6 (billing ✅, integrations ✅) | Billing & beyond | Manual billing ✅; weather + RSS integrations ✅ (weather needs a commercial Open-Meteo key in prod); next: Hindi/Marathi, reseller groundwork; Razorpay later. Invoices: external app |
+| 6 ✅ | Billing & beyond | Manual billing ✅; weather + RSS integrations ✅ (weather needs a commercial Open-Meteo key in prod); player auto-updates ✅; Help & Support, support access, platform settings ✅; Hindi/Marathi (draft, review pending) ✅; reseller groundwork ✅; retention + audit export ✅. Later: Razorpay, email notifications (provider to choose). Invoices: external app |
 
 ## 18. Still to confirm
 1. Real Firebase **project ID** and **Hosting site ID** (display name "WallX Play" is not the ID), and whether Firestore already exists (region).

@@ -81,13 +81,14 @@ export const PLATFORM_PERMISSIONS = [
   'audit.view',
   'settings.edit',
   'backup.manage',
+  'account.manage',
 ] as const;
 export type PlatformPermission = (typeof PLATFORM_PERMISSIONS)[number];
 
 export const PLATFORM_ROLE_PERMISSIONS: Record<PlatformRole, readonly PlatformPermission[]> = {
   superadmin: PLATFORM_PERMISSIONS,
   support: ['org.view', 'device.view', 'support.access.request', 'ticket.manage'],
-  billing: ['org.view', 'plan.manage', 'billing.view', 'billing.override'],
+  billing: ['org.view', 'plan.manage', 'billing.view', 'billing.override', 'account.manage'],
   ops: ['org.view', 'device.view', 'device.command', 'player.release', 'ticket.manage'],
   auditor: ['org.view', 'billing.view', 'device.view', 'audit.view'],
 };

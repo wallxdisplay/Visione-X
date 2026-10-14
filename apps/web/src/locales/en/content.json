@@ -217,7 +217,7 @@
     "edit": "Edit schedule",
     "needPlaylist": "Create a playlist first; schedules play playlists.",
     "emptyTitle": "No schedules yet",
-    "emptyBody": "Schedules start playing on screens once screens are paired and content is published (coming in phases 3–4).",
+    "emptyBody": "A schedule plays a playlist on chosen screens at chosen times. Screens follow it once they are paired and you publish.",
     "name": "Name",
     "playlist": "Playlist",
     "target": "Screens",
@@ -284,7 +284,9 @@
       "billing_past_due": "Payment is overdue: renew within the grace period to avoid interruption",
       "billing_restricted": "Subscription lapsed: editing and publishing are paused",
       "billing_payment_recorded": "Payment received; paid through {{until, date}}",
-      "billing_request_resolved": "WallX handled your billing request ({{status}})"
+      "billing_request_resolved": "WallX handled your billing request ({{status}})",
+      "support_access_requested": "WallX support asks for access for {{hours}} h: {{reason}}",
+      "support_access_granted": "WallX gave its support team emergency access for {{hours}} h: {{reason}}"
     }
   },
   "emergency": {

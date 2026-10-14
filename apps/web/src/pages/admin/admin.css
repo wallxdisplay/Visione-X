@@ -27,3 +27,13 @@
 .admin-devices__errors code {
   overflow-wrap: anywhere;
 }
+
+/* Platform settings (AdminSettings.tsx) */
+.admin-settings__section {
+  display: grid;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+.admin-settings__section .section-title {
+  margin: 0;
+}

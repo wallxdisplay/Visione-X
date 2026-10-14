@@ -1,4 +1,173 @@
 {
+  "help": {
+    "description": "Contact WallX, give our support team temporary access, and find quick guides.",
+    "contactTitle": "Contact WallX support",
+    "noContacts": "Support contacts will appear here soon.",
+    "whatsapp": "WhatsApp {{number}}",
+    "orgId": "Your organization ID (mention it when you contact us):",
+    "copy": "Copy",
+    "guidesTitle": "Quick guides",
+    "guides": {
+      "pair": {
+        "title": "Add a screen",
+        "body": "Install the WallX Play Player on the Android box and open it. It shows a pairing code: add the screen here with that code (or scan the QR code with your phone).",
+        "link": "Go to Screens"
+      },
+      "content": {
+        "title": "Upload content",
+        "body": "Upload images and videos to the Content Library. Videos are converted automatically so every box can play them.",
+        "link": "Open the Content Library"
+      },
+      "publish": {
+        "title": "Build and publish",
+        "body": "Combine media, layouts and widgets in a playlist, then publish. Screens keep playing their last published content while offline.",
+        "link": "Open Playlists"
+      },
+      "schedule": {
+        "title": "Schedule by time and place",
+        "body": "Schedules decide which playlist plays on which screens, on which days and hours. Higher priority wins when schedules overlap.",
+        "link": "Open Schedules"
+      },
+      "emergency": {
+        "title": "Emergency messages",
+        "body": "Show an urgent message on chosen screens immediately, above everything else, until you end it or it times out.",
+        "link": "Go to Screens"
+      },
+      "sensors": {
+        "title": "Sensors on screen",
+        "body": "Connect ESP32 sensors, add channels (e.g. temperature), and show live values on screens with sensor widgets or table cells.",
+        "link": "Open Sensors & Data"
+      },
+      "team": {
+        "title": "Team and permissions",
+        "body": "Invite people with a built-in or custom role, and limit them to some sites when needed.",
+        "link": "Open Team & Permissions"
+      },
+      "billing": {
+        "title": "Subscription",
+        "body": "See your plan, usage and payments, and ask WallX to add screens or change the plan.",
+        "link": "Open Subscription & Billing"
+      }
+    }
+  },
+  "supportAccess": {
+    "title": "WallX support access",
+    "explain": "WallX support staff can see your organization only while you allow it, for the time you choose. They never see passwords or API keys, and cannot change your team, billing or settings. Everything they do is in your activity log.",
+    "give": "Give support access",
+    "giveConfirm": "Give access",
+    "giveHint": "You can end it at any time. It also ends by itself when the time is up.",
+    "none": "WallX support has no access to your organization.",
+    "history": "Earlier access",
+    "level": "Access",
+    "levels": {
+      "view": "View only",
+      "edit": "Can help with content"
+    },
+    "levelHints": {
+      "view": "Support can look at screens, content and settings to find a problem, but not change anything.",
+      "edit": "Support can also fix content, publish and restart screens. Not your team, billing or settings."
+    },
+    "duration": "For",
+    "hours_one": "{{count}} hour",
+    "hours_other": "{{count}} hours",
+    "note": "Note for support (optional)",
+    "approve": "Allow",
+    "decline": "Decline",
+    "end": "End access",
+    "status": {
+      "requested": "Asking",
+      "active": "Active",
+      "declined": "Declined",
+      "revoked": "Ended",
+      "expired": "Expired"
+    },
+    "origins": {
+      "customer": "given by your team",
+      "staff_request": "requested by {{email}}",
+      "emergency": "emergency access by {{email}}"
+    },
+    "requestedFor": "Asks for {{hours}} h · {{at}}",
+    "until": "Until {{at}}",
+    "ended": "Ended {{at}}",
+    "opened_one": "used by {{count}} person",
+    "opened_other": "used by {{count}} people",
+    "session": "You are in {{org}} with WallX support access until {{until}}. The customer can see this and end it."
+  },
+  "adminSupport": {
+    "origins": { "customer": "given by the customer", "staff_request": "requested by {{email}}", "emergency": "emergency access by {{email}}" },
+    "description": "Customer organizations are visible to WallX staff only through time-limited access the customer can see and end.",
+    "request": "Request access",
+    "send": "Send request",
+    "grantNow": "Give emergency access",
+    "org": "Organization",
+    "chooseOrg": "Choose an organization",
+    "searchOrgs": "Search organizations",
+    "status": "Status",
+    "access": "Access",
+    "reason": "Reason",
+    "reasonHint": "Shown to the customer, e.g. “Screen 3 in Pune shows a black screen”.",
+    "until": "Until",
+    "open": "Open",
+    "none": "No support access yet.",
+    "emergency": "Emergency: give access now without waiting for the customer",
+    "emergencyHint": "Only when the customer cannot respond and something is seriously wrong. The customer is notified and it is recorded in their activity log.",
+    "policy": "Owners and admins answer requests under Help & Support. Access ends on time automatically; support staff never see passwords or API keys."
+  },
+  "adminResellers": {
+    "description": "Partners who sell WallX Play, and the organizations they brought. Groundwork: a reseller portal and dealer pricing come later.",
+    "new": "New reseller",
+    "edit": "Edit reseller",
+    "name": "Name",
+    "contact": "Contact",
+    "contactName": "Contact person",
+    "email": "Email",
+    "phone": "Phone",
+    "city": "City",
+    "gstin": "GSTIN",
+    "status": "Status",
+    "statuses": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "notes": "Notes (staff only)",
+    "orgs": "Organizations",
+    "manageOrgs": "Organizations…",
+    "none": "No resellers yet.",
+    "later": "Per-organization prices are set in each organization's subscription (Plans & billing).",
+    "orgsOf": "Organizations of {{name}}",
+    "reason": "Reason",
+    "reasonHint": "Recorded in the audit log for each change, e.g. “Signed through partner”.",
+    "makeDirect": "Make WallX direct",
+    "noOrgs": "No organizations yet.",
+    "addOrg": "Add organization",
+    "chooseOrg": "Choose an organization",
+    "assign": "Assign",
+    "inactiveHint": "This reseller is inactive, so no organizations can be added.",
+    "reseller": "Reseller",
+    "direct": "WallX direct"
+  },
+  "adminSettings": {
+    "description": "Settings that apply to all of WallX Play.",
+    "readOnly": "Only superadmins can change platform settings.",
+    "saved": "Platform settings saved.",
+    "supportTitle": "Support contacts",
+    "supportHint": "Shown to every customer on the Help & Support page. Leave a field empty to hide it.",
+    "support": { "email": "Support email", "phone": "Support phone", "whatsapp": "WhatsApp number", "hours": "Support hours" },
+    "bannerTitle": "Notice for everyone",
+    "bannerOn": "Show a notice at the top of every page",
+    "bannerMessage": "Message",
+    "bannerHint": "For example planned maintenance. People can dismiss it; a new message shows again.",
+    "bannerTone": "Style",
+    "tones": { "info": "Information", "warning": "Warning" },
+    "bannerUntil": "Hide after",
+    "bannerUntilHint": "Optional. Leave empty to show it until you turn it off.",
+    "signupsTitle": "New organizations",
+    "signupsOpen": "Accept new organization signups",
+    "signupsHint": "When off, people can still create an account and join existing organizations by invitation, but cannot request a new organization.",
+    "playerTitle": "Player releases",
+    "playerSigner": "Releases must be signed with the key whose SHA-256 is {{sha}}.",
+    "playerSignerNone": "No player release uploaded yet. The first release sets the signing key all later releases must use."
+  },
   "adminPlayers": {
     "description": "Upload new versions of the Android player and choose which screens get them.",
     "upload": "Upload release",
@@ -79,7 +248,8 @@
     "copy": "Copy link",
     "actions": "Actions",
     "all": "All",
-    "close": "Close"
+    "close": "Close",
+    "dismiss": "Dismiss"
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",
@@ -129,6 +299,7 @@
       "users": "Users & Roles",
       "devices": "Screens & Players",
       "players": "Player Releases",
+      "resellers": "Resellers",
       "features": "Features & Limits",
       "billing": "Plans & Billing",
       "integrations": "Integrations & API",
@@ -138,6 +309,7 @@
     }
   },
   "shell": {
+    "language": "Language",
     "navigation": "Main navigation",
     "toggleNav": "Toggle navigation",
     "notifications": "Notifications",
@@ -210,6 +382,8 @@
     }
   },
   "onboarding": {
+    "pausedTitle": "Signups are paused",
+    "pausedBody": "WallX Play is not accepting new organizations at the moment. Please contact WallX support, or try again later.",
     "title": "Set up your organization",
     "description": "Tell us about your business. A WallX administrator reviews each request, usually within one business day.",
     "orgName": "Organization name",
@@ -359,6 +533,7 @@
     "allSitesHint": "Sees and manages every site.",
     "someSitesHint": "Sees and manages only these sites’ screens, sensors and alerts. Organization-wide settings (team, billing, integrations) are not available.",
     "sitesFor": "Sites for {{email}}",
+    "supportMember": "WallX support, until {{until}} (managed under Help & Support)",
     "description": "{{count}} of {{limit}} users on your plan",
     "invite": "Invite member",
     "email": "Email",
@@ -390,7 +565,6 @@
     "timezone": "Time zone",
     "emptyTitle": "No sites yet",
     "emptyBody": "Add a site for each location, such as a store, lobby or factory floor. Screens and sensors are assigned to sites.",
-    "groupsNote": "Screen groups arrive with screen pairing in phase 3.",
     "deleteTitle": "Delete site?",
     "deleteConfirm": "Delete site",
     "deleteBody": "{{name}} will be deleted. Sites with screens cannot be deleted."

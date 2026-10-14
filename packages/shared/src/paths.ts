@@ -3,6 +3,8 @@ export const paths = {
   platformSettings: () => 'platform/settings',
   featureCatalog: () => 'platform/featureCatalog',
   platformUser: (uid: string) => `platformUsers/${uid}`,
+  accounts: () => 'accounts',
+  account: (id: string) => `accounts/${id}`,
   playerReleases: () => 'playerReleases',
   playerRelease: (id: string) => `playerReleases/${id}`,
   /** The release APK in Storage. */
@@ -22,6 +24,8 @@ export const paths = {
   member: (orgId: string, uid: string) => `orgs/${orgId}/members/${uid}`,
   roles: (orgId: string) => `orgs/${orgId}/roles`,
   role: (orgId: string, roleId: string) => `orgs/${orgId}/roles/${roleId}`,
+  supportGrants: (orgId: string) => `orgs/${orgId}/supportGrants`,
+  supportGrant: (orgId: string, id: string) => `orgs/${orgId}/supportGrants/${id}`,
   invites: (orgId: string) => `orgs/${orgId}/invites`,
   invite: (orgId: string, inviteId: string) => `orgs/${orgId}/invites/${inviteId}`,
   /** Global lookup from token hash → invite, so accepting needs only the token. */

@@ -6,6 +6,9 @@ import { useAuth } from '../auth/AuthProvider';
 import { useOrg } from '../org/OrgProvider';
 import { BillingBanner } from './BillingBanner';
 import { EmergencyBanner } from './EmergencyBanner';
+import { LanguagePicker } from './LanguagePicker';
+import { PlatformNotice } from './PlatformNotice';
+import { SupportSessionBanner } from './SupportSessionBanner';
 import type { NavGroup } from './nav';
 import { NotificationBell } from './NotificationBell';
 
@@ -93,9 +96,12 @@ export function AppShell({ nav, variant }: { nav: NavGroup[]; variant: 'customer
               </Link>
             ) : null}
             {variant === 'customer' ? <NotificationBell /> : null}
-            <button type="button" className="shell__icon-btn" aria-label={t('shell.help')}>
-              <HelpCircle size={18} />
-            </button>
+            <LanguagePicker />
+            {variant === 'customer' ? (
+              <Link to="/help" className="shell__icon-btn" aria-label={t('shell.help')} title={t('shell.help')}>
+                <HelpCircle size={18} />
+              </Link>
+            ) : null}
             <span className="shell__user wxp-muted" title={user?.email ?? ''}>
               {user?.email}
             </span>
@@ -110,6 +116,8 @@ export function AppShell({ nav, variant }: { nav: NavGroup[]; variant: 'customer
             </button>
           </div>
         </header>
+        <PlatformNotice />
+        {variant === 'customer' ? <SupportSessionBanner /> : null}
         {variant === 'customer' ? <EmergencyBanner /> : null}
         {variant === 'customer' ? <BillingBanner /> : null}
         <main className="shell__content">

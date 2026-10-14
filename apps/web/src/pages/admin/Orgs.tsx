@@ -1,7 +1,7 @@
 import { collection, limit, orderBy, query, where } from 'firebase/firestore';
 import { Alert, Button, Dialog, PageHeader, StatusChip, TextAreaField } from '@wallx-play/ui';
-import { hasPlatformPermission, type OrgDoc, type OrgStatus } from '@wallx-play/shared';
-import { useState } from 'react';
+import { hasPlatformPermission, type AccountDoc, type OrgDoc, type OrgStatus } from '@wallx-play/shared';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../auth/AuthProvider';
 import { call, errorMessage } from '../../lib/api';
@@ -27,6 +27,8 @@ export function Orgs() {
       ? query(collection(db, 'orgs'), orderBy('createdAt', 'desc'), limit(100))
       : query(collection(db, 'orgs'), where('status', '==', filter), orderBy('createdAt', 'desc'), limit(100)),
   );
+  const accounts = useQueryData<AccountDoc>('admin:accounts', () => query(collection(db, 'accounts'), limit(500)));
+  const accountName = useMemo(() => new Map(accounts.data.map((a) => [a.id, a.name])), [accounts.data]);
   const [target, setTarget] = useState<{ org: OrgDoc; action: 'suspend' | 'reactivate' } | null>(null);
   const [reason, setReason] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -70,6 +72,7 @@ export function Orgs() {
             <tr>
               <th>{t('admin.orgs.name')}</th>
               <th>{t('admin.approvals.status')}</th>
+              <th>{t('adminResellers.reseller')}</th>
               <th>{t('settings.timezone')}</th>
               <th>{t('admin.orgs.created')}</th>
               <th aria-label={t('common.actions')} />
@@ -88,6 +91,7 @@ export function Orgs() {
                     <div className="wxp-muted">{o.statusReason}</div>
                   ) : null}
                 </td>
+                <td>{o.parentAccountId ? (accountName.get(o.parentAccountId) ?? o.parentAccountId) : <span className="wxp-muted">{t('adminResellers.direct')}</span>}</td>
                 <td>{o.timezone}</td>
                 <td className="wxp-tabular">{formatDate(o.createdAt)}</td>
                 <td className="wxp-actions">

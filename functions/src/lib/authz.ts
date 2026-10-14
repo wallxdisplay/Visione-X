@@ -82,7 +82,7 @@ export async function requireOrgPermission(
   permission: OrgPermission,
 ): Promise<MemberDoc> {
   const member = await getMember(tx, db, orgId, actor.uid);
-  if (!member || member.status !== 'active' || !member.permissions.includes(permission)) {
+  if (!member || member.status !== 'active' || !member.permissions.includes(permission) || supportExpired(member)) {
     throw new HttpsError('permission-denied', 'You do not have permission for this action.');
   }
   if (member.siteScope?.length && ORG_WIDE_PERMISSIONS.includes(permission)) {
@@ -90,6 +90,12 @@ export async function requireOrgPermission(
   }
   return member;
 }
+
+/** Time source for membership expiry (tests point it at their fake clock). */
+export const authzClock = { now: () => Date.now() };
+
+/** A support member whose grant ended (the monitor removes the record within minutes). */
+export const supportExpired = (member: Pick<MemberDoc, 'support'>) => !!member.support && member.support.expiresAt <= authzClock.now();
 
 /** Site-scoped members may act only on their sites (screens, sensors, sites, schedules). */
 export function requireSiteInScope(member: Pick<MemberDoc, 'siteScope'>, siteId: string | null | undefined, what = 'this'): void {

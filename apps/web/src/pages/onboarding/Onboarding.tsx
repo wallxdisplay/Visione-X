@@ -1,6 +1,6 @@
 import { collection, limit, orderBy, query, where } from 'firebase/firestore';
 import { Alert, Button, Card, StatusChip, Spinner, TextAreaField } from '@wallx-play/ui';
-import { paths, type OrgSignupDetails, type SignupRequestDoc } from '@wallx-play/shared';
+import { paths, signupsOpen, type OrgSignupDetails, type SignupRequestDoc } from '@wallx-play/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
@@ -10,6 +10,7 @@ import { call, errorMessage } from '../../lib/api';
 import { db } from '../../lib/firebase';
 import { formatDateTime } from '../../lib/format';
 import { useQueryData } from '../../lib/hooks';
+import { usePlatformSettings } from '../../lib/platformSettings';
 import { OrgSignupForm, toFormValues } from './OrgSignupForm';
 
 export function Onboarding() {
@@ -25,6 +26,7 @@ export function Onboarding() {
     ),
   );
   const [busy, setBusy] = useState(false);
+  const settings = usePlatformSettings();
   const [error, setError] = useState<string | null>(null);
   const [startNew, setStartNew] = useState(false);
   const [response, setResponse] = useState('');
@@ -111,6 +113,8 @@ export function Onboarding() {
   } else if (latest && !startNew && latest.status === 'approved' && !hasActiveOrg) {
     // Approved but profile not yet refreshed (or org since suspended).
     body = <Alert tone="info">{t('onboarding.approvedNoAccess')}</Alert>;
+  } else if (!signupsOpen(settings.data)) {
+    body = <Alert tone="info" title={t('onboarding.pausedTitle')}>{t('onboarding.pausedBody')}</Alert>;
   } else {
     body = (
       <OrgSignupForm submitLabel={t('onboarding.submit')} busy={busy} onSubmit={(d) => void submit(d)} />
