@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDataSources, useDataSourceValue } from '../../content/dataSources';
 import { call, errorMessage } from '../../lib/api';
-import { formatDateTime } from '../../lib/format';
+import { formatDate, formatDateTime } from '../../lib/format';
 import type { WithId } from '../../lib/hooks';
 import { useOrg } from '../../org/OrgProvider';
 import './integrations.css';
@@ -370,10 +370,17 @@ function PreviewDialog({ source, onClose }: { source: DataSourceDoc; onClose: ()
           <ul className="plain-list">
             {w.daily.map((d) => (
               <li key={d.date}>
-                {d.date} {weatherIcon(weatherCondition(d.code))} {Math.round(d.maxC)}° / {Math.round(d.minC)}°
+                {/* Noon UTC keeps the calendar day in every Indian/Asian time zone. */}
+                {formatDate(Date.parse(`${d.date}T12:00:00Z`))} {weatherIcon(weatherCondition(d.code))} {Math.round(d.maxC)}° / {Math.round(d.minC)}°
               </li>
             ))}
           </ul>
+          {/* The provider's required credit ("Google Maps" is never translated). */}
+          {w.attribution ? (
+            <p className="wxp-muted">
+              {t('integrations.weatherSource')} <span translate="no">{w.attribution}</span>
+            </p>
+          ) : null}
         </div>
       ) : null}
       {value?.airQuality ? (
