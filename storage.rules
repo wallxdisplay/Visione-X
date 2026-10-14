@@ -40,6 +40,8 @@ service firebase.storage {
     match /playerReleases/{releaseId}/player.apk {
       allow create: if request.auth != null
         && request.auth.token.get('platformRole', null) in ['superadmin', 'ops']
+        // Staff two-step verification, as in firestore.rules and Cloud Functions.
+        && request.auth.token.get('firebase', {}).get('sign_in_second_factor', null) != null
         && request.resource.size > 0
         && request.resource.contentType == 'application/vnd.android.package-archive'
         && releaseAllows(releaseId);

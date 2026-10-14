@@ -17,8 +17,14 @@ service cloud.firestore {
       return signedIn() && request.auth.token.get('type', null) == 'device';
     }
 
+    // Staff must sign in with two-step verification (TOTP): without a second factor in this
+    // sign-in, a staff account is treated as an ordinary user here, as in Cloud Functions.
+    function hasSecondFactor() {
+      return request.auth.token.get('firebase', {}).get('sign_in_second_factor', null) != null;
+    }
+
     function platformRole() {
-      return signedIn() && !isDevice() ? request.auth.token.get('platformRole', null) : null;
+      return signedIn() && !isDevice() && hasSecondFactor() ? request.auth.token.get('platformRole', null) : null;
     }
 
     function isPlatformStaff() {

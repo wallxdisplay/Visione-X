@@ -10,6 +10,12 @@ import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
 
 let env: RulesTestEnvironment;
 
+/** A staff ID token from a sign-in with two-step verification (TOTP), as staff must use. */
+const staffToken = (platformRole: string, secondFactor: string | null = 'totp') => ({
+  platformRole,
+  firebase: { sign_in_provider: 'password', ...(secondFactor ? { sign_in_second_factor: secondFactor } : {}) },
+});
+
 beforeAll(async () => {
   env = await initializeTestEnvironment({
     projectId: 'demo-wallx-play',
@@ -75,7 +81,7 @@ describe('organizations', () => {
   });
 
   it('device records, pairing codes and rate limits are never client-readable', async () => {
-    const root = env.authenticatedContext('root', { platformRole: 'superadmin' }).firestore();
+    const root = env.authenticatedContext('root', staffToken('superadmin')).firestore();
     await assertFails(getDoc(doc(root, 'devices/d1')));
     await assertFails(getDoc(doc(root, 'pairingCodes/ABC234')));
     await assertFails(getDoc(doc(root, 'rateLimits/x')));
@@ -122,7 +128,7 @@ describe('phase 1 collections', () => {
     await assertSucceeds(getDoc(doc(env.authenticatedContext('alice').firestore(), 'signupRequests/r1')));
     await assertFails(getDoc(doc(env.authenticatedContext('bob').firestore(), 'signupRequests/r1')));
     await assertSucceeds(
-      getDoc(doc(env.authenticatedContext('s', { platformRole: 'support' }).firestore(), 'signupRequests/r1')),
+      getDoc(doc(env.authenticatedContext('s', staffToken('support')).firestore(), 'signupRequests/r1')),
     );
   });
 
@@ -150,7 +156,7 @@ describe('phase 1 collections', () => {
   });
 
   it('invite tokens and audit heads are never client-readable', async () => {
-    const root = env.authenticatedContext('root', { platformRole: 'superadmin' }).firestore();
+    const root = env.authenticatedContext('root', staffToken('superadmin')).firestore();
     await assertFails(getDoc(doc(root, 'inviteTokens/abc')));
     await assertFails(getDoc(doc(root, 'auditHeads/org1')));
   });
@@ -191,7 +197,7 @@ describe('sensors (phase 5)', () => {
     const db = env.authenticatedContext('viewer').firestore();
     await assertFails(setDoc(doc(db, 'orgs/org1/sensorDevices/d1/channels/temp'), { latest: { value: 1, ts: 1 } }, { merge: true }));
     await assertFails(setDoc(doc(db, 'orgs/org1/alerts/a1'), { status: 'resolved' }, { merge: true }));
-    const root = env.authenticatedContext('root', { platformRole: 'superadmin' }).firestore();
+    const root = env.authenticatedContext('root', staffToken('superadmin')).firestore();
     await assertFails(getDoc(doc(root, 'sensorKeys/hash')));
   });
 });
@@ -217,10 +223,10 @@ describe('billing (phase 6)', () => {
   });
 
   it('billing staff list across orgs; support staff cannot see billing', async () => {
-    const bill = env.authenticatedContext('b', { platformRole: 'billing' }).firestore();
+    const bill = env.authenticatedContext('b', staffToken('billing')).firestore();
     await assertSucceeds(getDocs(query(collectionGroup(bill, 'billing'))));
     await assertSucceeds(getDocs(query(collectionGroup(bill, 'billingRequests'), where('status', '==', 'open'))));
-    const sup = env.authenticatedContext('s', { platformRole: 'support' }).firestore();
+    const sup = env.authenticatedContext('s', staffToken('support')).firestore();
     await assertFails(getDoc(doc(sup, 'orgs/org1/billing/subscription')));
     await assertFails(getDocs(query(collectionGroup(sup, 'billing'))));
   });
@@ -240,7 +246,7 @@ describe('integrations (phase 6)', () => {
     await assertSucceeds(getDoc(doc(alice, 'orgs/org1/dataSources/ds1')));
     await assertFails(setDoc(doc(alice, 'orgs/org1/dataSources/ds2'), { name: 'X' }));
     await assertFails(getDoc(doc(env.authenticatedContext('mallory').firestore(), 'orgs/org1/dataSources/ds1')));
-    await assertFails(getDoc(doc(env.authenticatedContext('root', { platformRole: 'superadmin' }).firestore(), 'providerCache/w_18.52_73.86')));
+    await assertFails(getDoc(doc(env.authenticatedContext('root', staffToken('superadmin')).firestore(), 'providerCache/w_18.52_73.86')));
   });
 });
 
@@ -277,8 +283,8 @@ describe('site scope', () => {
       await setDoc(doc(ctx.firestore(), 'orgs/org1/members/all'), { role: 'viewer', status: 'active', permissions: ['screen.view'] });
     });
     await assertSucceeds(getDocs(query(collection(env.authenticatedContext('all').firestore(), 'orgs/org1/screens'))));
-    await assertSucceeds(getDocs(query(collectionGroup(env.authenticatedContext('ops', { platformRole: 'ops' }).firestore(), 'screens'))));
-    await assertFails(getDocs(query(collectionGroup(env.authenticatedContext('bill', { platformRole: 'billing' }).firestore(), 'screens'))));
+    await assertSucceeds(getDocs(query(collectionGroup(env.authenticatedContext('ops', staffToken('ops')).firestore(), 'screens'))));
+    await assertFails(getDocs(query(collectionGroup(env.authenticatedContext('bill', staffToken('billing')).firestore(), 'screens'))));
   });
 });
 
@@ -302,17 +308,17 @@ describe('support access', () => {
   });
 
   it('staff without a grant cannot read customer content; device staff still see screens', async () => {
-    const supportStaff = env.authenticatedContext('sup', { platformRole: 'support' }).firestore();
+    const supportStaff = env.authenticatedContext('sup', staffToken('support')).firestore();
     await assertFails(getDoc(doc(supportStaff, 'orgs/org1/media/m1')));
     await assertSucceeds(getDoc(doc(supportStaff, 'orgs/org1/screens/s1')));
-    await assertFails(getDoc(doc(env.authenticatedContext('bill', { platformRole: 'billing' }).firestore(), 'orgs/org1/screens/s1')));
+    await assertFails(getDoc(doc(env.authenticatedContext('bill', staffToken('billing')).firestore(), 'orgs/org1/screens/s1')));
     await assertSucceeds(getDoc(doc(supportStaff, 'orgs/org1'))); // organization details stay visible
   });
 
   it('grants are visible to the organization and support staff, never client-writable', async () => {
     await assertSucceeds(getDoc(doc(env.authenticatedContext('own').firestore(), 'orgs/org1/supportGrants/g1')));
-    await assertSucceeds(getDocs(query(collectionGroup(env.authenticatedContext('sup', { platformRole: 'support' }).firestore(), 'supportGrants'))));
-    await assertFails(getDoc(doc(env.authenticatedContext('ops', { platformRole: 'ops' }).firestore(), 'orgs/org1/supportGrants/g1')));
+    await assertSucceeds(getDocs(query(collectionGroup(env.authenticatedContext('sup', staffToken('support')).firestore(), 'supportGrants'))));
+    await assertFails(getDoc(doc(env.authenticatedContext('ops', staffToken('ops')).firestore(), 'orgs/org1/supportGrants/g1')));
     await assertFails(setDoc(doc(env.authenticatedContext('own').firestore(), 'orgs/org1/supportGrants/g2'), { status: 'active' }));
   });
 });
@@ -325,14 +331,14 @@ describe('platform data', () => {
   });
 
   it('platform staff can read org data', async () => {
-    const db = env.authenticatedContext('staff', { platformRole: 'support' }).firestore();
+    const db = env.authenticatedContext('staff', staffToken('support')).firestore();
     await assertSucceeds(getDoc(doc(db, 'orgs/org1')));
   });
 
   it('audit logs are readable by auditors only and never writable', async () => {
-    const auditor = env.authenticatedContext('aud', { platformRole: 'auditor' }).firestore();
-    const support = env.authenticatedContext('sup', { platformRole: 'support' }).firestore();
-    const admin = env.authenticatedContext('root', { platformRole: 'superadmin' }).firestore();
+    const auditor = env.authenticatedContext('aud', staffToken('auditor')).firestore();
+    const support = env.authenticatedContext('sup', staffToken('support')).firestore();
+    const admin = env.authenticatedContext('root', staffToken('superadmin')).firestore();
     await assertSucceeds(getDoc(doc(auditor, 'auditLogs/a1')));
     await assertFails(getDoc(doc(support, 'auditLogs/a1')));
     await assertFails(setDoc(doc(admin, 'auditLogs/a1'), { action: 'tampered' }));
@@ -340,10 +346,22 @@ describe('platform data', () => {
   });
 
   it('player releases are visible to device staff only and never client-writable', async () => {
-    const ops = env.authenticatedContext('ops', { platformRole: 'ops' }).firestore();
+    const ops = env.authenticatedContext('ops', staffToken('ops')).firestore();
     await assertSucceeds(getDoc(doc(ops, 'playerReleases/r1')));
-    await assertFails(getDoc(doc(env.authenticatedContext('bill', { platformRole: 'billing' }).firestore(), 'playerReleases/r1')));
+    await assertFails(getDoc(doc(env.authenticatedContext('bill', staffToken('billing')).firestore(), 'playerReleases/r1')));
     await assertFails(getDoc(doc(env.authenticatedContext('alice').firestore(), 'playerReleases/r1')));
     await assertFails(setDoc(doc(ops, 'playerReleases/r2'), { status: 'ready', rollout: 'all' }));
+  });
+});
+
+describe('staff two-step verification', () => {
+  it('a staff password-only sign-in has no staff access, only its own profile', async () => {
+    const noCode = env.authenticatedContext('root', staffToken('superadmin', null)).firestore();
+    await assertFails(getDoc(doc(noCode, 'auditLogs/a1')));
+    await assertFails(getDocs(query(collectionGroup(noCode, 'screens'))));
+    await assertFails(getDoc(doc(noCode, 'orgs/org1')));
+    await assertSucceeds(getDoc(doc(noCode, 'users/root')));
+    // The same account signed in with its authenticator code is staff again.
+    await assertSucceeds(getDoc(doc(env.authenticatedContext('root', staffToken('superadmin')).firestore(), 'orgs/org1')));
   });
 });
