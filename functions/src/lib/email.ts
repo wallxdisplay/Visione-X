@@ -29,7 +29,8 @@ let transporter: Transporter | null = null;
 
 function smtp(): Transporter | null {
   const user = process.env.SMTP_USER?.trim();
-  const pass = process.env.SMTP_PASSWORD?.trim();
+  // Google shows App Passwords in groups of four; spaces copied with it are not part of it.
+  const pass = process.env.SMTP_PASSWORD?.replace(/\s+/g, '');
   if (!user || !pass) return null;
   transporter ??= nodemailer.createTransport({ host: 'smtp.gmail.com', port: 465, secure: true, auth: { user, pass } });
   return transporter;
