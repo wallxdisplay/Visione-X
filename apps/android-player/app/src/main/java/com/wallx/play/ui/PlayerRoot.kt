@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -101,8 +102,10 @@ private fun Playback(state: UiState.Playing, engine: PlayerEngine) {
         return
     }
     Rotated(m.rotation) {
-        PlaylistPlayer(playlist.items, ctx) { item ->
-            engine.nowPlaying = Playing(playlist.id, item?.id, resolution.source)
+        CompositionLocalProvider(LocalPlayLog provides engine.plays) {
+            PlaylistPlayer(playlist.items, ctx) { item ->
+                engine.nowPlaying = Playing(playlist.id, item?.id, resolution.source)
+            }
         }
     }
 }

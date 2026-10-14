@@ -235,6 +235,9 @@ Platform overview · Organization approvals (approve/reject/request info) · Org
 ## 13. Notifications
 In-app (`notifications`) + email: the `emailNotification` trigger on `orgs/{orgId}/notifications/{id}` emails action-needed types to active members holding the matching permission (not support staff or site-scoped members), once per notification (`mailLog`, 30-day TTL), unless the org turns it off (`settings.emailNotifications`). Invitations and signup decisions are emailed directly by their callables. Sender: Gmail / Workspace SMTP (`SMTP_USER` + secret `SMTP_PASSWORD`). FCM web push later. Events: org approval status, screen offline, publish failed, sensor threshold/stale, limit approaching, payment failed, invoice issued, emergency triggered, security alert.
 
+## 13a. Proof-of-play (v1.1)
+Players count what they show — each media item and layout, also inside layout zones — as plays and seconds per UTC hour (`core/PlayLog.kt`), keep the counts in a file through restarts and offline days, and upload finished hours to `POST /api/v1/devices/plays` with a batch id (a retry after a lost response counts once: `devices/{id}/playBatches`, 7-day TTL). The server folds them into one summary per screen per local day in the org's time zone, `orgs/{orgId}/playStats/{date}_{screenId}` (items, hours, totals), about 24 writes per screen per day; nothing is stored unless the plan has `report.proofOfPlay`. Summaries expire after the plan's `retentionDays` (TTL). Clients never read playStats directly: the `playbackReport` callable checks `report.view`, the plan feature and the member's sites, and returns totals by content, screen, day and hour plus CSV rows (≤ 92 days, ≤ 20,000 summaries per report).
+
 ## 14. Internationalization
 `i18next` with JSON resources in `apps/web/src/locales/{en,hi,mr}`; all UI strings externalized. The language is chosen per browser (top bar) and Hindi/Marathi load on demand; missing keys fall back to English, and a unit test keeps every translation's keys and `{{placeholders}}` identical to English. Dates follow the language (`en-IN`, `hi-IN`, `mr-IN` with Latin digits). Screen content (clock, weather, charts) follows the player and stays English. Hindi and Marathi are machine-drafted and need review by native speakers. Fonts: Inter (UI) + Noto Sans Devanagari (content, bundled on player).
 
@@ -275,6 +278,7 @@ Feature catalogue stores `releaseStatus` (what WallX has built) separately from 
 | 4 ✅ | Publish & monitor | Manifest compiler, sync, bulk publish, emergency override, heartbeats, remote commands, diagnostics |
 | 5 ✅ (real ESP32 test pending) | Sensors | Ingest API, ESP32 firmware sample, channels, thresholds, data widgets, alerts |
 | 6 ✅ | Billing & beyond | Manual billing ✅; weather + RSS integrations ✅; player auto-updates ✅; Help & Support, support access, platform settings ✅; Hindi/Marathi (draft, review pending) ✅; reseller groundwork ✅; retention + audit export ✅. Google Weather (needs the API key secret) and Gmail emails (need the App Password secret) ✅. Air quality (AQI) widget with India NAQI, Google Air Quality API on the weather key ✅. Later: Razorpay. Invoices: external app |
+| v1.1 🚧 | Reports, analytics, API | Proof-of-play: player counting (0.13.0), upload API, daily summaries, Playback Reports page with CSV ✅. Next: analytics & diagnostics, API keys & webhooks |
 
 ## 18. Still to confirm
 1. Real Firebase **project ID** and **Hosting site ID** (display name "WallX Play" is not the ID), and whether Firestore already exists (region).

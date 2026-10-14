@@ -198,6 +198,24 @@
   .shell__user {
     display: none;
   }
+  /* Phones: the organization name gives way to the icons instead of pushing them off screen. */
+  .shell__topbar {
+    gap: var(--space-2);
+  }
+  .shell__context {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .shell__actions {
+    gap: 0;
+    flex-shrink: 0;
+  }
+  .shell__icon-btn {
+    width: 34px;
+    height: 34px;
+  }
 }
 
 .section-title {

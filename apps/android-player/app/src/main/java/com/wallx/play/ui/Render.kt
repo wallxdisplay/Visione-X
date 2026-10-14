@@ -32,6 +32,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
@@ -60,6 +61,7 @@ import coil.ImageLoader
 import com.wallx.play.core.DataStore
 import com.wallx.play.core.LiveStore
 import com.wallx.play.core.MediaLibrary
+import com.wallx.play.core.PlayLog
 import com.wallx.play.data.Layout
 import com.wallx.play.data.Manifest
 import com.wallx.play.data.PlaylistItem
@@ -150,6 +152,7 @@ fun PlaylistPlayer(
 /** Draws a layout letterboxed to its canvas aspect ratio. */
 @Composable
 fun LayoutView(layout: Layout, ctx: RenderContext) {
+    CountPlay("layout", layout.id)
     val bg = Color(parseColor(layout.canvas.background, android.graphics.Color.BLACK))
     BoxWithConstraints(Modifier.fillMaxSize().background(Color.Black), contentAlignment = Alignment.Center) {
         val aspect = layout.canvas.width.toFloat() / layout.canvas.height
@@ -181,9 +184,23 @@ private fun ZoneContent(content: JsonObject, ctx: RenderContext) {
     }
 }
 
+/** Proof-of-play counter for what is rendered (null in previews and tests that do not count). */
+val LocalPlayLog = staticCompositionLocalOf<PlayLog?> { null }
+
+/** Counts [kind]/[id] as on screen while this composable is shown. */
+@Composable
+private fun CountPlay(kind: String, id: String) {
+    val log = LocalPlayLog.current ?: return
+    DisposableEffect(log, kind, id) {
+        val handle = log.start(kind, id)
+        onDispose { log.end(handle) }
+    }
+}
+
 @Composable
 fun MediaView(mediaId: String, fit: String, library: MediaLibrary) {
     val file = library.file(mediaId) ?: return
+    CountPlay("media", mediaId)
     val mime = library.mimeType(mediaId) ?: ""
     when {
         mime.startsWith("image/") -> AsyncImage(

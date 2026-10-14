@@ -189,6 +189,13 @@ data class CommandResult(
     val screenshotJpegBase64: String?,
 )
 
+/** One content item in one UTC hour (proof-of-play, POST /devices/plays). */
+@Serializable
+data class PlayBucketBody(val hour: Long, val kind: String, val id: String, val plays: Int, val seconds: Long)
+
+@Serializable
+data class PlayUpload(val batchId: String, val buckets: List<PlayBucketBody>)
+
 @Serializable
 data class Heartbeat(
     val appVersion: String,

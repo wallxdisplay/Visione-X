@@ -25,6 +25,7 @@ import com.wallx.play.data.SUPPORTED_SPEC_VERSION
 import com.wallx.play.data.Size
 import com.wallx.play.data.json
 import com.wallx.play.data.CommandResult
+import com.wallx.play.data.PlayUpload
 import com.wallx.play.PlayerApp
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -68,6 +69,8 @@ data class Status(
 class PlayerEngine internal constructor(
     private val context: Context,
     apiBase: String = BuildConfig.API_BASE,
+    /** Clock for proof-of-play hours (tests move it; a real player uses server-corrected time). */
+    playClock: (() -> Long)? = null,
 ) {
     private val api = Api(apiBase)
     private val device = DeviceStore(context)
@@ -87,6 +90,9 @@ class PlayerEngine internal constructor(
 
     /** In-app updates offered by the server. */
     val updater = Updater(context, api.http)
+
+    /** Proof-of-play counts (the renderer reports what it shows; uploaded hourly). */
+    val plays = PlayLog(File(context.filesDir, "plays.json"), playClock ?: ::serverNow)
 
     /** Set by the renderer so heartbeats can report what is on screen. */
     @Volatile var nowPlaying: Playing? = null
@@ -125,6 +131,7 @@ class PlayerEngine internal constructor(
         scope.launch { heartbeatLoop() }
         scope.launch { liveLoop() }
         scope.launch { dataLoop() }
+        scope.launch { playsLoop() }
     }
 
     private suspend fun pollLoop() {
@@ -348,6 +355,42 @@ class PlayerEngine internal constructor(
         }
     }
 
+    /**
+     * Saves proof-of-play counts every few minutes and uploads finished hours. Counts stay on
+     * the box while offline and go up when the network is back.
+     */
+    private suspend fun playsLoop() {
+        delay(60_000)
+        while (currentCoroutineContextActive()) {
+            uploadPlays()
+            delay(PLAYS_SEC * 1000L)
+        }
+    }
+
+    internal suspend fun uploadPlays() {
+        plays.checkpoint()
+        plays.save()
+        val auth = device.auth ?: return
+        // Send everything finished; a few batches per round when a box was offline for long.
+        repeat(5) {
+            val batch = plays.nextBatch() ?: return
+            try {
+                api.plays(auth, PlayUpload(batch.id, batch.buckets))
+                plays.acknowledge(batch.id)
+            } catch (e: ApiException) {
+                // A refused batch (malformed, or the box is no longer a screen) would never pass.
+                if (e.status in 400..499 && e.status != 429) plays.acknowledge(batch.id)
+                Log.w(TAG, "Play upload refused: ${e.message}")
+                return
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w(TAG, "Play upload failed: ${e.message}")
+                return
+            }
+        }
+    }
+
     private suspend fun heartbeatLoop() {
         delay(5_000)
         while (currentCoroutineContextActive()) {
@@ -378,6 +421,7 @@ class PlayerEngine internal constructor(
         Log.w(TAG, "Resetting device identity: $reason")
         ErrorLog.record(context, "reset: $reason")
         device.clear()
+        plays.clear()
         manifests.clear()
         cache.clear()
         _ui.value = UiState.Starting
@@ -408,6 +452,9 @@ class PlayerEngine internal constructor(
     }
 
     companion object {
+        /** Proof-of-play: save counts and upload finished hours this often. */
+        const val PLAYS_SEC = 300
+
         @Volatile private var instance: PlayerEngine? = null
         fun get(context: Context): PlayerEngine =
             instance ?: synchronized(this) { instance ?: PlayerEngine(context.applicationContext).also { instance = it } }

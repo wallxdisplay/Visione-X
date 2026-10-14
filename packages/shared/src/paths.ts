@@ -50,6 +50,11 @@ export const paths = {
   devices: () => 'devices',
   pairingCode: (code: string) => `pairingCodes/${code}`,
   screenManifest: (orgId: string, screenId: string) => `orgs/${orgId}/screenManifests/${screenId}`,
+  /** Proof-of-play summary: one screen, one local day (reports.ts). */
+  playStats: (orgId: string) => `orgs/${orgId}/playStats`,
+  playStat: (orgId: string, date: string, screenId: string) => `orgs/${orgId}/playStats/${date}_${screenId}`,
+  /** Processed play uploads, so a retried upload counts once (TTL). */
+  playBatch: (deviceId: string, batchId: string) => `devices/${deviceId}/playBatches/${batchId}`,
   rateLimit: (key: string) => `rateLimits/${key}`,
   emergencies: (orgId: string) => `orgs/${orgId}/emergencies`,
   emergency: (orgId: string, id: string) => `orgs/${orgId}/emergencies/${id}`,

@@ -186,6 +186,7 @@ export const CALLABLES = {
   geocodePlace: 'geocodePlace',
   testRssFeed: 'testRssFeed',
   previewDataSource: 'previewDataSource',
+  playbackReport: 'playbackReport',
   setMemberSites: 'setMemberSites',
   saveRole: 'saveRole',
   deleteRole: 'deleteRole',

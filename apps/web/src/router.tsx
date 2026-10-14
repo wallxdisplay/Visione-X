@@ -15,6 +15,7 @@ import { AdminOverview } from './pages/admin/AdminOverview';
 import { OrgBilling } from './pages/admin/OrgBilling';
 import { Billing } from './pages/billing/Billing';
 import { Integrations } from './pages/integrations/Integrations';
+import { PlaybackReports } from './pages/reports/PlaybackReports';
 import { ApprovalReview } from './pages/admin/ApprovalReview';
 import { Approvals } from './pages/admin/Approvals';
 import { AuditLogs } from './pages/admin/AuditLogs';
@@ -59,6 +60,7 @@ const PAGES: Record<string, ReactNode> = {
   '/alerts': <Alerts />,
   '/billing': <Billing />,
   '/integrations': <Integrations />,
+  '/reports': <PlaybackReports />,
   '/team': <Team />,
   '/help': <Help />,
   '/sites': <Sites />,

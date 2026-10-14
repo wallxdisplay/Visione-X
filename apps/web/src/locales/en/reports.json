@@ -1,0 +1,61 @@
+{
+  "reports": {
+    "description": "What played on your screens and for how long (proof of play). Players send their counts every hour.",
+    "notInPlanTitle": "Playback reports are not included in your plan",
+    "notInPlanBody": "Upgrade to a plan with proof-of-play reports to see what played where, and export it for advertisers.",
+    "exportCsv": "Export CSV",
+    "period": "Period",
+    "from": "From",
+    "to": "To",
+    "site": "Site",
+    "screen": "Screen",
+    "allSites": "All sites",
+    "mySites": "All my sites",
+    "allScreens": "All screens",
+    "periods": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "last7": "Last 7 days",
+      "last30": "Last 30 days",
+      "thisMonth": "This month",
+      "lastMonth": "Last month",
+      "custom": "Custom dates"
+    },
+    "plays": "Plays",
+    "timeOnScreen": "Time on screen",
+    "screens": "Screens",
+    "items": "Content items",
+    "content": "Content",
+    "type": "Type",
+    "kinds": {
+      "media": "Media",
+      "layout": "Layout"
+    },
+    "deletedMedia": "Deleted media",
+    "deletedLayout": "Deleted layout",
+    "removedScreen": "Removed screen",
+    "byContent": "By content",
+    "byScreen": "By screen",
+    "byDay": "Plays per day",
+    "byHour": "Plays by hour of day",
+    "byHourAria": "Bar chart of plays for each hour of the day",
+    "hourTip": "{{h}}:00 – {{plays}} plays",
+    "hm": "{{h}} h {{m}} min",
+    "m": "{{m}} min",
+    "s": "{{s}} s",
+    "emptyTitle": "No plays in this period",
+    "emptyBody": "Counts appear here within about an hour of content playing. Screens need player 0.13.0 or newer.",
+    "truncated": "The CSV holds the first 50,000 rows. Choose fewer days or a site to export everything.",
+    "note": "A play is one appearance of an image, video or layout on screen, also inside layout zones. Days and hours are in {{tz}}. The latest hour arrives after it ends.",
+    "csv": {
+      "date": "Date",
+      "screen": "Screen",
+      "site": "Site",
+      "type": "Type",
+      "content": "Content",
+      "contentId": "Content ID",
+      "plays": "Plays",
+      "seconds": "Seconds on screen"
+    }
+  }
+}

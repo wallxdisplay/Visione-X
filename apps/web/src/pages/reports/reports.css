@@ -1,0 +1,122 @@
+.reports__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+.reports__filters > * {
+  min-width: 180px;
+  flex: 0 1 220px;
+}
+.reports__body {
+  display: grid;
+  gap: var(--space-4);
+}
+.reports__body--loading {
+  opacity: 0.6;
+  transition: opacity var(--transition-fast);
+}
+.reports__totals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-3);
+}
+.reports__stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.reports__stat strong {
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+}
+.wxp-table .reports__num,
+.reports__num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.reports__charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--space-4);
+}
+.reports__bars {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-1);
+  max-height: 360px;
+  overflow-y: auto;
+}
+.reports__bars li {
+  display: grid;
+  grid-template-columns: 64px 1fr 64px;
+  align-items: center;
+  gap: var(--space-2);
+}
+.reports__bar-label,
+.reports__bar-value {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.reports__bar-value {
+  text-align: right;
+}
+.reports__bar {
+  display: block;
+  height: 12px;
+  min-width: 2px;
+  border-radius: 3px;
+  background: var(--color-primary);
+}
+.reports__hours {
+  display: grid;
+  grid-template-columns: repeat(24, 1fr);
+  align-items: end;
+  gap: 2px;
+  height: 160px;
+  padding-bottom: 18px;
+}
+.reports__hour {
+  position: relative;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+}
+.reports__hour span {
+  display: block;
+  width: 100%;
+  min-height: 1px;
+  border-radius: 2px 2px 0 0;
+  background: var(--color-data-teal);
+}
+.reports__hour small {
+  position: absolute;
+  bottom: -18px;
+  left: 0;
+  font-size: 11px;
+  color: var(--color-ink-muted);
+}
+.reports__note {
+  margin: 0;
+  font-size: 13px;
+}
+/* Grid items may shrink below their content, so wide tables scroll inside their card on phones. */
+.reports__body > *,
+.reports__charts > *,
+.reports__totals > * {
+  min-width: 0;
+}
+@media (max-width: 480px) {
+  .reports__totals {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .reports__charts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .reports__filters > * {
+    flex: 1 1 100%;
+  }
+}

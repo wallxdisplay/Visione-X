@@ -71,6 +71,7 @@ import {
   UpdateMemberRoleInput,
   UpdateOrgSettingsInput,
   UpsertSiteInput,
+  PlaybackReportInput,
   type PlatformRole,
 } from '@wallx-play/shared';
 import { setPlatformRole as setPlatformRoleSvc } from './admin/platformUsers';
@@ -96,6 +97,7 @@ import * as sensors from './sensors/sensors';
 import * as billing from './billing/billing';
 import * as plans from './billing/plans';
 import * as integrations from './integrations/dataSources';
+import * as reports from './reports/plays';
 import { BASE_OPTIONS, MAIL_SECRETS, WEATHER_SECRETS, enforceAppCheck } from './options';
 
 export function actorFrom(request: CallableRequest): Actor {
@@ -238,3 +240,6 @@ export const deleteDataSource = callable(DataSourceRefInput, integrations.delete
 export const geocodePlace = callable(GeocodeInput, integrations.geocodePlace, { secrets: WEATHER_SECRETS });
 export const testRssFeed = callable(TestRssInput, integrations.testRssFeed);
 export const previewDataSource = callable(DataSourceRefInput, integrations.previewDataSource, { secrets: WEATHER_SECRETS });
+
+// Reports (v1.1)
+export const playbackReport = callable(PlaybackReportInput, reports.playbackReport, { memory: '512MiB', timeoutSeconds: 120 });

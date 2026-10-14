@@ -45,6 +45,8 @@ class PlayerEngineTest {
     private var authHeaders = mutableListOf<String?>()
     private val queued = mutableListOf<String>()
     private val results = mutableListOf<String>()
+    private var playsCode = 200
+    private val playUploads = mutableListOf<String>()
 
     private val png = byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47, 1, 2, 3, 4, 5, 6, 7, 8)
     private val video = ByteArray(200_000) { (it % 251).toByte() }
@@ -72,6 +74,7 @@ class PlayerEngineTest {
                     )
                     path == "/api/v1/devices/manifest" -> json(200, manifest)
                     path == "/api/v1/devices/heartbeat" -> json(200, """{"ok":true}""")
+                    path == "/api/v1/devices/plays" -> json(playsCode, """{"ok":true,"stored":true}""").also { playUploads.add(request.body.readUtf8()) }
                     path == "/api/v1/devices/commands" -> json(200, """{"commands":[${queued.joinToString(",") { """{"id":"c-$it","type":"$it"}""" }}]}""").also { queued.clear() }
                     path == "/api/v1/devices/commands/result" -> json(200, """{"ok":true}""").also { results.add(request.body.readUtf8()) }
                     path.startsWith("/files/") -> files[path.removePrefix("/files/")]?.let {
@@ -102,6 +105,28 @@ class PlayerEngineTest {
     """.trimIndent()
 
     private fun engine() = PlayerEngine(context, server.url("/api/v1").toString().trimEnd('/'))
+
+    @Test
+    fun uploadsFinishedPlayHoursOnceAndRetriesWithTheSameBatch() = runBlocking {
+        val hour = 3_600_000L
+        var clock = 1_790_000_000_000L - Math.floorMod(1_790_000_000_000L, hour) + 10 * 60_000L
+        val engine = PlayerEngine(context, server.url("/api/v1").toString().trimEnd('/'), playClock = { clock })
+        engine.tick() // registers the box
+        engine.plays.end(engine.plays.start("media", "m1"))
+        engine.uploadPlays()
+        assertTrue("the hour is not finished yet", playUploads.isEmpty())
+
+        clock += hour
+        playsCode = 500
+        engine.uploadPlays()
+        playsCode = 200
+        engine.uploadPlays()
+        engine.uploadPlays()
+        assertEquals(2, playUploads.size)
+        val ids = playUploads.map { Regex("\"batchId\":\"([A-Za-z0-9]+)\"").find(it)!!.groupValues[1] }
+        assertEquals("the retry carries the same batch id", ids[0], ids[1])
+        assertTrue(playUploads[1].contains("\"id\":\"m1\"") && playUploads[1].contains("\"plays\":1"))
+    }
 
     @Test
     fun pairingThenAuthorizationThenVerifiedPlayback() = runBlocking {

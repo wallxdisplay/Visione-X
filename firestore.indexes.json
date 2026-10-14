@@ -130,6 +130,22 @@
         { "fieldPath": "status", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "playStats",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "screenId", "order": "ASCENDING" },
+        { "fieldPath": "date", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "playStats",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "siteId", "order": "ASCENDING" },
+        { "fieldPath": "date", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": [
@@ -226,6 +242,28 @@
         { "arrayConfig": "CONTAINS", "queryScope": "COLLECTION" },
         { "order": "DESCENDING", "queryScope": "COLLECTION_GROUP" }
       ]
+    },
+    {
+      "collectionGroup": "playStats",
+      "fieldPath": "expiresAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "playStats",
+      "fieldPath": "items",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "playStats",
+      "fieldPath": "hours",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "playBatches",
+      "fieldPath": "expiresAt",
+      "ttl": true,
+      "indexes": []
     }
   ]
 }

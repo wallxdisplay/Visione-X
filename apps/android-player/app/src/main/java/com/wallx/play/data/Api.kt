@@ -43,6 +43,14 @@ class Api(private val base: String, val http: OkHttpClient = defaultClient()) {
         )
     }
 
+    /** Proof-of-play counts of finished hours. */
+    suspend fun plays(auth: String, body: PlayUpload) {
+        request(
+            Request.Builder().url("$base/devices/plays").post(json.encodeToString(body).toRequestBody(jsonType)),
+            auth,
+        )
+    }
+
     suspend fun heartbeat(auth: String, body: Heartbeat) {
         request(
             Request.Builder().url("$base/devices/heartbeat").post(json.encodeToString(body).toRequestBody(jsonType)),
