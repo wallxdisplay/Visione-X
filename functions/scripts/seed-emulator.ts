@@ -14,12 +14,15 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import { paths, type UserProfileDoc } from '@wallx-play/shared';
 import { applyPlatformRole } from '../src/admin/platformUsers';
+import { staffMfa } from '../src/lib/authz';
 import type { Actor, Deps } from '../src/lib/context';
 import { reviewOrgSignup } from '../src/orgs/review';
 import { submitOrgSignup } from '../src/orgs/signup';
 import { seedPlatformData } from '../src/seed/seed';
 
 const PROJECT_ID = 'demo-wallx-play';
+// The emulators cannot do TOTP, so the seeded superadmin acts without a second factor.
+staffMfa.required = false;
 
 const TEST_USERS = [
   { email: 'superadmin@wallx-play.test', password: 'Test-Admin-2026!', role: 'superadmin' as const },

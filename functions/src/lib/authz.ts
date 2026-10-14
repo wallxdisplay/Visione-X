@@ -19,10 +19,27 @@ export function requireVerifiedEmail(actor: Actor): asserts actor is Actor & { e
   }
 }
 
+/**
+ * Platform staff must sign in with a second factor (TOTP, docs/DEVELOPMENT.md). Required on
+ * deployed functions; off in the emulators, which cannot do TOTP. Tests switch it to cover both.
+ */
+export const staffMfa = { required: process.env.FUNCTIONS_EMULATOR !== 'true' };
+
+/** Refuses a platform staff session that was not signed in with a second factor. */
+export function requireStaffSecondFactor(actor: Actor): void {
+  if (staffMfa.required && actor.platformRole && !actor.secondFactor) {
+    throw new HttpsError(
+      'permission-denied',
+      'WallX staff must use two-step verification. Set it up under Account security, then sign in again.',
+    );
+  }
+}
+
 export function requirePlatform(actor: Actor, permission: PlatformPermission): void {
   if (!hasPlatformPermission(actor.platformRole, permission)) {
     throw new HttpsError('permission-denied', 'You do not have permission for this action.');
   }
+  requireStaffSecondFactor(actor);
 }
 
 export async function getOrg(tx: Transaction, db: Firestore, orgId: string): Promise<OrgDoc> {

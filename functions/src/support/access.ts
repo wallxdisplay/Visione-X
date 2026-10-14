@@ -21,7 +21,7 @@ import {
   type SupportPerson,
 } from '@wallx-play/shared';
 import { auditedTransaction, platformAudit } from '../lib/audit';
-import { getMember, getOrg, requireOrgPermission, requirePlatform } from '../lib/authz';
+import { getMember, getOrg, requireOrgPermission, requirePlatform, requireStaffSecondFactor } from '../lib/authz';
 import type { Actor, Deps } from '../lib/context';
 import { notify } from '../lib/notify';
 import { setMembership } from '../lib/profiles';
@@ -129,6 +129,7 @@ export async function respondSupportRequest({ db, now }: Deps, actor: Actor, inp
 /** The customer (member.manage) or a superadmin ends access now. */
 export async function revokeSupportAccess({ db, now }: Deps, actor: Actor, input: z.infer<typeof SupportGrantRefInput>): Promise<void> {
   const staff = hasPlatformPermission(actor.platformRole, 'support.access.grant');
+  if (staff) requireStaffSecondFactor(actor);
   await auditedTransaction(db, [input.orgId], async (tx, audit) => {
     if (!staff) await requireOrgPermission(tx, db, actor, input.orgId, 'member.manage');
     await getOrg(tx, db, input.orgId);

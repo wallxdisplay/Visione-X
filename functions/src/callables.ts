@@ -78,6 +78,7 @@ import * as layouts from './content/layouts';
 import * as media from './content/media';
 import * as schedules from './content/schedules';
 import { getDeps } from './lib/admin';
+import { requireStaffSecondFactor } from './lib/authz';
 import type { Actor, Deps } from './lib/context';
 import * as members from './members/members';
 import * as roles from './members/roles';
@@ -103,12 +104,17 @@ export function actorFrom(request: CallableRequest): Actor {
   // Devices authenticate with custom tokens; they may never call user-facing functions.
   if (auth.token.type === 'device') throw new HttpsError('permission-denied', 'Not allowed for devices.');
   const role = auth.token.platformRole as unknown;
-  return {
+  const secondFactor = auth.token.firebase?.sign_in_second_factor as unknown;
+  const actor: Actor = {
     uid: auth.uid,
     email: typeof auth.token.email === 'string' ? auth.token.email.toLowerCase() : null,
     emailVerified: auth.token.email_verified === true,
     platformRole: PLATFORM_ROLES.includes(role as PlatformRole) ? (role as PlatformRole) : null,
+    secondFactor: typeof secondFactor === 'string' && secondFactor ? secondFactor : null,
   };
+  // A staff session without a second factor may call nothing, not even customer functions.
+  requireStaffSecondFactor(actor);
+  return actor;
 }
 
 function callable<S extends z.ZodTypeAny, R>(

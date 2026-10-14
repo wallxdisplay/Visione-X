@@ -5,6 +5,7 @@ import { Navigate, Outlet, useLocation } from 'react-router';
 import { OrgProvider, pickActiveOrg } from '../org/OrgProvider';
 import { NotAuthorized } from '../pages/NotAuthorized';
 import { useAuth } from './AuthProvider';
+import { SECURITY_PATH, staffMfaRequired } from './mfa';
 
 // Guards decide what to SHOW. They are not security: Firestore rules and Cloud Functions
 // enforce every permission on the server.
@@ -32,6 +33,16 @@ export function RequireUser({ children }: { children?: ReactNode }) {
     return <Navigate to={`/verify-email${nextParam(location.pathname, location.search)}`} replace />;
   }
   return children ?? <Outlet />;
+}
+
+/** WallX staff without a second factor in this session set one up (or sign in with it) first. */
+export function RequireStaffSecondFactor() {
+  const { platformRole, secondFactor } = useAuth();
+  const location = useLocation();
+  if (staffMfaRequired && platformRole && !secondFactor) {
+    return <Navigate to={`${SECURITY_PATH}${nextParam(location.pathname, location.search)}`} replace />;
+  }
+  return <Outlet />;
 }
 
 export function RequirePlatformStaff() {

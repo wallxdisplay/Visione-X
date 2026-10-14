@@ -4,7 +4,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import type { Actor, Deps } from '../../functions/src/lib/context';
 import type { Mail } from '../../functions/src/lib/email';
-import { authzClock } from '../../functions/src/lib/authz';
+import { authzClock, staffMfa } from '../../functions/src/lib/authz';
 import { seedPlatformData } from '../../functions/src/seed/seed';
 
 export const PROJECT_ID = 'demo-wallx-play';
@@ -21,6 +21,8 @@ export const outbox: Mail[] = [];
 export const deps: Deps = { db, auth, bucket, now: () => clock, mailer: async (mail) => (outbox.push(mail), true) };
 // Membership expiry (support access) follows the same fake clock.
 authzClock.now = () => clock;
+// Staff test actors sign in without a second factor; staffMfa.test.ts switches the check on.
+staffMfa.required = false;
 export const advance = (ms: number) => {
   clock += ms;
 };

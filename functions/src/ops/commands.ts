@@ -13,7 +13,7 @@ import {
 } from '@wallx-play/shared';
 import { userAudit } from '../content/media';
 import { auditedTransaction, platformAudit } from '../lib/audit';
-import { requireActiveOrgPermission, requireOrgPermission, requireSiteInScope } from '../lib/authz';
+import { requireActiveOrgPermission, requireOrgPermission, requireSiteInScope, requireStaffSecondFactor } from '../lib/authz';
 import type { Actor, Deps } from '../lib/context';
 import { readEntitlements, requireFeature } from '../lib/entitlements';
 
@@ -32,7 +32,8 @@ export async function sendScreenCommand(
   const ref = db.collection(paths.commands(input.orgId, input.screenId)).doc();
   await auditedTransaction(db, [input.orgId], async (tx, audit) => {
     const staff = hasPlatformPermission(actor.platformRole, 'device.command');
-    if (!staff) {
+    if (staff) requireStaffSecondFactor(actor);
+    else {
       const { member } = await requireActiveOrgPermission(tx, db, actor, input.orgId, 'screen.command');
       requireFeature(await readEntitlements(tx, db, input.orgId), 'screen.remoteCommands', 'Remote commands');
       requireSiteInScope(member, ((await tx.get(screenRef)).data() as ScreenDoc | undefined)?.siteId, 'this screen');

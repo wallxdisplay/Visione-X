@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
 import { createBrowserRouter, Outlet, type RouteObject } from 'react-router';
 import { AuthProvider } from './auth/AuthProvider';
-import { CustomerGate, RedirectIfSignedIn, RequirePlatformStaff, RequireUser } from './auth/guards';
+import { CustomerGate, RedirectIfSignedIn, RequirePlatformStaff, RequireStaffSecondFactor, RequireUser } from './auth/guards';
+import { SECURITY_PATH } from './auth/mfa';
 import { AcceptInvite } from './pages/AcceptInvite';
 import { AdminBilling } from './pages/admin/AdminBilling';
 import { AdminDevices } from './pages/admin/AdminDevices';
@@ -19,6 +20,7 @@ import { Approvals } from './pages/admin/Approvals';
 import { AuditLogs } from './pages/admin/AuditLogs';
 import { Orgs } from './pages/admin/Orgs';
 import { PlatformUsers } from './pages/admin/PlatformUsers';
+import { AccountSecurity } from './pages/auth/AccountSecurity';
 import { ForgotPassword } from './pages/auth/ForgotPassword';
 import { SignIn } from './pages/auth/SignIn';
 import { SignUp } from './pages/auth/SignUp';
@@ -105,33 +107,40 @@ export const router = createBrowserRouter([
       {
         element: <RequireUser />,
         children: [
-          { path: '/onboarding', element: <Onboarding /> },
-          { path: '/invite/:token', element: <AcceptInvite /> },
+          // Reachable before two-step verification is set up, so staff can set it up here.
+          { path: SECURITY_PATH, element: <AccountSecurity /> },
           {
-            path: '/admin',
-            element: <RequirePlatformStaff />,
+            element: <RequireStaffSecondFactor />,
             children: [
+              { path: '/onboarding', element: <Onboarding /> },
+              { path: '/invite/:token', element: <AcceptInvite /> },
               {
-                element: <AppShell nav={adminNav} variant="admin" />,
+                path: '/admin',
+                element: <RequirePlatformStaff />,
                 children: [
-                  ...navRoutes(adminNav, '/admin'),
-                  { path: '/admin/approvals/:requestId', element: <ApprovalReview /> },
-                  { path: '/admin/billing/:orgId', element: <OrgBilling /> },
+                  {
+                    element: <AppShell nav={adminNav} variant="admin" />,
+                    children: [
+                      ...navRoutes(adminNav, '/admin'),
+                      { path: '/admin/approvals/:requestId', element: <ApprovalReview /> },
+                      { path: '/admin/billing/:orgId', element: <OrgBilling /> },
+                    ],
+                  },
                 ],
               },
-            ],
-          },
-          {
-            path: '/',
-            element: <CustomerGate />,
-            children: [
               {
-                element: <AppShell nav={customerNav} variant="customer" />,
+                path: '/',
+                element: <CustomerGate />,
                 children: [
-                  ...navRoutes(customerNav, '/'),
-                  { path: '/studio/:layoutId', element: <StudioEditor /> },
-                  { path: '/playlists/:playlistId', element: <PlaylistEditor /> },
-                  { path: '/sensors/:sensorDeviceId', element: <SensorDetail /> },
+                  {
+                    element: <AppShell nav={customerNav} variant="customer" />,
+                    children: [
+                      ...navRoutes(customerNav, '/'),
+                      { path: '/studio/:layoutId', element: <StudioEditor /> },
+                      { path: '/playlists/:playlistId', element: <PlaylistEditor /> },
+                      { path: '/sensors/:sensorDeviceId', element: <SensorDetail /> },
+                    ],
+                  },
                 ],
               },
             ],

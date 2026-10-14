@@ -96,7 +96,25 @@ Remaining one-time steps (console):
    superadmin: `npx tsx functions/scripts/bootstrap.ts --project wallx-play --email <you>`
    (needs Google Cloud SDK and `gcloud auth application-default login`). It also creates plans
    and the feature catalog if they do not exist.
-5. Enable MFA for platform staff (Identity Platform) before onboarding real customers.
+5. **Two-step verification** (TOTP authenticator apps; mandatory for platform staff, optional
+   for customers under the key icon → Account security, `/account/security`). Deployed
+   functions refuse every callable from a staff account (`platformRole` claim) whose sign-in had
+   no second factor (`staffMfa` in `functions/src/lib/authz.ts`), and the web app sends such
+   staff to Account security before anything else. With the emulators it is off: the Auth
+   emulator cannot do TOTP. Roll out in this order so no superadmin is locked out:
+   1. Authentication → Settings → upgrade to **Firebase Authentication with Identity Platform**
+      (TOTP needs it; no SMS is used, so there is no per-message cost).
+   2. Turn TOTP on (same `gcloud auth application-default login` as step 4):
+      `npx tsx functions/scripts/mfa.ts --project wallx-play --enable`
+      (without `--enable` it only shows the current setting; phone/SMS settings are kept).
+   3. Build and deploy hosting. Each staff member opens `/account/security`, scans the QR code
+      with an authenticator app, enters the code, then signs out and back in with a code.
+   4. Deploy functions: from then on staff callables need the second factor. (Deploying both
+      together also works once step 2 is done; staff just set it up before using Super Admin.)
+   Lost phone: `npx tsx functions/scripts/mfa.ts --project wallx-play --reset <email>` removes
+   that account's authenticators and signs it out everywhere; the person then sets up a new one.
+   Firestore and Storage rules still check only the `platformRole` claim, so a staff password
+   alone still reads what those rules allow; callables (every change) need the second factor.
 6. In Google Cloud console → APIs & Services → Credentials, restrict the browser API key to the
    `wallx-play.web.app` / `wallx-play.firebaseapp.com` referrers.
 7. **App Check** (web app, reCAPTCHA Enterprise), rolled out in three steps:

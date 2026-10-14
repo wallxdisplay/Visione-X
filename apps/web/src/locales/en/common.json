@@ -261,7 +261,11 @@
       "emailInUse": "An account with this email already exists. Sign in instead.",
       "weakPassword": "Choose a stronger password.",
       "tooManyRequests": "Too many attempts. Wait a few minutes and try again.",
-      "popupClosed": "The sign-in window was closed before finishing."
+      "popupClosed": "The sign-in window was closed before finishing.",
+      "invalidCode": "That code is not right. Enter the current code from your authenticator app.",
+      "mfaSessionExpired": "Sign-in took too long. Go back and sign in again.",
+      "notEnabled": "This option is not turned on for WallX Play yet. Contact WallX support.",
+      "tooManyFactors": "This account already has the most authenticator apps allowed. Remove one first."
     }
   },
   "nav": {
@@ -318,7 +322,8 @@
     "adminBadge": "Super Admin",
     "backToApp": "Back to app",
     "signOut": "Sign out",
-    "switchOrg": "Switch organization"
+    "switchOrg": "Switch organization",
+    "security": "Account security"
   },
   "placeholder": {
     "title": "Coming in phase {{phase}}",
@@ -379,6 +384,44 @@
       "resend": "Resend email",
       "resent": "Verification email sent again.",
       "notYet": "Your email is not verified yet. Check your inbox and spam folder."
+    },
+    "mfa": {
+      "title": "Two-step verification",
+      "description": "After your password, sign-in asks for a 6-digit code from an authenticator app on your phone (Google Authenticator, Microsoft Authenticator and similar).",
+      "code": "6-digit code",
+      "defaultName": "Authenticator app",
+      "none": "Two-step verification is off for this account.",
+      "setUp": "Set up an authenticator app",
+      "addAnother": "Add another authenticator app",
+      "addedOn": "Added {{value, date}}",
+      "remove": "Remove",
+      "removeConfirm": "Yes, remove",
+      "removeLastStaff": "Without an authenticator app you cannot use Super Admin until you set up a new one.",
+      "enrolled": "Two-step verification is on. Sign-in will ask for a code from your authenticator app.",
+      "removed": "Authenticator app removed.",
+      "continue": "Continue",
+      "staffRequiredTitle": "Required for WallX staff",
+      "staffRequired": "Set up an authenticator app to use Super Admin and other WallX tools.",
+      "signInAgain": "Sign out and sign in again with a code from your authenticator app to continue.",
+      "recentLogin": "For your security, sign in again before changing two-step verification.",
+      "signInAgainAction": "Sign in again",
+      "emulator": "Development mode: the Firebase Auth emulator cannot use authenticator apps, so staff do not need two-step verification here.",
+      "setup": {
+        "scan": "Scan this QR code with your authenticator app.",
+        "enterCode": "Enter the 6-digit code the app shows.",
+        "qrAlt": "QR code to add WallX Play to an authenticator app",
+        "manual": "Cannot scan? Enter this key in the app:",
+        "name": "Name (optional)",
+        "nameHint": "Helps you tell apps apart, for example “Work phone”.",
+        "verify": "Verify and turn on"
+      },
+      "signIn": {
+        "title": "Enter your verification code",
+        "description": "Open your authenticator app and enter the 6-digit code for WallX Play.",
+        "which": "Authenticator app",
+        "action": "Verify",
+        "unsupported": "This account uses a kind of two-step verification this app does not support. Contact WallX support."
+      }
     }
   },
   "onboarding": {

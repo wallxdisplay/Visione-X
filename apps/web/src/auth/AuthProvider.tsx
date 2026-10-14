@@ -9,6 +9,8 @@ interface AuthState {
   /** True until the first auth state and claims are known. */
   loading: boolean;
   platformRole: PlatformRole | null;
+  /** Second factor this session signed in with ('totp'), or null. Staff need one (auth/mfa.ts). */
+  secondFactor: string | null;
   profile: UserProfileDoc | undefined;
   profileLoading: boolean;
   /** Re-reads the user (e.g. after email verification) and refreshes claims. */
@@ -21,24 +23,30 @@ const AuthContext = createContext<AuthState | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [platformRole, setPlatformRole] = useState<PlatformRole | null>(null);
+  const [secondFactor, setSecondFactor] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [, setVersion] = useState(0);
 
   const readClaims = useCallback(async (u: User | null, force = false) => {
     if (!u) {
       setPlatformRole(null);
+      setSecondFactor(null);
       return;
     }
     const token = await u.getIdTokenResult(force);
     const role = token.claims.platformRole as PlatformRole | undefined;
     setPlatformRole(role && PLATFORM_ROLES.includes(role) ? role : null);
+    setSecondFactor(token.signInSecondFactor);
   }, []);
 
   useEffect(
     () =>
       onAuthStateChanged(auth, async (u) => {
         setUser(u);
-        await readClaims(u).catch(() => setPlatformRole(null));
+        await readClaims(u).catch(() => {
+          setPlatformRole(null);
+          setSecondFactor(null);
+        });
         setLoading(false);
       }),
     [readClaims],
@@ -60,12 +68,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       loading,
       platformRole,
+      secondFactor,
       profile: profile.data,
       profileLoading: profile.loading,
       refresh,
       signOut: () => fbSignOut(auth),
     }),
-    [user, loading, platformRole, profile.data, profile.loading, refresh],
+    [user, loading, platformRole, secondFactor, profile.data, profile.loading, refresh],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

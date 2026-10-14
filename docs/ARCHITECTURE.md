@@ -68,7 +68,7 @@ WallX Play/
 ## 4. Identity, roles, permissions
 
 **Three principal types**
-1. **Users** (Firebase Auth, email/password + Google; MFA mandatory for platform staff).
+1. **Users** (Firebase Auth with Identity Platform, email/password + Google; two-step verification with an authenticator app (TOTP) mandatory for platform staff, optional for customers). Callables refuse staff tokens without `firebase.sign_in_second_factor` (production only; the Auth emulator has no TOTP), and the web app sends such staff to `/account/security` to set it up.
 2. **Devices** (Android players): Firebase Auth custom token with claims `{deviceId, orgId, type:"device"}` issued after pairing + authorization. Can read only their own manifest/commands, write only heartbeat/logs via API.
 3. **Sensor devices** (ESP32): no Firebase Auth; per-device API key (hashed) used only against `/api/v1/ingest`.
 
@@ -225,6 +225,7 @@ Platform overview · Organization approvals (approve/reject/request info) · Org
 
 ## 12. Security
 - Rules unit-tested with the emulator in CI; App Check on web; rate limits on public endpoints.
+- Platform staff sign in with a second factor (TOTP); every callable refuses a staff session without one. Firestore/Storage rules do not check it yet (staff reads rely on the `platformRole` claim alone).
 - Device and API keys hashed (shown once), rotate/revoke flows.
 - Audit logs: Functions-only append, hash chain, daily export to retention-locked bucket.
 - Support access issues a short-lived scoped token; never reveals passwords or unmasked secrets.

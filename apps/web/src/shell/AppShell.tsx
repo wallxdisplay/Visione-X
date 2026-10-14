@@ -1,8 +1,9 @@
-import { HelpCircle, LogOut, Menu, ShieldCheck } from 'lucide-react';
+import { HelpCircle, KeyRound, LogOut, Menu, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, NavLink, Outlet } from 'react-router';
 import { useAuth } from '../auth/AuthProvider';
+import { SECURITY_PATH } from '../auth/mfa';
 import { useOrg } from '../org/OrgProvider';
 import { BillingBanner } from './BillingBanner';
 import { EmergencyBanner } from './EmergencyBanner';
@@ -105,6 +106,9 @@ export function AppShell({ nav, variant }: { nav: NavGroup[]; variant: 'customer
             <span className="shell__user wxp-muted" title={user?.email ?? ''}>
               {user?.email}
             </span>
+            <Link to={SECURITY_PATH} className="shell__icon-btn" aria-label={t('shell.security')} title={t('shell.security')}>
+              <KeyRound size={18} />
+            </Link>
             <button
               type="button"
               className="shell__icon-btn"

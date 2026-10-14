@@ -21,6 +21,11 @@ const AUTH_ERRORS: Record<string, string> = {
   'auth/weak-password': 'errors.auth.weakPassword',
   'auth/too-many-requests': 'errors.auth.tooManyRequests',
   'auth/popup-closed-by-user': 'errors.auth.popupClosed',
+  'auth/invalid-verification-code': 'errors.auth.invalidCode',
+  'auth/invalid-multi-factor-session': 'errors.auth.mfaSessionExpired',
+  'auth/missing-multi-factor-session': 'errors.auth.mfaSessionExpired',
+  'auth/operation-not-allowed': 'errors.auth.notEnabled',
+  'auth/maximum-second-factor-count-exceeded': 'errors.auth.tooManyFactors',
   'auth/network-request-failed': 'errors.network',
 };
 

@@ -1,4 +1,12 @@
-import { GoogleAuthProvider, signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
+import { FirebaseError } from 'firebase/app';
+import {
+  getMultiFactorResolver,
+  GoogleAuthProvider,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  type MultiFactorError,
+  type MultiFactorResolver,
+} from 'firebase/auth';
 import { Alert, Button, TextField } from '@wallx-play/ui';
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -6,6 +14,7 @@ import { Link, useSearchParams } from 'react-router';
 import { errorMessage } from '../../lib/api';
 import { auth } from '../../lib/firebase';
 import { AuthLayout } from './AuthLayout';
+import { SecondFactorStep } from './SecondFactorStep';
 
 export function SignIn() {
   const { t } = useTranslation();
@@ -14,6 +23,8 @@ export function SignIn() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  /** Set when the account has two-step verification: the code step comes next. */
+  const [resolver, setResolver] = useState<MultiFactorResolver | null>(null);
   const qs = params.toString() ? `?${params.toString()}` : '';
 
   async function run(action: () => Promise<unknown>) {
@@ -22,7 +33,11 @@ export function SignIn() {
     try {
       await action(); // RedirectIfSignedIn navigates once auth state updates.
     } catch (err) {
-      setError(errorMessage(err));
+      if (err instanceof FirebaseError && err.code === 'auth/multi-factor-auth-required') {
+        setResolver(getMultiFactorResolver(auth, err as MultiFactorError));
+      } else {
+        setError(errorMessage(err));
+      }
     } finally {
       setBusy(false);
     }
@@ -32,6 +47,8 @@ export function SignIn() {
     e.preventDefault();
     void run(() => signInWithEmailAndPassword(auth, email.trim(), password));
   }
+
+  if (resolver) return <SecondFactorStep resolver={resolver} onCancel={() => setResolver(null)} />;
 
   return (
     <AuthLayout

@@ -304,6 +304,41 @@
   justify-content: center;
 }
 
+/* Two-step verification (account security) */
+.mfa__factors {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+.mfa__factor {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: var(--border-default);
+  border-radius: var(--radius-control);
+}
+.mfa__factor > span:first-child {
+  display: grid;
+  min-width: 0;
+}
+.mfa__confirm {
+  display: flex;
+  gap: var(--space-2);
+}
+.mfa__qr {
+  justify-self: center;
+  background: #fff; /* QR codes need a light quiet zone, also in dark mode */
+  border-radius: var(--radius-control);
+}
+.mfa__secret {
+  word-break: break-all;
+  user-select: all;
+}
+
 .onboarding__header {
   display: flex;
   justify-content: space-between;

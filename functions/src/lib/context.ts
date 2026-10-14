@@ -24,4 +24,6 @@ export interface Actor {
   email: string | null;
   emailVerified: boolean;
   platformRole: PlatformRole | null;
+  /** Second factor used for this sign-in ('totp', 'phone'), from the ID token; absent without one. */
+  secondFactor?: string | null;
 }
