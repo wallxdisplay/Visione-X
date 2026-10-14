@@ -2,6 +2,7 @@ import { HttpsError } from 'firebase-functions/v2/https';
 import type { z } from 'zod';
 import {
   paths,
+  PRODUCT_NAME,
   TRIAL_DAYS,
   TRIAL_PLAN_ID,
   billingState,
@@ -15,28 +16,61 @@ import {
 import { auditedTransaction } from '../lib/audit';
 import { getOrg, requirePlatform } from '../lib/authz';
 import type { Actor, Deps } from '../lib/context';
+import { APP_URL, sendMail } from '../lib/email';
 import { computeEntitlements } from '../lib/entitlements';
 import { summaryOf, trialSubscription } from '../billing/billing';
 import { fanOutOrgToProfiles, readMembers } from '../lib/profiles';
 
+/** The applicant's email for a signup decision (English; the message is the reviewer's own text). */
+export function signupDecisionMail(decision: 'approve' | 'reject' | 'request_info', orgName: string, message: string | undefined) {
+  const note = message ? `
+
+Message from WallX: ${message}` : '';
+  switch (decision) {
+    case 'approve':
+      return {
+        subject: `${orgName} is approved on ${PRODUCT_NAME}`,
+        text: `Good news: your organization ${orgName} is approved. Your free trial has started, so you can add screens and publish content now.${note}`,
+        action: { label: `Open ${PRODUCT_NAME}`, url: APP_URL },
+      };
+    case 'request_info':
+      return {
+        subject: `More information needed for ${orgName}`,
+        text: `WallX needs a little more information before approving ${orgName}.${note}
+
+Sign in to reply and resubmit your request.`,
+        action: { label: 'Reply', url: APP_URL },
+      };
+    case 'reject':
+      return {
+        subject: `Your ${PRODUCT_NAME} request for ${orgName}`,
+        text: `We could not approve ${orgName} on ${PRODUCT_NAME}.${note}
+
+If you think this is a mistake, reply to this email.`,
+      };
+  }
+}
 
 /** Super Admin decision on a pending organization: approve, reject or request information. */
 export async function reviewOrgSignup(
-  { db, now }: Deps,
+  deps: Deps,
   actor: Actor,
   input: z.infer<typeof ReviewOrgSignupInput>,
-): Promise<{ status: OrgStatus }> {
+): Promise<{ status: OrgStatus; emailed: boolean }> {
+  const { db, now } = deps;
   requirePlatform(actor, 'org.approve');
   const at = now();
   const requestRef = db.doc(paths.signupRequest(input.requestId));
   const pre = await requestRef.get();
   if (!pre.exists) throw new HttpsError('not-found', 'Request not found.');
   const orgId = (pre.data() as SignupRequestDoc).orgId;
+  let applicant = { email: '', orgName: '' };
 
-  return auditedTransaction(db, [orgId], async (tx, audit) => {
+  const result = await auditedTransaction(db, [orgId], async (tx, audit) => {
     const request = (await tx.get(requestRef)).data() as SignupRequestDoc;
     const org = await getOrg(tx, db, orgId);
     const members = await readMembers(tx, db, orgId);
+    applicant = { email: request.requesterEmail, orgName: org.name };
 
     const allowedFrom: Record<typeof input.decision, SignupRequestDoc['status'][]> = {
       approve: ['pending', 'info_requested'],
@@ -101,6 +135,10 @@ export async function reviewOrgSignup(
     });
     return { status: status.org };
   });
+  const emailed = applicant.email
+    ? await sendMail(deps, { to: [applicant.email], ...signupDecisionMail(input.decision, applicant.orgName, input.message) })
+    : false;
+  return { ...result, emailed };
 }
 
 /** Super Admin suspends an active org or reactivates a suspended one. */

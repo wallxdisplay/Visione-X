@@ -3,8 +3,8 @@ import { paths, type NotificationDoc, type NotificationType } from '@wallx-play/
 
 /**
  * Adds an in-app notification for everyone in the org. Stores type + params only; the web app
- * renders the text in the reader's language. (Email delivery arrives with the notification
- * engine in phase 6.)
+ * renders the text in the reader's language. Important types are also emailed to the members
+ * who handle them (notifications/emails.ts, a trigger on this collection).
  */
 export function notify(
   writer: Transaction | WriteBatch,

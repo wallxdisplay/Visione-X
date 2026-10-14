@@ -1,7 +1,7 @@
 import { logger } from 'firebase-functions/v2';
 import { onRequest } from 'firebase-functions/v2/https';
 import { getDeps } from '../lib/admin';
-import { BASE_OPTIONS } from '../options';
+import { BASE_OPTIONS, WEATHER_SECRETS } from '../options';
 import { handle } from './router';
 
 /**
@@ -9,7 +9,7 @@ import { handle } from './router';
  * Device endpoints authenticate with device credentials; later phases add ESP32 ingest and
  * billing webhooks, each with their own authentication.
  */
-export const api = onRequest({ ...BASE_OPTIONS, cors: false, memory: '256MiB' }, async (req, res) => {
+export const api = onRequest({ ...BASE_OPTIONS, cors: false, memory: '256MiB', secrets: WEATHER_SECRETS }, async (req, res) => {
   try {
     const result = await handle(getDeps(), {
       method: req.method,

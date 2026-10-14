@@ -14,6 +14,7 @@ export function OrgSettings() {
   const [name, setName] = useState('');
   const [timezone, setTimezone] = useState('Asia/Kolkata');
   const [requireApproval, setRequireApproval] = useState(false);
+  const [emailAlerts, setEmailAlerts] = useState(true);
   const [status, setStatus] = useState<{ tone: 'success' | 'danger'; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -22,6 +23,7 @@ export function OrgSettings() {
       setName(org.name);
       setTimezone(org.timezone);
       setRequireApproval(org.settings?.requirePublishApproval ?? false);
+      setEmailAlerts(org.settings?.emailNotifications ?? true);
     }
   }, [org]);
 
@@ -35,6 +37,7 @@ export function OrgSettings() {
         name,
         timezone,
         ...(approvalsInPlan ? { requirePublishApproval: requireApproval } : {}),
+        emailNotifications: emailAlerts,
       });
       setStatus({ tone: 'success', text: t('settings.saved') });
     } catch (err) {
@@ -80,6 +83,13 @@ export function OrgSettings() {
               <p className="wxp-field__hint">
                 {approvalsInPlan ? t('settings.requireApprovalHint') : t('settings.requireApprovalNotInPlan')}
               </p>
+            </div>
+            <div className="wxp-field">
+              <label className="checkbox-row">
+                <input type="checkbox" disabled={!editable} checked={emailAlerts} onChange={(e) => setEmailAlerts(e.target.checked)} />
+                {t('settings.emailNotifications')}
+              </label>
+              <p className="wxp-field__hint">{t('settings.emailNotificationsHint')}</p>
             </div>
             {editable ? (
               <div className="wxp-form__actions">

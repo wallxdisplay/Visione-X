@@ -210,6 +210,7 @@
 
 /* ---- weather and RSS widgets ---- */
 .r-weather {
+  position: relative;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -291,4 +292,16 @@
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
+}
+
+/* Provider credit required next to weather data ("Google Maps": 12–16px, not translated). */
+.r-weather__credit {
+  position: absolute;
+  right: 2cqw;
+  bottom: 1.5cqh;
+  font-family: Roboto, Inter, system-ui, sans-serif;
+  font-weight: 400;
+  font-size: clamp(12px, 4cqh, 16px);
+  line-height: 1;
+  white-space: nowrap;
 }

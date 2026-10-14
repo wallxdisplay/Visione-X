@@ -133,11 +133,41 @@ uploads that never finished after a day (giving back the storage they reserved).
 `functions/src/ops/retention.ts`. Alerts, approvals, emergencies, payments and the audit log are
 kept. Sensor readings expire through the TTL policy (plan `retentionDays`).
 
-**Weather provider (phase 6).** Open-Meteo's free API is non-commercial, so production needs a
-commercial key. Once purchased: `npx firebase functions:secrets:set OPEN_METEO_API_KEY --project prod`,
-then bind the secret to the `api`, `previewDataSource` and `geocodePlace` functions (add
-`secrets: ['OPEN_METEO_API_KEY']` to their options) and redeploy. Until then weather sources show
-"not configured" in production; RSS works without any key.
+**Weather provider (Google Weather API).** Production uses Google's Weather API and Geocoding API
+(about 10,000 free calls per API each month, then about US$0.15 per 1,000; results are cached per
+place). One-time setup in the `wallx-play` Google Cloud project:
+
+1. APIs & Services → Library: enable **Weather API** and **Geocoding API** (billing must be on).
+2. APIs & Services → Credentials → Create credentials → API key. Edit it: Application restrictions
+   *None* (it is used only by Cloud Functions), API restrictions *Restrict key* → Weather API and
+   Geocoding API. Copy the key.
+3. `npx firebase functions:secrets:set GOOGLE_MAPS_API_KEY --project wallx-play` and paste it.
+4. Add `WEATHER_PROVIDER=google` to `functions/.env.wallx-play` and redeploy functions. That line
+   binds the secret to `api`, `previewDataSource` and `geocodePlace` (`WEATHER_SECRETS` in
+   `functions/src/options.ts`); binding a secret that does not exist yet would fail the deploy.
+
+Google's terms require the text "Google Maps" next to the weather (exactly that, never
+translated): the web renderer, the player and the Integrations page show it automatically. Without
+the key, weather falls back to a commercial Open-Meteo key (`OPEN_METEO_API_KEY`) if one is set,
+and otherwise shows "not configured" in production. RSS works without any key.
+
+**Email (Gmail / Google Workspace).** Invitations, signup decisions and alert emails are sent
+from a Gmail mailbox over SMTP (`functions/src/lib/email.ts`; about 500 recipients a day on @gmail.com, about 2,000 on Workspace):
+
+1. Turn on 2-Step Verification for the sender account (wallxdisplay@gmail.com; a Workspace address works the same way) at
+   myaccount.google.com → Security. (A Workspace admin may need to allow it for the domain.)
+2. myaccount.google.com → Security → App passwords: create one named "WallX Play". Copy the
+   16-character password.
+3. `npx firebase functions:secrets:set SMTP_PASSWORD --project wallx-play` and paste it.
+4. Add `SMTP_USER=wallxdisplay@gmail.com` to `functions/.env.wallx-play` and redeploy functions.
+   That line binds the secret to `inviteMember`, `reviewOrgSignup` and `emailNotification`
+   (`MAIL_SECRETS` in `functions/src/options.ts`).
+
+Until then nothing is emailed (a log line says so) and everything else works: invitation links can
+be copied from Team. Alert emails go to the members whose permission handles the alert (screen
+offline → screen.manage, sensor alerts → sensor.manage, billing → billing.manage, …); support staff
+and site-scoped members are skipped. Organizations can turn alert emails off in Settings. A
+`mailLog` doc per notification (30-day TTL) makes sure a retried trigger never sends twice.
 
 Secrets (Razorpay key secret, webhook secret, provider keys) go into Secret Manager via
 `npx firebase functions:secrets:set NAME` — never into `.env` files that the web app reads.

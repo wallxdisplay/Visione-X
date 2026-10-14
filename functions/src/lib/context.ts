@@ -2,6 +2,7 @@ import type { Auth } from 'firebase-admin/auth';
 import type { Firestore } from 'firebase-admin/firestore';
 import type { Bucket } from '@google-cloud/storage';
 import type { PlatformRole } from '@wallx-play/shared';
+import type { Mail } from './email';
 
 /** Injected into every service so tests can pass emulator-backed clients and a fixed clock. */
 export interface Deps {
@@ -14,6 +15,8 @@ export interface Deps {
   fetch?: typeof fetch;
   /** DNS lookup used by the SSRF guard; tests pass a fake. Defaults to node:dns. */
   lookup?: (host: string) => Promise<string[]>;
+  /** Outgoing email; tests pass a fake. Defaults to Gmail SMTP (lib/email.ts). */
+  mailer?: (mail: Mail) => Promise<boolean>;
 }
 
 export interface Actor {

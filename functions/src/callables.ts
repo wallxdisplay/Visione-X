@@ -95,7 +95,7 @@ import * as sensors from './sensors/sensors';
 import * as billing from './billing/billing';
 import * as plans from './billing/plans';
 import * as integrations from './integrations/dataSources';
-import { BASE_OPTIONS, ENFORCE_APP_CHECK } from './options';
+import { BASE_OPTIONS, ENFORCE_APP_CHECK, MAIL_SECRETS, WEATHER_SECRETS } from './options';
 
 export function actorFrom(request: CallableRequest): Actor {
   const auth = request.auth;
@@ -114,7 +114,7 @@ export function actorFrom(request: CallableRequest): Actor {
 function callable<S extends z.ZodTypeAny, R>(
   schema: S,
   handler: (deps: Deps, actor: Actor, input: z.infer<S>) => Promise<R>,
-  options: { memory?: '256MiB' | '512MiB' | '1GiB'; timeoutSeconds?: number } = {},
+  options: { memory?: '256MiB' | '512MiB' | '1GiB'; timeoutSeconds?: number; secrets?: string[] } = {},
 ) {
   return onCall({ ...BASE_OPTIONS, memory: '256MiB', enforceAppCheck: ENFORCE_APP_CHECK, ...options }, async (request) => {
     // Monitor mode: count calls that would be refused once App Check is enforced.
@@ -138,12 +138,12 @@ function callable<S extends z.ZodTypeAny, R>(
 
 export const submitOrgSignup = callable(SubmitOrgSignupInput, signup.submitOrgSignup);
 export const resubmitOrgSignup = callable(ResubmitOrgSignupInput, signup.resubmitOrgSignup);
-export const reviewOrgSignup = callable(ReviewOrgSignupInput, reviewSvc);
+export const reviewOrgSignup = callable(ReviewOrgSignupInput, reviewSvc, { secrets: MAIL_SECRETS });
 export const setOrgStatus = callable(SetOrgStatusInput, setOrgStatusSvc);
 export const updateOrgSettings = callable(UpdateOrgSettingsInput, settings.updateOrgSettings);
 export const upsertSite = callable(UpsertSiteInput, settings.upsertSite);
 export const deleteSite = callable(DeleteSiteInput, settings.deleteSite);
-export const inviteMember = callable(InviteMemberInput, members.inviteMember);
+export const inviteMember = callable(InviteMemberInput, members.inviteMember, { secrets: MAIL_SECRETS });
 export const acceptInvite = callable(AcceptInviteInput, members.acceptInvite);
 export const revokeInvite = callable(RevokeInviteInput, members.revokeInvite);
 export const updateMemberRole = callable(UpdateMemberRoleInput, members.updateMemberRole);
@@ -226,6 +226,6 @@ export const migrateSubscriptions = callable(z.object({}), billing.migrateSubscr
 // Integrations (phase 6): weather and RSS data sources.
 export const saveDataSource = callable(SaveDataSourceInput, integrations.saveDataSource);
 export const deleteDataSource = callable(DataSourceRefInput, integrations.deleteDataSource);
-export const geocodePlace = callable(GeocodeInput, integrations.geocodePlace);
+export const geocodePlace = callable(GeocodeInput, integrations.geocodePlace, { secrets: WEATHER_SECRETS });
 export const testRssFeed = callable(TestRssInput, integrations.testRssFeed);
-export const previewDataSource = callable(DataSourceRefInput, integrations.previewDataSource);
+export const previewDataSource = callable(DataSourceRefInput, integrations.previewDataSource, { secrets: WEATHER_SECRETS });

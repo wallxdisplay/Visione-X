@@ -183,13 +183,15 @@ function WeatherDialog({ source, onClose }: { source: DataSourceDoc | null; onCl
   const [name, setName] = useState(initial?.name ?? '');
   const [query, setQuery] = useState(initial?.config.placeName ?? '');
   const [results, setResults] = useState<GeocodeResult[] | null>(null);
+  const [credit, setCredit] = useState<string | null>(null);
   const [place, setPlace] = useState(initial ? initial.config : null);
 
   async function search() {
     setBusy(true);
     setError(null);
     try {
-      const r = await call<{ results: GeocodeResult[] }>('geocodePlace', { orgId, query });
+      const r = await call<{ results: GeocodeResult[]; attribution?: string }>('geocodePlace', { orgId, query });
+      setCredit(r.attribution ?? null);
       setResults(r.results);
     } catch (err) {
       setError(errorMessage(err));
@@ -259,7 +261,12 @@ function WeatherDialog({ source, onClose }: { source: DataSourceDoc | null; onCl
       ) : null}
       {place ? <p>{t('integrations.selectedPlace', { place: place.placeName })}</p> : null}
       <TextField label={t('integrations.name')} hint={t('integrations.nameHint')} required maxLength={80} value={name} onChange={(e) => setName(e.target.value)} />
-      <p className="wxp-muted">{t('integrations.weatherCredit')}</p>
+      {/* The provider's required credit ("Google Maps" is never translated). */}
+      {credit ? (
+        <p className="wxp-muted">
+          {t('integrations.weatherSource')} <span translate="no">{credit}</span>
+        </p>
+      ) : null}
     </Dialog>
   );
 }

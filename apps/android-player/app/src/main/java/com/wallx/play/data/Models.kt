@@ -240,7 +240,13 @@ data class WeatherNow(
 data class WeatherDay(val date: String, val code: Int, val maxC: Double, val minC: Double)
 
 @Serializable
-data class WeatherData(val current: WeatherNow, val daily: List<WeatherDay> = emptyList(), val timezone: String = "UTC")
+/** [attribution]: the credit the weather provider requires next to its data (e.g. "Google Maps"). */
+data class WeatherData(
+    val current: WeatherNow,
+    val daily: List<WeatherDay> = emptyList(),
+    val timezone: String = "UTC",
+    val attribution: String? = null,
+)
 
 @Serializable
 data class RssItem(val title: String, val publishedAt: Long? = null)

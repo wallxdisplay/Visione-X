@@ -68,6 +68,7 @@ export const UpdateOrgSettingsInput = z.object({
   name: trimmed(2, 120),
   timezone: Timezone,
   requirePublishApproval: z.boolean().optional(),
+  emailNotifications: z.boolean().optional(),
 });
 
 export const InvitableRole = z.enum(SYSTEM_ORG_ROLES);

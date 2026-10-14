@@ -25,6 +25,13 @@ function Placeholder({ text, style }: { text: string; style: CSSProperties }) {
   );
 }
 
+/** True for light text colours (the credit then uses white, else Google's dark grey). */
+function isLight(color: unknown): boolean {
+  const hex = typeof color === 'string' && /^#[0-9a-f]{6}$/i.test(color) ? color : '#FFFFFF';
+  const n = parseInt(hex.slice(1), 16);
+  return 0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255) > 140;
+}
+
 export function WeatherView({ widget, orgId }: { widget: W<'weather'>; orgId?: string }) {
   const { t } = useTranslation();
   const { value } = useDataSourceValue(orgId, widget.dataSourceId);
@@ -64,6 +71,12 @@ export function WeatherView({ widget, orgId }: { widget: W<'weather'>; orgId?: s
         </div>
       ) : null}
       {!value!.ok ? <div className="r-sensor__note">{t('render.data.stale')}</div> : null}
+      {/* Required by the provider's terms; never translated ("Google Maps" exactly). */}
+      {w.attribution ? (
+        <div className="r-weather__credit" translate="no" style={{ color: isLight(style.color) ? '#FFFFFF' : '#1F1F1F' }}>
+          {w.attribution}
+        </div>
+      ) : null}
     </div>
   );
 }

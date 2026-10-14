@@ -155,7 +155,7 @@ Rules: deny-by-default; anything money-, limit-, status- or audit-related is Fun
 - **Emergency override.** An emergency lives in `emergencies/{id}`. It targets all screens, sites, groups or individual screens. Starting one requires typing `START EMERGENCY`. The content is a playlist or a full-screen message, with an optional duration. The emergency is compiled into every affected manifest and republished on start and end. Timed emergencies are expired by the monitor.
 - **Remote commands.** Commands are stored in `screens/{id}/commands/{cmd}`: refresh, restart_app, reboot (falls back to restart without Device Owner), clear_cache, screenshot (JPEG in Storage at `orgs/{org}/screenshots/...`) and diagnostics. `/me` carries `commandsPending`. The player fetches pending commands from `GET /devices/commands` and reports the outcome to `POST /devices/commands/result`. Unanswered commands expire after 30 minutes.
 - **Monitoring.** The scheduled function `monitorScreens` runs every 5 minutes (Asia/Kolkata). It raises one `screen_offline` notification per outage; the heartbeat clears it and sends `screen_online`. It also expires emergencies and stale commands.
-- **Notifications.** Notifications are stored in-app at `notifications/{id}` with a per-user `readBy`. Email delivery comes later.
+- **Notifications.** Notifications are stored in-app at `notifications/{id}` with a per-user `readBy`. Important types are also emailed (Gmail SMTP) to the members who handle them; see §13.
 
 ## 8. Android player (core requirement)
 **Recommended stack:** Kotlin, Jetpack Compose for layout zones, **Media3/ExoPlayer** (hardware decoding) for video/audio, Coil for images, WebView only for web-page/HTML widgets, WorkManager + OkHttp for resumable downloads, Room for local manifest/state, Firebase Auth + FCM SDKs.
@@ -231,7 +231,7 @@ Platform overview · Organization approvals (approve/reject/request info) · Org
 - Data retention: a daily job removes expired pairing codes and invitations, old remote commands, screenshots and notifications, and abandoned uploads (releasing their reserved storage); customer history and the audit log are kept (docs/DEVELOPMENT.md).
 
 ## 13. Notifications
-Firestore-triggered event bus → in-app (`notifications`) + email provider (adapter) + FCM web push later. Events: org approval status, screen offline, publish failed, sensor threshold/stale, limit approaching, payment failed, invoice issued, emergency triggered, security alert.
+In-app (`notifications`) + email: the `emailNotification` trigger on `orgs/{orgId}/notifications/{id}` emails action-needed types to active members holding the matching permission (not support staff or site-scoped members), once per notification (`mailLog`, 30-day TTL), unless the org turns it off (`settings.emailNotifications`). Invitations and signup decisions are emailed directly by their callables. Sender: Gmail / Workspace SMTP (`SMTP_USER` + secret `SMTP_PASSWORD`). FCM web push later. Events: org approval status, screen offline, publish failed, sensor threshold/stale, limit approaching, payment failed, invoice issued, emergency triggered, security alert.
 
 ## 14. Internationalization
 `i18next` with JSON resources in `apps/web/src/locales/{en,hi,mr}`; all UI strings externalized. The language is chosen per browser (top bar) and Hindi/Marathi load on demand; missing keys fall back to English, and a unit test keeps every translation's keys and `{{placeholders}}` identical to English. Dates follow the language (`en-IN`, `hi-IN`, `mr-IN` with Latin digits). Screen content (clock, weather, charts) follows the player and stays English. Hindi and Marathi are machine-drafted and need review by native speakers. Fonts: Inter (UI) + Noto Sans Devanagari (content, bundled on player).
@@ -272,7 +272,7 @@ Feature catalogue stores `releaseStatus` (what WallX has built) separately from 
 | 3 ✅ (real-box test pending) | Android player | Pairing/authorization, boot-start, kiosk, HDMI playback, offline cache, rendering |
 | 4 ✅ | Publish & monitor | Manifest compiler, sync, bulk publish, emergency override, heartbeats, remote commands, diagnostics |
 | 5 ✅ (real ESP32 test pending) | Sensors | Ingest API, ESP32 firmware sample, channels, thresholds, data widgets, alerts |
-| 6 ✅ | Billing & beyond | Manual billing ✅; weather + RSS integrations ✅ (weather needs a commercial Open-Meteo key in prod); player auto-updates ✅; Help & Support, support access, platform settings ✅; Hindi/Marathi (draft, review pending) ✅; reseller groundwork ✅; retention + audit export ✅. Later: Razorpay, email notifications (provider to choose). Invoices: external app |
+| 6 ✅ | Billing & beyond | Manual billing ✅; weather + RSS integrations ✅; player auto-updates ✅; Help & Support, support access, platform settings ✅; Hindi/Marathi (draft, review pending) ✅; reseller groundwork ✅; retention + audit export ✅. Google Weather (needs the API key secret) and Gmail emails (need the App Password secret) ✅. Later: Razorpay. Invoices: external app |
 
 ## 18. Still to confirm
 1. Real Firebase **project ID** and **Hosting site ID** (display name "WallX Play" is not the ID), and whether Firestore already exists (region).

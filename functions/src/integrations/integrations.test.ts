@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Deps } from '../lib/context';
 import { FetchError, isPrivateAddress, safeGet } from './net';
 import { FeedError, parseFeed, plainText } from './rss';
-import { normalizeWeather } from './weather';
+import { googleConditionToWmo, normalizeGoogleWeather, normalizeWeather } from './weather';
 
 describe('isPrivateAddress', () => {
   it('blocks internal ranges and allows public ones', () => {
@@ -93,7 +93,46 @@ describe('normalizeWeather', () => {
         { date: '2026-10-13', code: 61, maxC: 30, minC: 23 },
       ],
       timezone: 'Asia/Kolkata',
+      attribution: 'Open-Meteo.com',
     });
     expect(() => normalizeWeather({ current: {} })).toThrow(FetchError);
+  });
+});
+
+describe('Google weather', () => {
+  const current = {
+    isDaytime: true,
+    weatherCondition: { type: 'SCATTERED_SHOWERS' },
+    temperature: { degrees: 28.4, unit: 'CELSIUS' },
+    feelsLikeTemperature: { degrees: 31, unit: 'CELSIUS' },
+    relativeHumidity: 78,
+    wind: { speed: { value: 12, unit: 'KILOMETERS_PER_HOUR' } },
+    timeZone: { id: 'Asia/Kolkata' },
+  };
+  const days = {
+    forecastDays: [
+      { displayDate: { year: 2026, month: 10, day: 14 }, daytimeForecast: { weatherCondition: { type: 'THUNDERSTORM' } }, maxTemperature: { degrees: 31 }, minTemperature: { degrees: 22 } },
+      { displayDate: { year: 2026, month: 10, day: 15 }, daytimeForecast: { weatherCondition: { type: 'SOME_NEW_TYPE' } }, maxTemperature: { degrees: 30 }, minTemperature: { degrees: 21 } },
+    ],
+  };
+
+  it('maps Google data to our weather shape with the required attribution', () => {
+    expect(normalizeGoogleWeather(current, days)).toEqual({
+      current: { tempC: 28.4, feelsLikeC: 31, humidity: 78, windKmh: 12, code: 80, isDay: true },
+      daily: [
+        { date: '2026-10-14', code: 95, maxC: 31, minC: 22 },
+        { date: '2026-10-15', code: 3, maxC: 30, minC: 21 },
+      ],
+      timezone: 'Asia/Kolkata',
+      attribution: 'Google Maps',
+    });
+  });
+
+  it('maps every condition family, including types Google may add later', () => {
+    expect(googleConditionToWmo('CLEAR')).toBe(0);
+    expect(googleConditionToWmo('HEAVY_SNOW_STORM')).toBe(75);
+    expect(googleConditionToWmo('FUTURE_THUNDER_THING')).toBe(95);
+    expect(googleConditionToWmo(undefined)).toBe(3);
+    expect(() => normalizeGoogleWeather({ weatherCondition: { type: 'CLEAR' } }, {})).toThrow();
   });
 });

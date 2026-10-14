@@ -34,7 +34,7 @@ class DataWidgetsTest {
           {"id":"w1","type":"weather","name":"Pune","ok":true,"error":null,"fetchedAt":1,
            "weather":{"current":{"tempC":29.6,"feelsLikeC":33.2,"humidity":70,"windKmh":9,"code":3,"isDay":true},
                       "daily":[{"date":"2026-10-12","code":3,"maxC":31,"minC":24},{"date":"2026-10-13","code":61,"maxC":29,"minC":23}],
-                      "timezone":"Asia/Kolkata"},"rss":null},
+                      "timezone":"Asia/Kolkata","attribution":"Google Maps"},"rss":null},
           {"id":"r1","type":"rss","name":"News","ok":true,"error":null,"fetchedAt":1,"weather":null,
            "rss":{"feedTitle":"Pune Today","items":[{"title":"Metro extension opens","publishedAt":null},{"title":"Rain likely","publishedAt":null}]}}
         ]}
@@ -72,6 +72,7 @@ class DataWidgetsTest {
         compose.onNodeWithText("Pune").assertExists()
         compose.onNodeWithText("30°").assertExists()
         compose.onNodeWithText("Cloudy · Feels like 33°").assertExists()
+        compose.onNodeWithText("Google Maps").assertExists() // provider credit required next to the data
     }
 
     @Test

@@ -72,6 +72,8 @@ export const paths = {
   dataSource: (orgId: string, id: string) => `orgs/${orgId}/dataSources/${id}`,
   /** Server-only cache of provider results (weather by place, RSS by feed). */
   providerCache: (key: string) => `providerCache/${key}`,
+  /** One doc per email sent for a notification, so trigger retries never send twice (TTL). */
+  mailLog: (key: string) => `mailLog/${key}`,
   alerts: (orgId: string) => `orgs/${orgId}/alerts`,
   alert: (orgId: string, id: string) => `orgs/${orgId}/alerts/${id}`,
   signupRequests: () => 'signupRequests',

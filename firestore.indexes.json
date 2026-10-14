@@ -152,6 +152,12 @@
       "indexes": []
     },
     {
+      "collectionGroup": "mailLog",
+      "fieldPath": "expiresAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
       "collectionGroup": "billing",
       "fieldPath": "nextTransitionAt",
       "indexes": [

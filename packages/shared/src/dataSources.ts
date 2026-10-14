@@ -57,6 +57,8 @@ export interface WeatherData {
   /** Today first. */
   daily: Array<{ date: string; code: number; maxC: number; minC: number }>;
   timezone: string;
+  /** Credit the provider requires next to the data ("Google Maps", "Open-Meteo.com"); shown on screens. */
+  attribution?: string | null;
 }
 
 export interface RssItem {

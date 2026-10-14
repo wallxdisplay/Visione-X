@@ -4,6 +4,7 @@ import { HttpsError } from 'firebase-functions/v2/https';
 import type { z } from 'zod';
 import {
   INVITE_TTL_DAYS,
+  PRODUCT_NAME,
   paths,
   withinLimit,
   type AcceptInviteInput,
@@ -24,6 +25,7 @@ import {
   requireVerifiedEmail,
 } from '../lib/authz';
 import type { Actor, Deps } from '../lib/context';
+import { APP_URL, sendMail } from '../lib/email';
 import { readEntitlements } from '../lib/entitlements';
 import { setMembership } from '../lib/profiles';
 import { resolveRole } from './roles';
@@ -54,10 +56,11 @@ function userAudit(actor: Actor) {
  * hash is stored. Email delivery is added with the notification engine.
  */
 export async function inviteMember(
-  { db, now }: Deps,
+  deps: Deps,
   actor: Actor,
   input: z.infer<typeof InviteMemberInput>,
-): Promise<{ inviteId: string; token: string; expiresAt: number }> {
+): Promise<{ inviteId: string; token: string; expiresAt: number; emailed: boolean }> {
+  const { db, now } = deps;
   const at = now();
   const token = randomBytes(32).toString('base64url');
   const tokenHash = hashToken(token);
@@ -65,10 +68,13 @@ export async function inviteMember(
   const expiresAt = at + INVITE_TTL_DAYS * DAY_MS;
   // Direct service callers may omit it (the callable schema defaults it to all sites).
   const siteScope = input.siteScope ?? [];
+  let orgName = '';
 
   await auditedTransaction(db, [input.orgId], async (tx, audit) => {
     const me = await requireOrgPermission(tx, db, actor, input.orgId, 'member.manage');
-    requireOrgActive(await getOrg(tx, db, input.orgId));
+    const org = await getOrg(tx, db, input.orgId);
+    requireOrgActive(org);
+    orgName = org.name;
     if (input.role === 'owner' && me.role !== 'owner') {
       throw new HttpsError('permission-denied', 'Only owners can invite another owner.');
     }
@@ -123,7 +129,17 @@ export async function inviteMember(
     });
   });
 
-  return { inviteId: inviteRef.id, token, expiresAt };
+  // The link still works when email is not set up; the inviter can copy it from Team.
+  const emailed = await sendMail(deps, {
+    to: [input.email],
+    subject: `You're invited to ${orgName} on ${PRODUCT_NAME}`,
+    text: `${actor.email ?? 'A colleague'} invited you to join ${orgName} on ${PRODUCT_NAME}, the digital signage platform by WallX.
+
+Sign in or create an account with this email address (${input.email}) to accept. The invitation expires in ${INVITE_TTL_DAYS} days.`,
+    action: { label: 'Accept invitation', url: `${APP_URL}/invite/${token}` },
+    ...(actor.email ? { replyTo: actor.email } : {}),
+  });
+  return { inviteId: inviteRef.id, token, expiresAt, emailed };
 }
 
 export async function acceptInvite(

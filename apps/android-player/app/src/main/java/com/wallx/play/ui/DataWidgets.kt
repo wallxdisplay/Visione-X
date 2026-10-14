@@ -111,6 +111,17 @@ fun WeatherWidget(widget: JsonObject, ctx: RenderContext) {
             }
             if (!v.ok) StaleNote(text = stringResource(R.string.data_stale), size = sp((h * 0.08f).atMost(w * 0.06f)))
         }
+        // Provider credit required by its terms ("Google Maps": 12–16 sp, white or #1F1F1F, never translated).
+        weather.attribution?.let { credit ->
+            val light = text.red * 0.299f + text.green * 0.587f + text.blue * 0.114f > 0.55f
+            Text(
+                credit,
+                Modifier.align(Alignment.BottomEnd).padding(end = w * 0.02f, bottom = h * 0.015f),
+                color = if (light) Color.White else Color(0xFF1F1F1F),
+                fontSize = sp((h * 0.04f).coerceIn(12.dp, 16.dp)),
+                maxLines = 1,
+            )
+        }
     }
 }
 

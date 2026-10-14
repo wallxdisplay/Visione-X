@@ -26,7 +26,7 @@
     "places": "Matching places",
     "noPlaces": "No place found. Try another spelling or a nearby city.",
     "selectedPlace": "Selected: {{place}}",
-    "weatherCredit": "Weather data by Open-Meteo.com.",
+    "weatherSource": "Weather and place data:",
     "feedUrl": "Feed address",
     "feedHint": "The RSS or Atom address of a news site or blog (often ends in /rss or /feed).",
     "maxItems": "Headlines to show",

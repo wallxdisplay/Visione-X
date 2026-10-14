@@ -43,6 +43,8 @@ export interface OrgDoc {
 export interface OrgSettings {
   /** Publishing by members without content.approve becomes an approval request. */
   requirePublishApproval?: boolean;
+  /** Email important alerts (screen offline, sensor alerts, billing…) to the members who handle them. Default on. */
+  emailNotifications?: boolean;
 }
 
 /** orgs/{orgId}/members/{uid}; `permissions` is denormalized so rules can check it. */

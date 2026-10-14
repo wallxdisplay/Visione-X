@@ -3,6 +3,7 @@ import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import type { Actor, Deps } from '../../functions/src/lib/context';
+import type { Mail } from '../../functions/src/lib/email';
 import { authzClock } from '../../functions/src/lib/authz';
 import { seedPlatformData } from '../../functions/src/seed/seed';
 
@@ -15,7 +16,9 @@ export const auth = getAuth(app);
 export const bucket = getStorage(app).bucket(BUCKET);
 
 let clock = Date.UTC(2026, 9, 1, 9, 0, 0);
-export const deps: Deps = { db, auth, bucket, now: () => clock };
+/** Emails "sent" during a test (cleared by resetEmulator). */
+export const outbox: Mail[] = [];
+export const deps: Deps = { db, auth, bucket, now: () => clock, mailer: async (mail) => (outbox.push(mail), true) };
 // Membership expiry (support access) follows the same fake clock.
 authzClock.now = () => clock;
 export const advance = (ms: number) => {
@@ -29,6 +32,7 @@ export async function resetEmulator() {
     method: 'DELETE',
   });
   await seedPlatformData(db, { overwrite: true });
+  outbox.length = 0;
 }
 
 export function user(uid: string, overrides: Partial<Actor> = {}): Actor {

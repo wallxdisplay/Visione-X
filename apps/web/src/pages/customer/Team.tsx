@@ -65,6 +65,7 @@ export function Team() {
   /** Select value: a system role or "custom:<roleId>". */
   const [role, setRole] = useState<string>('editor');
   const [link, setLink] = useState<string | null>(null);
+  const [emailedTo, setEmailedTo] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [removing, setRemoving] = useState<MemberDoc | null>(null);
@@ -100,8 +101,9 @@ export function Team() {
 
   async function sendInvite() {
     await run(async () => {
-      const res = await call<{ token: string }>('inviteMember', { orgId, email, ...parseRoleValue(role), siteScope: role === 'owner' ? [] : siteScope });
+      const res = await call<{ token: string; emailed?: boolean }>('inviteMember', { orgId, email, ...parseRoleValue(role), siteScope: role === 'owner' ? [] : siteScope });
       setLink(`${window.location.origin}/invite/${res.token}`);
+      setEmailedTo(res.emailed ? email : null);
     });
   }
 
@@ -110,6 +112,7 @@ export function Team() {
     setEmail('');
     setSiteScope([]);
     setLink(null);
+    setEmailedTo(null);
     setError(null);
   }
 
@@ -263,6 +266,7 @@ export function Team() {
           <>
             <Alert tone="success" title={t('team.inviteCreated')}>
               {t('team.inviteLinkHint')}
+              {emailedTo ? <> {t('team.inviteEmailed', { email: emailedTo })}</> : null}
             </Alert>
             <TextField label={t('team.inviteLink')} readOnly value={link} onFocus={(e) => e.target.select()} />
             <div>

@@ -28,7 +28,7 @@ import { requireActiveOrgPermission, requireOrgPermission } from '../lib/authz';
 import type { Actor, Deps } from '../lib/context';
 import { readEntitlements, requireFeature } from '../lib/entitlements';
 import { fetchRss, getDataSourceValue, providerMessage } from './cache';
-import { geocode } from './weather';
+import { geocode, weatherAttribution } from './weather';
 
 const FEATURE = { weather: 'widget.weather', rss: 'widget.rss' } as const;
 const LABEL = { weather: 'Weather', rss: 'RSS feeds' } as const;
@@ -96,14 +96,14 @@ export async function deleteDataSource({ db, now }: Deps, actor: Actor, input: z
 }
 
 /** Place search for weather data sources. */
-export async function geocodePlace(deps: Deps, actor: Actor, input: z.infer<typeof GeocodeInput>): Promise<{ results: GeocodeResult[] }> {
+export async function geocodePlace(deps: Deps, actor: Actor, input: z.infer<typeof GeocodeInput>): Promise<{ results: GeocodeResult[]; attribution: string }> {
   const { db } = deps;
   await db.runTransaction(async (tx) => {
     await requireActiveOrgPermission(tx, db, actor, input.orgId, 'integration.manage');
     requireFeature(await readEntitlements(tx, db, input.orgId), 'widget.weather', 'Weather');
   });
   try {
-    return { results: await geocode(deps, input.query) };
+    return { results: await geocode(deps, input.query), attribution: weatherAttribution() };
   } catch (err) {
     throw new HttpsError('unavailable', providerMessage(err));
   }

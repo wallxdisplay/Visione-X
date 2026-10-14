@@ -42,6 +42,7 @@ export async function updateOrgSettings(
       ...(input.requirePublishApproval !== undefined
         ? { 'settings.requirePublishApproval': input.requirePublishApproval }
         : {}),
+      ...(input.emailNotifications !== undefined ? { 'settings.emailNotifications': input.emailNotifications } : {}),
       updatedAt: at,
     });
     fanOutOrgToProfiles(tx, db, members, { id: org.id, name: input.name, status: org.status }, at);
@@ -57,6 +58,10 @@ export async function updateOrgSettings(
         requirePublishApproval: {
           before: org.settings?.requirePublishApproval ?? false,
           after: input.requirePublishApproval ?? org.settings?.requirePublishApproval ?? false,
+        },
+        emailNotifications: {
+          before: org.settings?.emailNotifications ?? true,
+          after: input.emailNotifications ?? org.settings?.emailNotifications ?? true,
         },
       },
     });
