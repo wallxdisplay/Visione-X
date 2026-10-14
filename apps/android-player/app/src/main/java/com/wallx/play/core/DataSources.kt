@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /**
- * Weather / RSS values for the playing manifest, refreshed from /devices/data every
+ * Weather / RSS / air quality values for the playing manifest, refreshed from /devices/data every
  * POLL_SEC. The server fetches and caches providers; when the network is down the last values
  * stay on screen.
  */
@@ -20,7 +20,7 @@ class DataStore {
         val previous = _values.value
         _values.value = res.sources.associate { v ->
             val keep = previous[v.id]
-            v.id to if (v.weather == null && v.rss == null && keep != null) keep.copy(ok = false, error = v.error) else v
+            v.id to if (v.weather == null && v.rss == null && v.airQuality == null && keep != null) keep.copy(ok = false, error = v.error) else v
         }
     }
 

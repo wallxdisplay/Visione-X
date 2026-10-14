@@ -34,7 +34,7 @@ data class Manifest(
     val assets: List<Asset>,
     /** Sensor channels the content shows; values come from /devices/live (phase 5). */
     val liveChannels: List<LiveChannel> = emptyList(),
-    /** Weather / RSS data sources the content shows; values come from /devices/data (phase 6). */
+    /** Weather / RSS / air quality data sources the content shows; values come from /devices/data (phase 6). */
     val dataSources: List<ManifestDataSource> = emptyList(),
     /** Clockwise degrees to rotate the whole output (0, 90, 180, 270): portrait walls on landscape HDMI. */
     val rotation: Int = 0,
@@ -254,6 +254,27 @@ data class RssItem(val title: String, val publishedAt: Long? = null)
 @Serializable
 data class RssData(val feedTitle: String = "", val items: List<RssItem> = emptyList())
 
+/** [display]: the score as Google says to show it; [color]: band colour "#RRGGBB"; [dominantPollutant]: e.g. "PM2.5". */
+@Serializable
+data class AirQualityIndex(
+    val code: String,
+    val name: String = "",
+    val aqi: Double,
+    val display: String = "",
+    val category: String = "",
+    val color: String? = null,
+    val dominantPollutant: String? = null,
+)
+
+@Serializable
+/** [attribution]: the credit the provider requires next to its data ("Google Maps"). */
+data class AirQualityData(
+    val index: AirQualityIndex,
+    val regionCode: String? = null,
+    val measuredAt: String? = null,
+    val attribution: String? = null,
+)
+
 @Serializable
 data class DataSourceValue(
     val id: String,
@@ -264,6 +285,7 @@ data class DataSourceValue(
     val fetchedAt: Long? = null,
     val weather: WeatherData? = null,
     val rss: RssData? = null,
+    val airQuality: AirQualityData? = null,
 )
 
 @Serializable

@@ -23,7 +23,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-/** /devices/data parsing, weather mapping (same cases as live.test.ts) and data widgets. */
+/** /devices/data parsing, weather mapping (same cases as live.test.ts) and data widgets (weather, RSS, air quality). */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
 class DataWidgetsTest {
@@ -36,7 +36,10 @@ class DataWidgetsTest {
                       "daily":[{"date":"2026-10-12","code":3,"maxC":31,"minC":24},{"date":"2026-10-13","code":61,"maxC":29,"minC":23}],
                       "timezone":"Asia/Kolkata","attribution":"Google Maps"},"rss":null},
           {"id":"r1","type":"rss","name":"News","ok":true,"error":null,"fetchedAt":1,"weather":null,
-           "rss":{"feedTitle":"Pune Today","items":[{"title":"Metro extension opens","publishedAt":null},{"title":"Rain likely","publishedAt":null}]}}
+           "rss":{"feedTitle":"Pune Today","items":[{"title":"Metro extension opens","publishedAt":null},{"title":"Rain likely","publishedAt":null}]}},
+          {"id":"a1","type":"air_quality","name":"Pune air","ok":true,"error":null,"fetchedAt":1,"weather":null,"rss":null,
+           "airQuality":{"index":{"code":"ind_cpcb","name":"NAQI (IN)","aqi":112,"display":"112","category":"Moderate air quality","color":"#FFFF00","dominantPollutant":"PM10"},
+                         "regionCode":"in","measuredAt":"2026-10-14T05:00:00Z","attribution":"Google Maps"}}
         ]}
     """.trimIndent()
 
@@ -73,6 +76,31 @@ class DataWidgetsTest {
         compose.onNodeWithText("30°").assertExists()
         compose.onNodeWithText("Cloudy · Feels like 33°").assertExists()
         compose.onNodeWithText("Google Maps").assertExists() // provider credit required next to the data
+    }
+
+    @Test
+    fun rendersAirQualityWithTheRequiredCredit() {
+        val store = DataStore().apply { apply(json.decodeFromString<DeviceDataResponse>(response)) }
+        compose.setContent {
+            Box(Modifier.size(500.dp, 300.dp)) { WidgetView(widget("""{"type":"aqi","dataSourceId":"a1","layout":"detailed","style":{}}"""), ctx(store)) }
+        }
+        compose.onNodeWithText("Pune air").assertExists()
+        compose.onNodeWithText("112").assertExists()
+        compose.onNodeWithText("AQI").assertExists()
+        compose.onNodeWithText("Moderate air quality").assertExists()
+        compose.onNodeWithText("Main pollutant PM10 · NAQI (IN)").assertExists()
+        compose.onNodeWithText("Google Maps").assertExists() // provider credit required next to the data
+    }
+
+    @Test
+    fun keepsLastAirQualityWhenTheServerOnlyHasAnError() {
+        val store = DataStore()
+        store.apply(json.decodeFromString<DeviceDataResponse>(response))
+        store.apply(json.decodeFromString<DeviceDataResponse>("""{"sources":[{"id":"a1","type":"air_quality","ok":false,"error":"down"}]}"""))
+        val a1 = store.values.value["a1"]!!
+        assertFalse(a1.ok)
+        assertEquals("ind_cpcb", a1.airQuality!!.index.code)
+        assertEquals(112.0, a1.airQuality!!.index.aqi, 0.0)
     }
 
     @Test

@@ -1,6 +1,6 @@
 /**
- * Data sources (weather places, RSS feeds) per organization, and their values for previews
- * (web) and screens (GET /api/v1/devices/data).
+ * Data sources (weather and air quality places, RSS feeds) per organization, and their values
+ * for previews (web) and screens (GET /api/v1/devices/data).
  */
 import { HttpsError } from 'firebase-functions/v2/https';
 import type { z } from 'zod';
@@ -30,8 +30,9 @@ import { readEntitlements, requireFeature } from '../lib/entitlements';
 import { fetchRss, getDataSourceValue, providerMessage } from './cache';
 import { geocode, weatherAttribution } from './weather';
 
-const FEATURE = { weather: 'widget.weather', rss: 'widget.rss' } as const;
-const LABEL = { weather: 'Weather', rss: 'RSS feeds' } as const;
+// Air quality is part of the weather feature (same provider and place search).
+const FEATURE = { weather: 'widget.weather', rss: 'widget.rss', air_quality: 'widget.weather' } as const;
+const LABEL = { weather: 'Weather', rss: 'RSS feeds', air_quality: 'Air quality' } as const;
 
 export async function saveDataSource({ db, now }: Deps, actor: Actor, input: z.infer<typeof SaveDataSourceInput>): Promise<{ dataSourceId: string }> {
   const at = now();
@@ -95,7 +96,7 @@ export async function deleteDataSource({ db, now }: Deps, actor: Actor, input: z
   });
 }
 
-/** Place search for weather data sources. */
+/** Place search for weather and air quality data sources. */
 export async function geocodePlace(deps: Deps, actor: Actor, input: z.infer<typeof GeocodeInput>): Promise<{ results: GeocodeResult[]; attribution: string }> {
   const { db } = deps;
   await db.runTransaction(async (tx) => {

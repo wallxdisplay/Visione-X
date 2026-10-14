@@ -1,7 +1,7 @@
 import { Alert, Button, Dialog, EmptyState, PageHeader, StatusChip, TextField } from '@wallx-play/ui';
 import { weatherCondition, weatherIcon } from '@wallx-play/layout-spec';
 import { RSS_MAX_ITEMS, type DataSourceDoc, type GeocodeResult, type RssData } from '@wallx-play/shared';
-import { CloudSun, Plug, Rss } from 'lucide-react';
+import { CloudSun, Plug, Rss, Wind } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDataSources, useDataSourceValue } from '../../content/dataSources';
@@ -11,9 +11,9 @@ import type { WithId } from '../../lib/hooks';
 import { useOrg } from '../../org/OrgProvider';
 import './integrations.css';
 
-type Editing = { kind: 'weather' | 'rss'; source: DataSourceDoc | null } | null;
+type Editing = { kind: DataSourceDoc['type']; source: DataSourceDoc | null } | null;
 
-/** Weather places and RSS feeds that widgets can show. */
+/** Weather and air quality places, and RSS feeds, that widgets can show. */
 export function Integrations() {
   const { t } = useTranslation();
   const { orgId, can, entitlements } = useOrg();
@@ -65,6 +65,11 @@ export function Integrations() {
                   <CloudSun size={15} aria-hidden /> {t('integrations.addWeather')}
                 </Button>
               ) : null}
+              {weatherOn ? (
+                <Button onClick={() => setEditing({ kind: 'air_quality', source: null })}>
+                  <Wind size={15} aria-hidden /> {t('integrations.addAir')}
+                </Button>
+              ) : null}
               {rssOn ? (
                 <Button onClick={() => setEditing({ kind: 'rss', source: null })}>
                   <Rss size={15} aria-hidden /> {t('integrations.addRss')}
@@ -96,7 +101,7 @@ export function Integrations() {
                   <td>{s.name}</td>
                   <td>{t(`integrations.types.${s.type}`)}</td>
                   <td className="wxp-muted integrations__details">
-                    {s.type === 'weather' ? `${s.config.placeName} (${s.config.latitude.toFixed(2)}, ${s.config.longitude.toFixed(2)})` : s.config.url}
+                    {s.type === 'rss' ? s.config.url : `${s.config.placeName} (${s.config.latitude.toFixed(2)}, ${s.config.longitude.toFixed(2)})`}
                   </td>
                   <td>
                     {s.lastFetch ? (
@@ -131,7 +136,7 @@ export function Integrations() {
       )}
       <p className="wxp-muted integrations__hint">{t('integrations.howTo')}</p>
 
-      {editing?.kind === 'weather' ? <WeatherDialog source={editing.source} onClose={() => setEditing(null)} /> : null}
+      {editing?.kind === 'weather' || editing?.kind === 'air_quality' ? <PlaceDialog kind={editing.kind} source={editing.source} onClose={() => setEditing(null)} /> : null}
       {editing?.kind === 'rss' ? <RssDialog source={editing.source} onClose={() => setEditing(null)} /> : null}
       {previewing ? <PreviewDialog source={previewing} onClose={() => setPreviewing(null)} /> : null}
       <Dialog
@@ -176,9 +181,11 @@ function useSave(onClose: () => void) {
   return { error, setError, busy, setBusy, save, orgId };
 }
 
-function WeatherDialog({ source, onClose }: { source: DataSourceDoc | null; onClose: () => void }) {
+/** A weather or air quality place, found with the place search. */
+function PlaceDialog({ kind, source, onClose }: { kind: 'weather' | 'air_quality'; source: DataSourceDoc | null; onClose: () => void }) {
   const { t } = useTranslation();
-  const initial = source?.type === 'weather' ? source : null;
+  const initial = source && source.type !== 'rss' && source.type === kind ? source : null;
+  const air = kind === 'air_quality';
   const { error, setError, busy, setBusy, save, orgId } = useSave(onClose);
   const [name, setName] = useState(initial?.name ?? '');
   const [query, setQuery] = useState(initial?.config.placeName ?? '');
@@ -203,7 +210,7 @@ function WeatherDialog({ source, onClose }: { source: DataSourceDoc | null; onCl
   return (
     <Dialog
       open
-      title={source ? t('integrations.editWeather') : t('integrations.addWeather')}
+      title={air ? t(source ? 'integrations.editAir' : 'integrations.addAir') : t(source ? 'integrations.editWeather' : 'integrations.addWeather')}
       onClose={onClose}
       footer={
         <>
@@ -211,7 +218,7 @@ function WeatherDialog({ source, onClose }: { source: DataSourceDoc | null; onCl
           <Button
             variant="primary"
             disabled={busy || !place || !name.trim()}
-            onClick={() => place && void save({ ...(source ? { dataSourceId: source.id } : {}), name, type: 'weather', config: place })}
+            onClick={() => place && void save({ ...(source ? { dataSourceId: source.id } : {}), name, type: kind, config: place })}
           >
             {t('common.save')}
           </Button>
@@ -264,7 +271,7 @@ function WeatherDialog({ source, onClose }: { source: DataSourceDoc | null; onCl
       {/* The provider's required credit ("Google Maps" is never translated). */}
       {credit ? (
         <p className="wxp-muted">
-          {t('integrations.weatherSource')} <span translate="no">{credit}</span>
+          {t(air ? 'integrations.placeSource' : 'integrations.weatherSource')} <span translate="no">{credit}</span>
         </p>
       ) : null}
     </Dialog>
@@ -367,6 +374,24 @@ function PreviewDialog({ source, onClose }: { source: DataSourceDoc; onClose: ()
               </li>
             ))}
           </ul>
+        </div>
+      ) : null}
+      {value?.airQuality ? (
+        <div className="integrations__weather">
+          <p className="integrations__now">
+            {value.airQuality.index.color ? <span className="integrations__swatch" style={{ background: value.airQuality.index.color }} aria-hidden /> : null}
+            <strong>{t('integrations.aqiValue', { aqi: value.airQuality.index.display })}</strong> {value.airQuality.index.category}
+          </p>
+          <p className="wxp-muted">
+            {[value.airQuality.index.dominantPollutant ? t('render.aqi.pollutant', { p: value.airQuality.index.dominantPollutant }) : null, value.airQuality.index.name]
+              .filter(Boolean)
+              .join(' · ')}
+          </p>
+          {value.airQuality.attribution ? (
+            <p className="wxp-muted">
+              {t('integrations.airSource')} <span translate="no">{value.airQuality.attribution}</span>
+            </p>
+          ) : null}
         </div>
       ) : null}
       {value?.rss ? (

@@ -223,7 +223,7 @@ export const setFeatureRelease = callable(SetFeatureReleaseInput, plans.setFeatu
 export const setEntitlementOverrides = callable(SetEntitlementOverridesInput, plans.setEntitlementOverrides);
 export const migrateSubscriptions = callable(z.object({}), billing.migrateSubscriptions);
 
-// Integrations (phase 6): weather and RSS data sources.
+// Integrations (phase 6): weather, RSS and air quality data sources.
 export const saveDataSource = callable(SaveDataSourceInput, integrations.saveDataSource);
 export const deleteDataSource = callable(DataSourceRefInput, integrations.deleteDataSource);
 export const geocodePlace = callable(GeocodeInput, integrations.geocodePlace, { secrets: WEATHER_SECRETS });

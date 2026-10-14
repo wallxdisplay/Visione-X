@@ -208,7 +208,7 @@
   font-size: min(8cqh, 6cqw);
 }
 
-/* ---- weather and RSS widgets ---- */
+/* ---- weather, RSS and air quality widgets ---- */
 .r-weather {
   position: relative;
   display: flex;
@@ -294,7 +294,7 @@
   -webkit-box-orient: vertical;
 }
 
-/* Provider credit required next to weather data ("Google Maps": 12–16px, not translated). */
+/* Provider credit required next to weather and air quality data ("Google Maps": 12–16px, not translated). */
 .r-weather__credit {
   position: absolute;
   right: 2cqw;
@@ -304,4 +304,64 @@
   font-size: clamp(12px, 4cqh, 16px);
   line-height: 1;
   white-space: nowrap;
+}
+
+.r-aqi {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3cqh;
+  padding: 5cqh 5cqw;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-align: center;
+}
+.r-aqi__place {
+  max-width: 100%;
+  font-size: min(10cqh, 7cqw);
+  font-weight: 600;
+  opacity: 0.8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.r-aqi__score {
+  display: flex;
+  align-items: baseline;
+  gap: 2cqw;
+  line-height: 1;
+}
+.r-aqi__swatch {
+  align-self: center;
+  width: min(9cqh, 6cqw);
+  height: min(9cqh, 6cqw);
+  border-radius: 50%;
+}
+.r-aqi__value {
+  font-size: min(36cqh, 24cqw);
+  font-weight: 700;
+}
+.r-aqi--detailed .r-aqi__value {
+  font-size: min(28cqh, 20cqw);
+}
+.r-aqi__unit {
+  font-size: min(10cqh, 7cqw);
+  font-weight: 600;
+  opacity: 0.8;
+}
+.r-aqi__category {
+  max-width: 100%;
+  padding: 0.15em 0.7em;
+  border-radius: 999px;
+  font-size: min(9cqh, 6cqw);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.r-aqi__meta {
+  font-size: min(8cqh, 5.5cqw);
+  opacity: 0.85;
 }

@@ -193,7 +193,7 @@
     "layout.multiZone": "Multi-zone layouts",
     "layout.templates": "Layout templates",
     "widget.core": "Core widgets",
-    "widget.weather": "Weather widget",
+    "widget.weather": "Weather and air quality widgets",
     "widget.rss": "RSS widget",
     "content.approvals": "Content approvals",
     "sensor.esp32": "ESP32 sensors",

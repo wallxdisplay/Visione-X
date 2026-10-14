@@ -35,7 +35,7 @@ export const ENFORCE_APP_CHECK = process.env.APP_CHECK_ENFORCE === 'true';
  * fails. After `npx firebase functions:secrets:set NAME`, the matching switch goes into
  * functions/.env.wallx-play and functions are redeployed (docs/DEVELOPMENT.md).
  *  - SMTP_USER=<sender address>  → SMTP_PASSWORD is mounted for functions that send email.
- *  - WEATHER_PROVIDER=google      → GOOGLE_MAPS_API_KEY is mounted for weather functions.
+ *  - WEATHER_PROVIDER=google      → GOOGLE_MAPS_API_KEY is mounted for weather and air quality functions.
  */
 export const MAIL_SECRETS: string[] = process.env.SMTP_USER?.trim() ? ['SMTP_PASSWORD'] : [];
 export const WEATHER_SECRETS: string[] = process.env.WEATHER_PROVIDER === 'google' ? ['GOOGLE_MAPS_API_KEY'] : [];

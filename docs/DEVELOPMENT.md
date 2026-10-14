@@ -151,6 +151,19 @@ translated): the web renderer, the player and the Integrations page show it auto
 the key, weather falls back to a commercial Open-Meteo key (`OPEN_METEO_API_KEY`) if one is set,
 and otherwise shows "not configured" in production. RSS works without any key.
 
+**Air quality (Google Air Quality API).** Air quality widgets use the same key and secret as weather
+(`GOOGLE_MAPS_API_KEY`, bound by `WEATHER_PROVIDER=google`); there is no free fallback, so without
+the key air quality shows "not configured", also in the emulator. They ask for India's NAQI (CPCB)
+and fall back to Google's Universal AQI elsewhere. Results are cached 30 minutes per place (Google
+updates hourly); see the Air Quality API pricing page for the per-call price. One-time setup:
+
+1. APIs & Services → Library: enable **Air Quality API** in the `wallx-play` project.
+2. APIs & Services → Credentials → the existing weather key ("WallX Play weather") → API
+   restrictions: tick **Air Quality API** next to Weather API and Geocoding API, and save. No new
+   secret and no redeploy are needed for the key itself; deploy functions with this release.
+
+The "Google Maps" credit rule above applies to air quality too and is shown the same way.
+
 **Email (Gmail / Google Workspace).** Invitations, signup decisions and alert emails are sent
 from a Gmail mailbox over SMTP (`functions/src/lib/email.ts`; about 500 recipients a day on @gmail.com, about 2,000 on Workspace):
 

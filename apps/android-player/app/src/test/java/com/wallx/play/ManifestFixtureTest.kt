@@ -22,12 +22,12 @@ class ManifestFixtureTest {
         assertEquals(7, m.version)
         assertEquals(listOf("media", "widget", "widget", "empty"), m.layouts[0].zones.map { it.content.kind() })
         assertEquals("दिवाली ऑफर – 30% off", m.layouts[0].zones[2].content["widget"]!!.let { (it as kotlinx.serialization.json.JsonObject).str("text") })
-        assertEquals(listOf("media", "layout", "widget"), m.playlists[0].items.map { it.content.kind() })
+        assertEquals(listOf("media", "layout", "widget", "widget"), m.playlists[0].items.map { it.content.kind() })
         assertEquals(listOf(1, 2, 3, 4, 5), m.schedules[0].daysOfWeek)
         assertEquals("video/mp4", m.assets[1].mimeType)
         assertEquals(null, m.emergency)
         assertEquals(listOf("sensor1/temp"), m.liveChannels.map { it.key })
         assertEquals(60, m.liveChannels[0].historyMinutes)
-        assertEquals(listOf("ds1" to "weather"), m.dataSources.map { it.id to it.type })
+        assertEquals(listOf("ds1" to "weather", "ds2" to "air_quality"), m.dataSources.map { it.id to it.type })
     }
 }

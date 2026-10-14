@@ -4,9 +4,11 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { DataSourceChoice } from './widgetSources';
 
-type DataWidget = Extract<Widget, { type: 'weather' | 'rss' }>;
+type DataWidget = Extract<Widget, { type: 'weather' | 'rss' | 'aqi' }>;
 
-/** Properties of the weather and RSS widgets. */
+const SOURCE_LABEL = { weather: 'dataWidgets.place', rss: 'dataWidgets.feed', aqi: 'dataWidgets.airPlace' } as const;
+
+/** Properties of the weather, RSS and air quality widgets. */
 export function DataWidgetEditor({
   widget,
   sources,
@@ -26,7 +28,7 @@ export function DataWidgetEditor({
   return (
     <>
       <SelectField
-        label={widget.type === 'weather' ? t('dataWidgets.place') : t('dataWidgets.feed')}
+        label={t(SOURCE_LABEL[widget.type])}
         disabled={readOnly}
         error={known ? undefined : t('dataWidgets.missing')}
         options={known ? options : [{ value: widget.dataSourceId, label: t('dataWidgets.missing') }, ...options]}
@@ -40,6 +42,14 @@ export function DataWidgetEditor({
           options={(['current', 'forecast'] as const).map((v) => ({ value: v, label: t(`dataWidgets.layouts.${v}`) }))}
           value={widget.layout}
           onChange={(e) => onChange({ ...widget, layout: e.target.value as 'current' | 'forecast' })}
+        />
+      ) : widget.type === 'aqi' ? (
+        <SelectField
+          label={t('dataWidgets.show')}
+          disabled={readOnly}
+          options={(['compact', 'detailed'] as const).map((v) => ({ value: v, label: t(`dataWidgets.aqiLayouts.${v}`) }))}
+          value={widget.layout}
+          onChange={(e) => onChange({ ...widget, layout: e.target.value as 'compact' | 'detailed' })}
         />
       ) : (
         <>

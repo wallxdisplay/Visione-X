@@ -6,12 +6,16 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -46,7 +50,7 @@ import java.util.Locale
 import kotlin.math.roundToInt
 
 /**
- * Weather and RSS widgets — native counterpart of apps/web/src/render/DataWidgets.tsx.
+ * Weather, RSS and air quality widgets — native counterpart of apps/web/src/render/DataWidgets.tsx.
  * Values come from /devices/data via RenderContext.data; sizes are fractions of the zone.
  */
 
@@ -111,17 +115,74 @@ fun WeatherWidget(widget: JsonObject, ctx: RenderContext) {
             }
             if (!v.ok) StaleNote(text = stringResource(R.string.data_stale), size = sp((h * 0.08f).atMost(w * 0.06f)))
         }
-        // Provider credit required by its terms ("Google Maps": 12–16 sp, white or #1F1F1F, never translated).
-        weather.attribution?.let { credit ->
-            val light = text.red * 0.299f + text.green * 0.587f + text.blue * 0.114f > 0.55f
-            Text(
-                credit,
-                Modifier.align(Alignment.BottomEnd).padding(end = w * 0.02f, bottom = h * 0.015f),
-                color = if (light) Color.White else Color(0xFF1F1F1F),
-                fontSize = sp((h * 0.04f).coerceIn(12.dp, 16.dp)),
-                maxLines = 1,
-            )
+        Credit(weather.attribution, text, h, w)
+    }
+}
+
+private fun Color.isLight() = red * 0.299f + green * 0.587f + blue * 0.114f > 0.55f
+
+/** Provider credit required by its terms ("Google Maps": 12–16 sp, white or #1F1F1F, never translated). */
+@Composable
+private fun BoxScope.Credit(credit: String?, text: Color, h: Dp, w: Dp) {
+    if (credit == null) return
+    Text(
+        credit,
+        Modifier.align(Alignment.BottomEnd).padding(end = w * 0.02f, bottom = h * 0.015f),
+        color = if (text.isLight()) Color.White else Color(0xFF1F1F1F),
+        fontSize = with(LocalDensity.current) { (h * 0.04f).coerceIn(12.dp, 16.dp).toSp() },
+        maxLines = 1,
+    )
+}
+
+/** Air quality: score and category (in the band colour), plus the dominant pollutant and index when detailed. */
+@Composable
+fun AqiWidget(widget: JsonObject, ctx: RenderContext) {
+    val style = widget["style"] as? JsonObject
+    val text = Color(parseColor(style?.str("color"), android.graphics.Color.WHITE))
+    val bg = Color(parseColor(style?.str("background"), android.graphics.Color.TRANSPARENT))
+    val values by ctx.data.values.collectAsState()
+    val v = values[widget.str("dataSourceId")]
+    val detailed = widget.str("layout") == "detailed"
+    BoxWithConstraints(Modifier.fillMaxSize().background(bg), contentAlignment = Alignment.Center) {
+        val h = maxHeight
+        val w = maxWidth
+        val density = LocalDensity.current
+        fun sp(x: Dp) = with(density) { x.toSp() }
+        val air = v?.airQuality
+        if (air == null) {
+            Placeholder(v?.error ?: stringResource(R.string.data_nodata), text, h, w)
+            return@BoxWithConstraints
         }
+        val band = air.index.color?.let { Color(parseColor(it, android.graphics.Color.TRANSPARENT)) }?.takeIf { it.alpha > 0f }
+        Column(
+            Modifier.fillMaxSize().padding(horizontal = w * 0.05f, vertical = h * 0.05f),
+            verticalArrangement = Arrangement.spacedBy(h * 0.03f, Alignment.CenterVertically),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(v.name, color = text.copy(alpha = 0.8f), fontWeight = FontWeight.SemiBold, fontSize = sp((h * 0.10f).atMost(w * 0.07f)), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(w * 0.02f)) {
+                band?.let { Box(Modifier.size((h * 0.09f).atMost(w * 0.06f)).background(it, CircleShape)) }
+                Text(air.index.display.ifEmpty { air.index.aqi.roundToInt().toString() }, color = text, fontWeight = FontWeight.Bold, fontSize = sp((h * if (detailed) 0.28f else 0.36f).atMost(w * if (detailed) 0.20f else 0.24f)))
+                Text(stringResource(R.string.aqi_label), color = text.copy(alpha = 0.8f), fontWeight = FontWeight.SemiBold, fontSize = sp((h * 0.10f).atMost(w * 0.07f)))
+            }
+            if (air.index.category.isNotEmpty()) {
+                Text(
+                    air.index.category,
+                    color = if (band == null) text else if (band.isLight()) Color(0xFF111827) else Color.White,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = sp((h * 0.09f).atMost(w * 0.06f)),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.background(band ?: Color.Transparent, RoundedCornerShape(50)).padding(horizontal = 12.dp, vertical = 2.dp),
+                )
+            }
+            if (detailed) {
+                val pollutant = air.index.dominantPollutant?.let { stringResource(R.string.aqi_pollutant, it) }
+                Text(listOfNotNull(pollutant, air.index.name.ifEmpty { null }).joinToString(" · "), color = text.copy(alpha = 0.85f), fontSize = sp((h * 0.08f).atMost(w * 0.055f)))
+            }
+            if (!v.ok) StaleNote(text = stringResource(R.string.data_stale), size = sp((h * 0.08f).atMost(w * 0.06f)))
+        }
+        Credit(air.attribution, text, h, w)
     }
 }
 

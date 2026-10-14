@@ -478,7 +478,7 @@
     "emergency.trigger": "Start emergency messages",
     "sensor.view": "See sensors and alerts",
     "sensor.manage": "Manage sensors and alert rules",
-    "integration.manage": "Manage integrations (weather, RSS)",
+    "integration.manage": "Manage integrations (weather, air quality, RSS)",
     "apikey.manage": "Manage API keys",
     "report.view": "See reports",
     "billing.view": "See the subscription and payments",

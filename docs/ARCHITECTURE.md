@@ -218,6 +218,7 @@ Rules: deny-by-default; anything money-, limit-, status- or audit-related is Fun
 - **RSS safety.** Feeds are reduced to plain-text headlines (tags stripped, entities decoded, length-capped). They are never rendered as HTML. Every request hop, including redirects, is resolved and refused if it points at private, loopback, link-local or metadata addresses. Requests use standard ports only, a 1 MB cap and an 8 s timeout.
 - **Weather licence.** Open-Meteo's free API is non-commercial, so it is used only in the emulator and local development. In production the provider requires a commercial API key (`OPEN_METEO_API_KEY`). Without it, weather requests fail with "not configured" rather than calling the free API. Attribution "Weather data by Open-Meteo.com" is shown in the app.
 - **Widgets.** `weather` (current conditions, or with a 3-day forecast) and `rss` (headline carousel, seconds per headline, optional feed name). Saving checks the feature and that the source exists with the right type. The manifest lists `dataSources`, and the player fetches `GET /devices/data` every 5 minutes, keeping the last values offline. Web previews use the `previewDataSource` callable through the same cache.
+- **Air quality.** Data source type `air_quality` (a place, like weather) and widget `aqi` (compact: score and category in the band colour; detailed: also the dominant pollutant and index name). Values come from the Google Air Quality API (`currentConditions:lookup` with `LOCAL_AQI`: India's NAQI by CPCB, else Universal AQI) with the weather key, cached per place for 30 minutes; there is no free fallback. It comes with the `widget.weather` plan feature and shows the "Google Maps" credit like weather (player 0.12.0).
 
 ## 11. Super Admin (`/admin`)
 Platform overview · Organization approvals (approve/reject/request info) · Organizations · Users & roles · Screens & players · Features & limits · Plans & billing · Integrations & API · Support access (time-boxed, scoped, customer-visible, no secrets) · Tickets · Notifications · Security alerts · Backup & recovery (scheduled Firestore exports) · Platform analytics · Audit logs · Platform settings.
@@ -251,7 +252,7 @@ Feature catalogue stores `releaseStatus` (what WallX has built) separately from 
 | Media, playlists, schedules, offline playback | v1 | ✓ | ✓ | ✓ | ✓ |
 | Multi-zone layouts, templates | v1 | ✓ | ✓ | ✓ | ✓ |
 | Text, clock, QR, table, web widgets | v1 | ✓ | ✓ | ✓ | ✓ |
-| Weather, RSS widgets | v1 | ✓ | – | ✓ | ✓ |
+| Weather, air quality, RSS widgets | v1 | ✓ | – | ✓ | ✓ |
 | Content approval workflow | v1 | – | – | ✓ | ✓ |
 | ESP32 sensors & data widgets | v1 | limited | – | ✓ | ✓ |
 | Emergency override | v1 | ✓ | ✓ | ✓ | ✓ |
@@ -272,7 +273,7 @@ Feature catalogue stores `releaseStatus` (what WallX has built) separately from 
 | 3 ✅ (real-box test pending) | Android player | Pairing/authorization, boot-start, kiosk, HDMI playback, offline cache, rendering |
 | 4 ✅ | Publish & monitor | Manifest compiler, sync, bulk publish, emergency override, heartbeats, remote commands, diagnostics |
 | 5 ✅ (real ESP32 test pending) | Sensors | Ingest API, ESP32 firmware sample, channels, thresholds, data widgets, alerts |
-| 6 ✅ | Billing & beyond | Manual billing ✅; weather + RSS integrations ✅; player auto-updates ✅; Help & Support, support access, platform settings ✅; Hindi/Marathi (draft, review pending) ✅; reseller groundwork ✅; retention + audit export ✅. Google Weather (needs the API key secret) and Gmail emails (need the App Password secret) ✅. Later: Razorpay. Invoices: external app |
+| 6 ✅ | Billing & beyond | Manual billing ✅; weather + RSS integrations ✅; player auto-updates ✅; Help & Support, support access, platform settings ✅; Hindi/Marathi (draft, review pending) ✅; reseller groundwork ✅; retention + audit export ✅. Google Weather (needs the API key secret) and Gmail emails (need the App Password secret) ✅. Air quality (AQI) widget with India NAQI, Google Air Quality API on the weather key ✅. Later: Razorpay. Invoices: external app |
 
 ## 18. Still to confirm
 1. Real Firebase **project ID** and **Hosting site ID** (display name "WallX Play" is not the ID), and whether Firestore already exists (region).

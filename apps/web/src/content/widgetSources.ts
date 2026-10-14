@@ -1,13 +1,15 @@
+import { DATA_WIDGET_SOURCE } from '@wallx-play/layout-spec';
 import { useMemo } from 'react';
 import { useOrg } from '../org/OrgProvider';
 import { useDataSources } from './dataSources';
 import { useAllChannels } from './sensors';
 import type { ChannelChoice, DataWidgetType } from './widgetDefaults';
 
-/** A weather place or RSS feed the org has set up (Integrations). */
+/** A weather or air quality place, or an RSS feed, the org has set up (Integrations). */
 export interface DataSourceChoice {
   id: string;
   name: string;
+  /** The widget type that shows it. */
   type: DataWidgetType;
 }
 
@@ -43,8 +45,9 @@ export function useWidgetSources(): WidgetSources {
   const rssOn = !!entitlements?.features.includes('widget.rss');
   const sources = useDataSources(orgId, weatherOn || rssOn);
   const dataSources = useMemo<WidgetSources['dataSources']>(() => {
-    const pick = (type: DataWidgetType) => sources.data.filter((d) => d.type === type).map((d) => ({ id: d.id, name: d.name, type }));
-    return { ...(weatherOn ? { weather: pick('weather') } : {}), ...(rssOn ? { rss: pick('rss') } : {}) };
+    const pick = (type: DataWidgetType) => sources.data.filter((d) => d.type === DATA_WIDGET_SOURCE[type]).map((d) => ({ id: d.id, name: d.name, type }));
+    // Air quality comes with the weather feature.
+    return { ...(weatherOn ? { weather: pick('weather'), aqi: pick('aqi') } : {}), ...(rssOn ? { rss: pick('rss') } : {}) };
   }, [sources.data, weatherOn, rssOn]);
   return useMemo(() => ({ sensors, dataSources }), [sensors, dataSources]);
 }

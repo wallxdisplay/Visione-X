@@ -1,19 +1,21 @@
 /**
- * Central provider cache (providerCache/{key}, server-only). Weather is cached per place
- * (coordinates rounded to ~1 km), RSS per feed URL, so many screens and orgs showing the same
- * place or feed cost one provider call per TTL. On a provider error the last good result is
- * served (marked not ok) for up to STALE_SERVE_MS, and retries back off for 2 minutes.
+ * Central provider cache (providerCache/{key}, server-only). Weather and air quality are cached
+ * per place (coordinates rounded to ~1 km), RSS per feed URL, so many screens and orgs showing
+ * the same place or feed cost one provider call per TTL. On a provider error the last good
+ * result is served (marked not ok) for up to STALE_SERVE_MS, and retries back off for 2 minutes.
  */
 import { createHash } from 'node:crypto';
 import { Timestamp } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
 import {
+  AIR_QUALITY_TTL_MS,
   RSS_MAX_BYTES,
   RSS_MAX_ITEMS,
   RSS_TTL_MS,
   STALE_SERVE_MS,
   WEATHER_TTL_MS,
   paths,
+  type AirQualityData,
   type DataSourceDoc,
   type DataSourceValue,
   type RssConfig,
@@ -21,6 +23,7 @@ import {
   type WeatherData,
 } from '@wallx-play/shared';
 import type { Deps } from '../lib/context';
+import { fetchAirQuality } from './airQuality';
 import { FetchError, safeGet } from './net';
 import { FeedError, parseFeed } from './rss';
 import { ProviderNotConfigured, fetchWeather } from './weather';
@@ -32,6 +35,8 @@ interface CacheDoc {
   error: string | null;
   weather: WeatherData | null;
   rss: RssData | null;
+  /** Absent on entries cached before air quality existed. */
+  airQuality?: AirQualityData | null;
   /** Firestore TTL deletes entries nobody has refreshed for a day. */
   expiresAt: Timestamp;
 }
@@ -40,6 +45,7 @@ const RETRY_MS = 2 * 60_000;
 
 export function cacheKey(ds: DataSourceDoc): string {
   if (ds.type === 'weather') return `w_${ds.config.latitude.toFixed(2)}_${ds.config.longitude.toFixed(2)}`;
+  if (ds.type === 'air_quality') return `a_${ds.config.latitude.toFixed(2)}_${ds.config.longitude.toFixed(2)}`;
   return `r_${createHash('sha256').update(ds.config.url).digest('hex').slice(0, 40)}`;
 }
 
@@ -54,7 +60,7 @@ export async function fetchRss(deps: Deps, config: Pick<RssConfig, 'url'>): Prom
   return parseFeed(xml, RSS_MAX_ITEMS);
 }
 
-function valueOf(ds: DataSourceDoc, c: Pick<CacheDoc, 'fetchedAt' | 'weather' | 'rss'> | null, ok: boolean, error: string | null): DataSourceValue {
+function valueOf(ds: DataSourceDoc, c: Pick<CacheDoc, 'fetchedAt' | 'weather' | 'rss' | 'airQuality'> | null, ok: boolean, error: string | null): DataSourceValue {
   return {
     id: ds.id,
     type: ds.type,
@@ -64,6 +70,7 @@ function valueOf(ds: DataSourceDoc, c: Pick<CacheDoc, 'fetchedAt' | 'weather' | 
     fetchedAt: c?.fetchedAt ?? null,
     weather: ds.type === 'weather' ? (c?.weather ?? null) : null,
     rss: ds.type === 'rss' && c?.rss ? { ...c.rss, items: c.rss.items.slice(0, ds.config.maxItems) } : null,
+    airQuality: ds.type === 'air_quality' ? (c?.airQuality ?? null) : null,
   };
 }
 
@@ -77,9 +84,12 @@ export async function getDataSourceValue(deps: Deps, orgId: string, ds: DataSour
   if (cached && !cached.error && at < cached.freshUntil) return valueOf(ds, cached, true, null);
   if (cached?.error && at < cached.retryAt) return valueOf(ds, usable, false, cached.error);
 
-  let fresh: Pick<CacheDoc, 'weather' | 'rss'>;
+  let fresh: Pick<CacheDoc, 'weather' | 'rss' | 'airQuality'>;
   try {
-    fresh = ds.type === 'weather' ? { weather: await fetchWeather(deps, ds.config), rss: null } : { weather: null, rss: await fetchRss(deps, ds.config) };
+    const none = { weather: null, rss: null, airQuality: null };
+    if (ds.type === 'weather') fresh = { ...none, weather: await fetchWeather(deps, ds.config) };
+    else if (ds.type === 'air_quality') fresh = { ...none, airQuality: await fetchAirQuality(deps, ds.config) };
+    else fresh = { ...none, rss: await fetchRss(deps, ds.config) };
   } catch (err) {
     const error = providerMessage(err);
     if (!(err instanceof FetchError || err instanceof FeedError || err instanceof ProviderNotConfigured)) logger.warn('Provider fetch failed', { key: ref.id, err: String(err) });
@@ -89,7 +99,7 @@ export async function getDataSourceValue(deps: Deps, orgId: string, ds: DataSour
         retryAt: at + RETRY_MS,
         freshUntil: 0,
         expiresAt: Timestamp.fromMillis(at + STALE_SERVE_MS),
-        ...(cached ? {} : { fetchedAt: null, weather: null, rss: null }),
+        ...(cached ? {} : { fetchedAt: null, weather: null, rss: null, airQuality: null }),
       },
       { merge: true },
     );
@@ -99,7 +109,7 @@ export async function getDataSourceValue(deps: Deps, orgId: string, ds: DataSour
   const doc: CacheDoc = {
     ...fresh,
     fetchedAt: at,
-    freshUntil: at + (ds.type === 'weather' ? WEATHER_TTL_MS : RSS_TTL_MS),
+    freshUntil: at + (ds.type === 'weather' ? WEATHER_TTL_MS : ds.type === 'air_quality' ? AIR_QUALITY_TTL_MS : RSS_TTL_MS),
     retryAt: 0,
     error: null,
     expiresAt: Timestamp.fromMillis(at + STALE_SERVE_MS),

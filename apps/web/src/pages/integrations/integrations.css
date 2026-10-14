@@ -31,3 +31,11 @@
   font-size: 20px;
   margin: 0;
 }
+.integrations__swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 8px;
+  border-radius: 50%;
+  vertical-align: middle;
+}

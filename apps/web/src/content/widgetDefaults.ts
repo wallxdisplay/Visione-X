@@ -77,12 +77,17 @@ export function defaultSensorWidget(type: SensorWidgetType, c: ChannelChoice): W
   }
 }
 
-export type DataWidgetType = 'weather' | 'rss';
-export const DATA_WIDGET_TYPES: DataWidgetType[] = ['weather', 'rss'];
+export type DataWidgetType = 'weather' | 'rss' | 'aqi';
+export const DATA_WIDGET_TYPES: DataWidgetType[] = ['weather', 'rss', 'aqi'];
 
-/** Starting configuration for a weather or RSS widget showing data source `id`. */
+/** Starting configuration for a weather, RSS or air quality widget showing data source `id`. */
 export function defaultDataWidget(type: DataWidgetType, dataSourceId: string): Widget {
-  return type === 'weather'
-    ? { type, dataSourceId, layout: 'current', style: { color: '#FFFFFF' } }
-    : { type, dataSourceId, itemDurationSec: 8, showFeedTitle: true, style: { color: '#FFFFFF', fontScale: 0.14, bold: true } };
+  switch (type) {
+    case 'weather':
+      return { type, dataSourceId, layout: 'current', style: { color: '#FFFFFF' } };
+    case 'aqi':
+      return { type, dataSourceId, layout: 'compact', style: { color: '#FFFFFF' } };
+    case 'rss':
+      return { type, dataSourceId, itemDurationSec: 8, showFeedTitle: true, style: { color: '#FFFFFF', fontScale: 0.14, bold: true } };
+  }
 }

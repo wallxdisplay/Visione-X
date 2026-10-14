@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Deps } from '../lib/context';
+import { googleColor, normalizeAirQuality, pollutantLabel } from './airQuality';
 import { FetchError, isPrivateAddress, safeGet } from './net';
 import { FeedError, parseFeed, plainText } from './rss';
 import { googleConditionToWmo, normalizeGoogleWeather, normalizeWeather } from './weather';
@@ -134,5 +135,58 @@ describe('Google weather', () => {
     expect(googleConditionToWmo('FUTURE_THUNDER_THING')).toBe(95);
     expect(googleConditionToWmo(undefined)).toBe(3);
     expect(() => normalizeGoogleWeather({ weatherCondition: { type: 'CLEAR' } }, {})).toThrow();
+  });
+});
+
+describe('Google air quality', () => {
+  const response = {
+    dateTime: '2026-10-14T05:00:00Z',
+    regionCode: 'in',
+    indexes: [
+      {
+        code: 'uaqi',
+        displayName: 'Universal AQI',
+        aqi: 48,
+        aqiDisplay: '48',
+        color: { red: 1, green: 0.85, blue: 0.2 },
+        category: 'Moderate air quality',
+        dominantPollutant: 'pm25',
+      },
+      {
+        code: 'ind_cpcb',
+        displayName: 'NAQI (IN)',
+        aqi: 156,
+        aqiDisplay: '156',
+        color: { red: 1, green: 0.6 },
+        category: 'Moderate air quality',
+        dominantPollutant: 'pm10',
+      },
+    ],
+  };
+
+  it('prefers the local index (India: NAQI by CPCB) and keeps the required attribution', () => {
+    expect(normalizeAirQuality(response)).toEqual({
+      index: { code: 'ind_cpcb', name: 'NAQI (IN)', aqi: 156, display: '156', category: 'Moderate air quality', color: '#FF9900', dominantPollutant: 'PM10' },
+      regionCode: 'in',
+      measuredAt: '2026-10-14T05:00:00Z',
+      attribution: 'Google Maps',
+    });
+  });
+
+  it('falls back to the Universal AQI and rejects responses without a score', () => {
+    const uaqi = normalizeAirQuality({ indexes: [response.indexes[0]] });
+    expect(uaqi.index).toMatchObject({ code: 'uaqi', aqi: 48, color: '#FFD933', dominantPollutant: 'PM2.5' });
+    expect(uaqi).toMatchObject({ regionCode: null, measuredAt: null });
+    const bare = normalizeAirQuality({ indexes: [{ code: 'uaqi', aqi: 70 }] });
+    expect(bare.index).toEqual({ code: 'uaqi', name: 'uaqi', aqi: 70, display: '70', category: '', color: null, dominantPollutant: null });
+    expect(() => normalizeAirQuality({ indexes: [{ code: 'uaqi' }] })).toThrow(FetchError);
+    expect(() => normalizeAirQuality({})).toThrow(FetchError);
+  });
+
+  it('labels pollutants and converts colours', () => {
+    expect(['pm25', 'o3', 'no2', 'co', 'XYZ', null].map(pollutantLabel)).toEqual(['PM2.5', 'O₃', 'NO₂', 'CO', 'XYZ', null]);
+    expect(googleColor({})).toBe('#000000');
+    expect(googleColor({ red: 2, green: -1, blue: 0.5 })).toBe('#FF0080');
+    expect(googleColor(undefined)).toBeNull();
   });
 });

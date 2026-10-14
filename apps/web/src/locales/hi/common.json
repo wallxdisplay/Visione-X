@@ -512,7 +512,7 @@
     "emergency.trigger": "आपातकालीन संदेश शुरू करें",
     "sensor.view": "सेंसर और अलर्ट देखें",
     "sensor.manage": "सेंसर और अलर्ट नियम संभालें",
-    "integration.manage": "इंटीग्रेशन संभालें (मौसम, RSS)",
+    "integration.manage": "इंटीग्रेशन संभालें (मौसम, वायु गुणवत्ता, RSS)",
     "apikey.manage": "API कुंजियाँ संभालें",
     "report.view": "रिपोर्ट देखें",
     "billing.view": "सब्सक्रिप्शन और भुगतान देखें",

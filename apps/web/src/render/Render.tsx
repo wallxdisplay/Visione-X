@@ -11,7 +11,7 @@ import { createContext, useContext, useEffect, useState, type CSSProperties, typ
 import { useTranslation } from 'react-i18next';
 import { useStorageUrl } from '../content/data';
 import { ChartView, GaugeView, LiveCell, SensorValueView, StatusView } from './SensorWidgets';
-import { RssView, WeatherView } from './DataWidgets';
+import { AqiView, RssView, WeatherView } from './DataWidgets';
 import './render.css';
 
 export interface RenderLibrary {
@@ -116,6 +116,8 @@ export function WidgetView({ widget }: { widget: Widget }) {
       return <WeatherView widget={widget} orgId={orgId} />;
     case 'rss':
       return <RssView widget={widget} orgId={orgId} />;
+    case 'aqi':
+      return <AqiView widget={widget} orgId={orgId} />;
     case 'text':
       return (
         <div className="r-fill r-text" style={textStyle(widget.style, 0.4)}>

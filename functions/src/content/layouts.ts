@@ -5,6 +5,7 @@ import {
   AVAILABLE_WIDGETS,
   SENSOR_WIDGETS,
   widgetBindings,
+  widgetDataSource,
   layoutRefs,
   playlistRefs,
   type ContentRefs,
@@ -43,16 +44,20 @@ function checkWidgets(refs: ContentRefs, entitlements: EntitlementsDoc) {
   }
   if (refs.widgetTypes.includes('weather')) requireFeature(entitlements, 'widget.weather', 'The weather widget');
   if (refs.widgetTypes.includes('rss')) requireFeature(entitlements, 'widget.rss', 'The RSS widget');
+  // Air quality comes with weather in the plans (same provider and place search).
+  if (refs.widgetTypes.includes('aqi')) requireFeature(entitlements, 'widget.weather', 'The air quality widget');
 }
 
-/** Weather and RSS widgets must point at a data source of the same type in this org (reads only). */
+const SOURCE_LABEL = { weather: 'weather', rss: 'RSS', air_quality: 'air quality' } as const;
+
+/** Data widgets must point at a data source of the matching type in this org (reads only). */
 async function checkDataSources(tx: Transaction, db: Firestore, orgId: string, content: Array<{ widget: Widget }>) {
-  const wanted = content.flatMap(({ widget }) => (widget.type === 'weather' || widget.type === 'rss' ? [{ id: widget.dataSourceId, type: widget.type }] : []));
+  const wanted = content.flatMap(({ widget }) => widgetDataSource(widget) ?? []);
   const snaps = await Promise.all(wanted.map((w) => tx.get(db.doc(paths.dataSource(orgId, w.id)))));
   snaps.forEach((snap, i) => {
     const ds = snap.data() as DataSourceDoc | undefined;
-    if (!ds) throw new HttpsError('invalid-argument', 'A weather or RSS widget points at a data source that no longer exists.');
-    if (ds.type !== wanted[i]!.type) throw new HttpsError('invalid-argument', `“${ds.name}” is not a ${wanted[i]!.type} data source.`);
+    if (!ds) throw new HttpsError('invalid-argument', 'A weather, RSS or air quality widget points at a data source that no longer exists.');
+    if (ds.type !== wanted[i]!.type) throw new HttpsError('invalid-argument', `“${ds.name}” is not a ${SOURCE_LABEL[wanted[i]!.type]} data source.`);
   });
 }
 

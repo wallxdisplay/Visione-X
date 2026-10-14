@@ -19,4 +19,6 @@
     <string name="data_nodata">No data yet</string>
     <string name="data_stale">Not updated recently</string>
     <string name="weather_feels">Feels like %1$s</string>
+    <string name="aqi_label">AQI</string>
+    <string name="aqi_pollutant">Main pollutant %1$s</string>
 </resources>

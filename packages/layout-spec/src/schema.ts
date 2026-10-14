@@ -113,6 +113,14 @@ export const Widget = z.discriminatedUnion('type', [
     style: TextStyle,
   }),
   z.object({
+    type: z.literal('aqi'),
+    /** An `air_quality` data source. */
+    dataSourceId: BindingId,
+    /** Score and category, or also the dominant pollutant and the index name. */
+    layout: z.enum(['compact', 'detailed']).default('compact'),
+    style: TextStyle,
+  }),
+  z.object({
     type: z.literal('sensorValue'),
     binding: DataBinding,
     /** Caption above the value, e.g. "Cold room". */
@@ -167,14 +175,19 @@ export const AVAILABLE_WIDGETS = [
   'web',
   'weather',
   'rss',
+  'aqi',
   'sensorValue',
   'gauge',
   'chart',
   'status',
 ] as const satisfies readonly WidgetType[];
 
-/** Widgets that show data-source content (weather, RSS), fetched by the server. */
-export const DATA_WIDGETS = ['weather', 'rss'] as const satisfies readonly WidgetType[];
+/** Widgets that show data-source content (weather, RSS, air quality), fetched by the server. */
+export const DATA_WIDGETS = ['weather', 'rss', 'aqi'] as const satisfies readonly WidgetType[];
+export type DataWidget = (typeof DATA_WIDGETS)[number];
+
+/** Data source type each data widget shows. */
+export const DATA_WIDGET_SOURCE = { weather: 'weather', rss: 'rss', aqi: 'air_quality' } as const satisfies Record<DataWidget, string>;
 
 /** Widgets that show live sensor values (need the sensor feature in the plan). */
 export const SENSOR_WIDGETS = ['sensorValue', 'gauge', 'chart', 'status'] as const satisfies readonly WidgetType[];
@@ -291,8 +304,8 @@ export const LiveChannel = z.object({
 });
 export type LiveChannel = z.infer<typeof LiveChannel>;
 
-/** A data source (weather, RSS) the content shows; values come from /devices/data. */
-export const ManifestDataSource = z.object({ id: z.string(), type: z.enum(['weather', 'rss']) });
+/** A data source (weather, RSS, air quality) the content shows; values come from /devices/data. */
+export const ManifestDataSource = z.object({ id: z.string(), type: z.enum(['weather', 'rss', 'air_quality']) });
 export type ManifestDataSource = z.infer<typeof ManifestDataSource>;
 
 export const Manifest = z.object({

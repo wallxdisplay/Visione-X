@@ -16,7 +16,8 @@
       "snow": "Snow",
       "storm": "Thunderstorm",
       "feels": "Feels like {{t}}"
-    }
+    },
+    "aqi": { "label": "AQI", "pollutant": "Main pollutant {{p}}" }
   },
   "library": {
     "description": "Images, videos and audio for your screens. Your plan includes {{limit}} GB of storage.",
@@ -99,7 +100,7 @@
     "discard": "Discard changes",
     "layers": "Layers",
     "add": "Add zone",
-    "laterWidgets": "More widgets (table, web page, weather, RSS, gauge, chart, status) are under Content in the zone’s properties.",
+    "laterWidgets": "More widgets (table, web page, weather, RSS, air quality, gauge, chart, status) are under Content in the zone’s properties.",
     "untitledZone": "Untitled zone",
     "contentTypes": {
       "empty": "Empty zone",
@@ -112,6 +113,7 @@
       "web": "Web page",
       "weather": "Weather",
       "rss": "RSS",
+      "aqi": "Air quality",
       "sensorValue": "Sensor value",
       "gauge": "Gauge",
       "chart": "Chart",

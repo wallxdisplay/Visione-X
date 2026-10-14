@@ -1,7 +1,7 @@
 /**
- * Weather and RSS widgets for the web renderer (Studio preview). The Android player draws the
- * same widgets natively (ui/DataWidgets.kt) from /devices/data. Sizes are fractions of the
- * zone (cqh/cqw).
+ * Weather, RSS and air quality widgets for the web renderer (Studio preview). The Android
+ * player draws the same widgets natively (ui/DataWidgets.kt) from /devices/data. Sizes are
+ * fractions of the zone (cqh/cqw).
  */
 import { weatherCondition, weatherIcon, type Widget } from '@wallx-play/layout-spec';
 import { useEffect, useState, type CSSProperties } from 'react';
@@ -30,6 +30,15 @@ function isLight(color: unknown): boolean {
   const hex = typeof color === 'string' && /^#[0-9a-f]{6}$/i.test(color) ? color : '#FFFFFF';
   const n = parseInt(hex.slice(1), 16);
   return 0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255) > 140;
+}
+
+/** Provider credit required by its terms ("Google Maps" exactly: never translated). */
+function Credit({ text, color }: { text: string | null | undefined; color: unknown }) {
+  return text ? (
+    <div className="r-weather__credit" translate="no" style={{ color: isLight(color) ? '#FFFFFF' : '#1F1F1F' }}>
+      {text}
+    </div>
+  ) : null;
 }
 
 export function WeatherView({ widget, orgId }: { widget: W<'weather'>; orgId?: string }) {
@@ -71,12 +80,40 @@ export function WeatherView({ widget, orgId }: { widget: W<'weather'>; orgId?: s
         </div>
       ) : null}
       {!value!.ok ? <div className="r-sensor__note">{t('render.data.stale')}</div> : null}
-      {/* Required by the provider's terms; never translated ("Google Maps" exactly). */}
-      {w.attribution ? (
-        <div className="r-weather__credit" translate="no" style={{ color: isLight(style.color) ? '#FFFFFF' : '#1F1F1F' }}>
-          {w.attribution}
+      <Credit text={w.attribution} color={style.color} />
+    </div>
+  );
+}
+
+export function AqiView({ widget, orgId }: { widget: W<'aqi'>; orgId?: string }) {
+  const { t } = useTranslation();
+  const { value } = useDataSourceValue(orgId, widget.dataSourceId);
+  const style = base(widget.style);
+  if (value === undefined) return <Placeholder text="…" style={style} />;
+  const a = value?.airQuality;
+  if (!a) return <Placeholder text={value?.error ?? t('render.data.nodata')} style={style} />;
+  const band = a.index.color;
+  const detailed = widget.layout === 'detailed';
+  return (
+    <div className={`r-fill r-aqi${detailed ? ' r-aqi--detailed' : ''}`} style={style}>
+      <div className="r-aqi__place">{value!.name}</div>
+      <div className="r-aqi__score">
+        {band ? <span className="r-aqi__swatch" style={{ background: band }} aria-hidden /> : null}
+        <span className="r-aqi__value wxp-tabular">{a.index.display}</span>
+        <span className="r-aqi__unit">{t('render.aqi.label')}</span>
+      </div>
+      {a.index.category ? (
+        <div className="r-aqi__category" style={band ? { background: band, color: isLight(band) ? '#111827' : '#FFFFFF' } : undefined}>
+          {a.index.category}
         </div>
       ) : null}
+      {detailed ? (
+        <div className="r-aqi__meta">
+          {[a.index.dominantPollutant ? t('render.aqi.pollutant', { p: a.index.dominantPollutant }) : null, a.index.name].filter(Boolean).join(' · ')}
+        </div>
+      ) : null}
+      {!value!.ok ? <div className="r-sensor__note">{t('render.data.stale')}</div> : null}
+      <Credit text={a.attribution} color={style.color} />
     </div>
   );
 }

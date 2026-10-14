@@ -136,6 +136,7 @@ export function WidgetEditor({
   switch (w.type) {
     case 'weather':
     case 'rss':
+    case 'aqi':
       return <DataWidgetEditor widget={w} sources={sources.dataSources[w.type] ?? []} readOnly={readOnly} onChange={onChange} styleEditor={(s, u, d, m) => styleEditor(s, u, d, m)} />;
     case 'sensorValue':
     case 'gauge':

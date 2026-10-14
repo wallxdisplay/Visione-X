@@ -1,4 +1,4 @@
-import type { DataBinding, LayoutBody, LiveChannel, ManifestDataSource, PlaylistItem, Widget } from './schema';
+import { DATA_WIDGET_SOURCE, type DataBinding, type LayoutBody, type LiveChannel, type ManifestDataSource, type PlaylistItem, type Widget } from './schema';
 
 /** A sensor channel a widget shows: sensor device id + channel key. */
 export interface SensorRef {
@@ -13,13 +13,15 @@ export interface ContentRefs {
   widgetTypes: Widget['type'][];
   /** Sensor channels bound by widgets (deduplicated). */
   sensors: SensorRef[];
-  /** Data sources (weather, RSS) used by widgets. */
+  /** Data sources (weather, RSS, air quality) used by widgets. */
   dataSourceIds: string[];
 }
 
 /** The data source a widget shows, if any. */
 export function widgetDataSource(widget: Widget): ManifestDataSource | null {
-  return widget.type === 'weather' || widget.type === 'rss' ? { id: widget.dataSourceId, type: widget.type } : null;
+  return widget.type === 'weather' || widget.type === 'rss' || widget.type === 'aqi'
+    ? { id: widget.dataSourceId, type: DATA_WIDGET_SOURCE[widget.type] }
+    : null;
 }
 
 const uniq = <T>(xs: T[]) => [...new Set(xs)];
