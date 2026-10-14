@@ -65,12 +65,13 @@ export async function sendMail(deps: Pick<Deps, 'mailer'>, mail: Mail): Promise<
     return false;
   }
   const text = mail.action ? `${mail.text}\n\n${mail.action.label}: ${mail.action.url}` : mail.text;
+  const sender = process.env.SMTP_USER!.trim();
   try {
     await t.sendMail({
-      from: { name: PRODUCT_NAME, address: process.env.SMTP_USER!.trim() },
-      // One message per recipient list, addresses hidden from each other.
-      to: process.env.SMTP_USER!.trim(),
-      bcc: mail.to,
+      from: { name: PRODUCT_NAME, address: sender },
+      // One person (invitations, signup decisions): addressed to them. Several (alert emails):
+      // one message with everyone in Bcc, so members do not see each other's addresses.
+      ...(mail.to.length === 1 ? { to: mail.to[0] } : { to: sender, bcc: mail.to }),
       replyTo: mail.replyTo,
       subject: mail.subject,
       text,
