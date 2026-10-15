@@ -333,26 +333,28 @@ class PlayerEngine internal constructor(
     private suspend fun dataLoop() {
         delay(3_000)
         var lastIds = emptySet<String>()
+        var nextAt = 0L
         while (currentCoroutineContextActive()) {
             val ids = (_ui.value as? UiState.Playing)?.manifest?.dataSources.orEmpty().map { it.id }.toSet()
             val auth = device.auth
-            var wait = DataStore.POLL_SEC * 1000
-            if (ids.isNotEmpty() && auth != null) {
+            val now = android.os.SystemClock.elapsedRealtime()
+            if (ids.isEmpty()) {
+                lastIds = emptySet()
+            } else if (auth != null && dataFetchDue(ids, lastIds, now, nextAt)) {
                 if (ids != lastIds) data.retain(ids)
-                try {
+                lastIds = ids
+                nextAt = try {
                     data.apply(api.data(auth))
-                    lastIds = ids
+                    now + DataStore.POLL_SEC * 1000
                 } catch (e: kotlinx.coroutines.CancellationException) {
                     throw e
                 } catch (e: Exception) {
                     Log.w(TAG, "Data sources failed: ${e.message}")
-                    wait = 60_000 // retry sooner after a failure
+                    now + 60_000 // retry sooner after a failure
                 }
-            } else if (ids.isEmpty()) {
-                lastIds = emptySet()
-                wait = 15_000 // pick up a new manifest with data sources quickly
             }
-            delay(wait)
+            // Short ticks: newly published widgets get their weather / RSS within seconds.
+            delay(DATA_CHECK_MS)
         }
     }
 
@@ -464,6 +466,13 @@ class PlayerEngine internal constructor(
     companion object {
         /** Proof-of-play: save counts and upload finished hours this often. */
         const val PLAYS_SEC = 300
+
+        /** How often the data loop looks for new data sources in the playing content. */
+        const val DATA_CHECK_MS = 15_000L
+
+        /** Fetch widget data now: the content's data sources changed, or the refresh is due. */
+        fun dataFetchDue(ids: Set<String>, lastIds: Set<String>, now: Long, nextAt: Long): Boolean =
+            ids.isNotEmpty() && (ids != lastIds || now >= nextAt)
 
         @Volatile private var instance: PlayerEngine? = null
         fun get(context: Context): PlayerEngine =
