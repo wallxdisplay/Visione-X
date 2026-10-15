@@ -97,7 +97,7 @@ export function PlaybackReports() {
     if (m) return t('reports.m', { m });
     return t('reports.s', { s: seconds });
   };
-  const contentName = (kind: PlayKind, name: string) => name || t(kind === 'media' ? 'reports.deletedMedia' : 'reports.deletedLayout');
+  const contentName = (kind: PlayKind, name: string) => name || t(kind === 'media' ? 'reports.deletedMedia' : kind === 'tap' ? 'reports.deletedPage' : 'reports.deletedLayout');
 
   function exportCsv() {
     if (!report) return;

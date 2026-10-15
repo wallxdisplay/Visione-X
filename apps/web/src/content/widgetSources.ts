@@ -18,6 +18,8 @@ export interface WidgetSources {
   sensors: ChannelChoice[] | null;
   /** Data sources per widget type the plan includes; a type missing from the map is not offered. */
   dataSources: Partial<Record<DataWidgetType, DataSourceChoice[]>>;
+  /** Touch screens are in the plan: buttons and tap actions on layout zones. */
+  touch: boolean;
 }
 
 /** What widget editors may bind to, limited by the plan and the member's permissions. */
@@ -49,5 +51,6 @@ export function useWidgetSources(): WidgetSources {
     // Air quality comes with the weather feature.
     return { ...(weatherOn ? { weather: pick('weather'), aqi: pick('aqi') } : {}), ...(rssOn ? { rss: pick('rss') } : {}) };
   }, [sources.data, weatherOn, rssOn]);
-  return useMemo(() => ({ sensors, dataSources }), [sensors, dataSources]);
+  const touch = !!entitlements?.features.includes('interactive.touch');
+  return useMemo(() => ({ sensors, dataSources, touch }), [sensors, dataSources, touch]);
 }

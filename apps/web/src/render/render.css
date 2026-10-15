@@ -365,3 +365,11 @@
   font-size: min(8cqh, 5.5cqw);
   opacity: 0.85;
 }
+
+/* Touch button: padding and corner radius scale with the zone, like the player. */
+.r-button__face {
+  position: absolute;
+  inset: 8cqmin;
+  border-radius: 18cqmin;
+  container-type: size;
+}

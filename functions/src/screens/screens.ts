@@ -18,7 +18,7 @@ import {
 import { auditedTransaction } from '../lib/audit';
 import { requireActiveOrgPermission, requireOrgPermission, requireSiteInScope } from '../lib/authz';
 import type { Actor, Deps } from '../lib/context';
-import { readEntitlements } from '../lib/entitlements';
+import { readEntitlements, requireFeature } from '../lib/entitlements';
 import { userAudit } from '../content/media';
 import { notify } from '../lib/notify';
 import { compileManifest } from './manifest';
@@ -164,6 +164,13 @@ export async function updateScreen(
     requireSiteInScope(member, before.siteId, 'this screen');
     requireSiteInScope(member, input.siteId, 'the selected site');
     await checkTargets(tx, db, input.orgId, input.siteId, input.groupIds, input.defaultPlaylistId);
+    if (input.touch) {
+      requireFeature(await readEntitlements(tx, db, input.orgId), 'interactive.touch', 'Touch screens');
+      if (before.syncGroupId) throw new HttpsError('failed-precondition', 'A screen in a sync group cannot be a touch screen. Remove it from the group first.');
+      if (!(await tx.get(db.doc(paths.layout(input.orgId, input.touch.homeLayoutId)))).exists) {
+        throw new HttpsError('invalid-argument', 'The touch home page no longer exists.');
+      }
+    }
     tx.update(ref, {
       name: input.name,
       siteId: input.siteId,
@@ -172,6 +179,7 @@ export async function updateScreen(
       rotation: input.rotation ?? 0,
       resolution: input.resolution,
       defaultPlaylistId: input.defaultPlaylistId,
+      ...(input.touch !== undefined ? { touch: input.touch } : {}),
       updatedAt: at,
     });
     audit(input.orgId, {
@@ -180,7 +188,7 @@ export async function updateScreen(
       orgId: input.orgId,
       action: 'screen.updated',
       target: { type: 'screen', id: input.screenId },
-      data: { name: input.name, defaultPlaylistId: input.defaultPlaylistId },
+      data: { name: input.name, defaultPlaylistId: input.defaultPlaylistId, ...(input.touch !== undefined ? { touch: input.touch } : {}) },
     });
   });
 }

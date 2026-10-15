@@ -1,5 +1,5 @@
 import { Button, SelectField, TextField } from '@wallx-play/ui';
-import type { Widget, Zone, ZoneContent } from '@wallx-play/layout-spec';
+import type { Widget, Zone, ZoneAction, ZoneContent } from '@wallx-play/layout-spec';
 import type { MediaDoc, PlaylistDoc } from '@wallx-play/shared';
 import { ArrowDown, ArrowUp, Copy, Trash2 } from 'lucide-react';
 import { useState } from 'react';
@@ -18,11 +18,19 @@ function choiceOf(content: ZoneContent): ContentChoice {
 
 const pct = (v: number) => Math.round(v * 1000) / 10;
 
+/** Tap action <-> select value ('' = nothing, 'page:<id>', 'back', 'home'). */
+const actionValue = (a: ZoneAction | undefined) => (!a ? '' : a.kind === 'page' ? `page:${a.layoutId}` : a.kind);
+function parseAction(v: string): ZoneAction | undefined {
+  if (v.startsWith('page:')) return { kind: 'page', layoutId: v.slice(5) };
+  return v === 'back' || v === 'home' ? { kind: v } : undefined;
+}
+
 /** Properties panel for the selected zone. All edits go through `onChange` (undoable). */
 export function ZoneInspector({
   zone,
   media,
   playlists,
+  pages,
   timezone,
   readOnly,
   sources,
@@ -35,6 +43,8 @@ export function ZoneInspector({
   zone: Zone;
   media: MediaDoc[];
   playlists: PlaylistDoc[];
+  /** Other layouts a tap may open (touch screens). */
+  pages: Array<{ id: string; name: string }>;
   timezone: string;
   readOnly: boolean;
   /** Sensor channels and data sources widgets may show. */
@@ -81,6 +91,8 @@ export function ZoneInspector({
   }
 
   const c = zone.content;
+  const act = zone.action;
+  const missingPage = act?.kind === 'page' && !pages.some((p) => p.id === act.layoutId);
   return (
     <div className="inspector">
       <TextField label={t('studio.zoneName')} value={zone.name} disabled={readOnly} maxLength={60} onChange={(e) => onChange({ ...zone, name: e.target.value })} />
@@ -122,7 +134,7 @@ export function ZoneInspector({
         disabled={readOnly}
         options={[
           ...(['empty', 'media', 'playlist'] as const).map((v) => ({ value: v, label: t(`studio.contentTypes.${v}`) })),
-          ...widgetChoices(sources).map((o) => ({ value: o.type, label: t(`studio.contentTypes.${o.type}`), disabled: o.disabled })),
+          ...widgetChoices(sources, { zone: true }).map((o) => ({ value: o.type, label: t(`studio.contentTypes.${o.type}`), disabled: o.disabled })),
         ]}
         hint={widgetChoicesHint(sources, t)}
         value={choice}
@@ -130,6 +142,29 @@ export function ZoneInspector({
       />
 
       {c.kind === 'widget' ? <WidgetEditor widget={c.widget} sources={sources} readOnly={readOnly} compact onChange={setWidget} /> : null}
+
+      {sources.touch || zone.action ? (
+        <SelectField
+          label={t('studio.tap.label')}
+          hint={sources.touch ? t('studio.tap.hint') : t('studio.tap.notInPlan')}
+          disabled={readOnly}
+          options={[
+            { value: '', label: t('studio.tap.none') },
+            ...pages.map((p) => ({ value: `page:${p.id}`, label: t('studio.tap.open', { name: p.name }) })),
+            ...(missingPage
+              ? [{ value: actionValue(zone.action), label: t('studio.tap.missing') }]
+              : []),
+            { value: 'back', label: t('studio.tap.back') },
+            { value: 'home', label: t('studio.tap.home') },
+          ]}
+          value={actionValue(zone.action)}
+          onChange={(e) => {
+            const { action: _drop, ...rest } = zone;
+            const action = parseAction(e.target.value);
+            onChange(action ? { ...rest, action } : rest);
+          }}
+        />
+      ) : null}
 
       {c.kind === 'media' ? (
         <>

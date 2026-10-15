@@ -124,6 +124,17 @@ export function WidgetView({ widget }: { widget: Widget }) {
           <span className="r-pre">{widget.text}</span>
         </div>
       );
+    case 'button': {
+      // Same look as the player: a rounded pill (indigo unless styled), label on one line.
+      const style = textStyle({ bold: true, ...widget.style, background: undefined }, 0.36, Math.max(4, widget.label.length));
+      return (
+        <div className="r-fill r-button">
+          <div className="r-text r-button__face" style={{ ...style, background: widget.style?.background ?? '#4F46E5' }}>
+            <span>{widget.label}</span>
+          </div>
+        </div>
+      );
+    }
     case 'clock':
       return <ClockView widget={widget} />;
     case 'qr':

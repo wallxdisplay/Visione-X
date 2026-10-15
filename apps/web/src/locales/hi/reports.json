@@ -29,7 +29,8 @@
     "type": "प्रकार",
     "kinds": {
       "media": "मीडिया",
-      "layout": "लेआउट"
+      "layout": "लेआउट",
+      "tap": "टैप (टच पेज)"
     },
     "deletedMedia": "हटाया गया मीडिया",
     "deletedLayout": "हटाया गया लेआउट",
@@ -56,6 +57,7 @@
       "contentId": "कंटेंट ID",
       "plays": "प्ले",
       "seconds": "स्क्रीन पर सेकंड"
-    }
+    },
+    "deletedPage": "हटाया गया पेज"
   }
 }

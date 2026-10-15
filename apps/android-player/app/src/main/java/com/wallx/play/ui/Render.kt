@@ -13,6 +13,8 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -37,6 +39,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
@@ -71,6 +74,7 @@ import com.wallx.play.core.SyncTimeline
 import com.wallx.play.core.TimelinePosition
 import com.wallx.play.core.VideoDrift
 import com.wallx.play.data.WallTile
+import com.wallx.play.data.ZoneAction
 import com.wallx.play.data.Layout
 import com.wallx.play.data.Manifest
 import com.wallx.play.data.PlaylistItem
@@ -208,9 +212,20 @@ fun WallTileView(tile: WallTile, content: @Composable () -> Unit) {
     ) { content() }
 }
 
+/**
+ * Touch screens (0.17.0): handles a tap on a zone with an action, given the page (layout id) it
+ * was on. Only provided while a touch visit shows a page, so zones are not tappable elsewhere.
+ */
+fun interface TouchNav {
+    fun onTap(action: ZoneAction, pageId: String)
+}
+
+val LocalTouchNav = staticCompositionLocalOf<TouchNav?> { null }
+
 /** Draws a layout letterboxed to its canvas aspect ratio. */
 @Composable
 fun LayoutView(layout: Layout, ctx: RenderContext) {
+    val nav = LocalTouchNav.current
     CountPlay("layout", layout.id)
     val bg = Color(parseColor(layout.canvas.background, android.graphics.Color.BLACK))
     BoxWithConstraints(Modifier.fillMaxSize().background(Color.Black), contentAlignment = Alignment.Center) {
@@ -220,11 +235,13 @@ fun LayoutView(layout: Layout, ctx: RenderContext) {
             for (zone in layout.zones.sortedBy { it.z }) {
                 val zw = w * zone.w.toFloat()
                 val zh = h * zone.h.toFloat()
+                val action = zone.action
                 Box(
                     Modifier
                         .offset(x = w * zone.x.toFloat(), y = h * zone.y.toFloat())
                         .size(zw, zh)
-                        .clipToBounds(),
+                        .clipToBounds()
+                        .then(if (nav != null && action != null) Modifier.clickable { nav.onTap(action, layout.id) } else Modifier),
                 ) {
                     ZoneContent(zone.content, ctx)
                 }
@@ -361,6 +378,7 @@ fun WidgetView(widget: JsonObject, ctx: RenderContext? = null) {
                 val s = Style(widget["style"] as? JsonObject)
                 TextBlock(widget.str("text") ?: "", s, fontSize(s.fontScale ?: 0.4, h, w), singleLine = false)
             }
+            "button" -> ButtonWidget(widget, h, w)
             "clock" -> ClockWidget(widget, h, w)
             "qr" -> {
                 val bmp = remember(widget) {
@@ -418,6 +436,19 @@ private fun TextBlock(text: String, s: Style, size: TextUnit, singleLine: Boolea
             overflow = TextOverflow.Clip,
             modifier = Modifier.fillMaxWidth(),
         )
+    }
+}
+
+/** Touch button: a rounded label (the zone's tap action does the work). Indigo with white text by default. */
+@Composable
+private fun ButtonWidget(widget: JsonObject, h: Dp, w: Dp) {
+    val o = widget["style"] as? JsonObject
+    val s = Style(o)
+    val label = widget.str("label") ?: ""
+    val fill = s.background ?: Color(0xFF4F46E5)
+    val pad = minOf(h, w) * 0.08f
+    Box(Modifier.fillMaxSize().padding(pad).clip(RoundedCornerShape(minOf(h, w) * 0.18f)).background(fill)) {
+        TextBlock(label, s, fontSize(s.fontScale ?: 0.36, h - pad * 2, w - pad * 2, singleLineChars = label.length.coerceAtLeast(4)), singleLine = true)
     }
 }
 

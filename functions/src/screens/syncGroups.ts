@@ -35,6 +35,7 @@ export async function saveSyncGroup(deps: Deps, actor: Actor, input: z.infer<typ
       if (s.status !== 'authorized') throw new HttpsError('failed-precondition', `Authorize “${s.name}” before adding it to a sync group.`);
       requireSiteInScope(member, s.siteId, `“${s.name}”`);
       if (s.syncGroupId && s.syncGroupId !== ref.id) throw new HttpsError('failed-precondition', `“${s.name}” is already in another sync group.`);
+      if (s.touch) throw new HttpsError('failed-precondition', `“${s.name}” is a touch screen; turn touch off before adding it to a sync group.`);
     });
     const leaving = (before?.members ?? []).map((m) => m.screenId).filter((id) => !members.some((m) => m.screenId === id));
 

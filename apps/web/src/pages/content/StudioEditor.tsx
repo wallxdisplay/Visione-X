@@ -71,7 +71,7 @@ export function StudioEditor() {
   const channelChoices = widgetSources.sensors;
   const readOnly = !can('layout.edit');
   const saved = useDoc<LayoutDoc>(paths.layout(orgId, layoutId));
-  const { library, media, playlists } = useRenderLibrary(orgId);
+  const { library, media, playlists, layouts } = useRenderLibrary(orgId);
 
   // Undo history lives in ONE state object, updated functionally, so rapid edits/undos never
   // read a stale snapshot.
@@ -423,6 +423,7 @@ export function StudioEditor() {
               zone={zone}
               media={media.data}
               playlists={playlists.data}
+              pages={layouts.data.filter((l) => l.id !== layoutId).map((l) => ({ id: l.id, name: l.name }))}
               timezone={org?.timezone ?? 'Asia/Kolkata'}
               readOnly={readOnly}
               sources={widgetSources}

@@ -29,7 +29,8 @@
     "type": "प्रकार",
     "kinds": {
       "media": "मीडिया",
-      "layout": "लेआउट"
+      "layout": "लेआउट",
+      "tap": "टॅप (टच पेज)"
     },
     "deletedMedia": "हटवलेले मीडिया",
     "deletedLayout": "हटवलेला लेआउट",
@@ -56,6 +57,7 @@
       "contentId": "कंटेंट ID",
       "plays": "प्ले",
       "seconds": "स्क्रीनवरील सेकंद"
-    }
+    },
+    "deletedPage": "हटवलेले पेज"
   }
 }

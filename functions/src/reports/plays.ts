@@ -238,6 +238,8 @@ export async function playbackReport(deps: Deps, actor: Actor, input: z.infer<ty
   await Promise.all([
     load(ids('media').map((id) => db.doc(paths.media(input.orgId, id))), (id) => `media_${id}`),
     load(ids('layout').map((id) => db.doc(paths.layout(input.orgId, id))), (id) => `layout_${id}`),
+    // Taps are counted per touch page: show the page's (layout's) name.
+    load(ids('tap').map((id) => db.doc(paths.layout(input.orgId, id))), (id) => `tap_${id}`),
     load([...screens.keys()].map((id) => db.doc(paths.screen(input.orgId, id))), (id) => `screen_${id}`),
   ]);
   const screenSites = new Map(docs.map((d) => [d.screenId, d.siteId]));

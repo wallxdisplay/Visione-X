@@ -4,8 +4,15 @@
     "missingMedia": "Media file not found",
     "missingPlaylist": "Playlist not found",
     "emptyPlaylist": "This playlist is empty",
-    "sensor": { "nodata": "No data", "stale": "Stale", "offline": "Sensor offline" },
-    "data": { "nodata": "No data yet", "stale": "Not updated recently" },
+    "sensor": {
+      "nodata": "No data",
+      "stale": "Stale",
+      "offline": "Sensor offline"
+    },
+    "data": {
+      "nodata": "No data yet",
+      "stale": "Not updated recently"
+    },
     "weather": {
       "clear": "Clear",
       "partly": "Partly cloudy",
@@ -17,7 +24,10 @@
       "storm": "Thunderstorm",
       "feels": "Feels like {{t}}"
     },
-    "aqi": { "label": "AQI", "pollutant": "Main pollutant {{p}}" }
+    "aqi": {
+      "label": "AQI",
+      "pollutant": "Main pollutant {{p}}"
+    }
   },
   "library": {
     "description": "Images, videos and audio for your screens. Your plan includes {{limit}} GB of storage.",
@@ -29,7 +39,11 @@
     "search": "Search by name or tag",
     "type": "Type",
     "allTypes": "All types",
-    "types": { "image": "Image", "video": "Video", "audio": "Audio" },
+    "types": {
+      "image": "Image",
+      "video": "Video",
+      "audio": "Audio"
+    },
     "folder": "Folder",
     "allFolders": "All folders",
     "noFolder": "No folder",
@@ -86,7 +100,11 @@
     "template": "Template",
     "resolution": "Resolution",
     "resolutionHint": "Match your LED controller’s output. Portrait templates swap width and height.",
-    "presets": { "fhd": "Full HD {{w}}×{{h}}", "uhd": "4K UHD {{w}}×{{h}}", "hd": "HD {{w}}×{{h}}" },
+    "presets": {
+      "fhd": "Full HD {{w}}×{{h}}",
+      "uhd": "4K UHD {{w}}×{{h}}",
+      "hd": "HD {{w}}×{{h}}"
+    },
     "preview": "Preview",
     "previewHint": "Preview at {{w}}×{{h}} · Press Esc to close",
     "saved": "Layout saved.",
@@ -117,20 +135,29 @@
       "sensorValue": "Sensor value",
       "gauge": "Gauge",
       "chart": "Chart",
-      "status": "Status"
+      "status": "Status",
+      "button": "Button"
     },
     "canvasHint": "{{w}}×{{h}} · Drag to move, use handles to resize · Arrow keys nudge (Shift = 5%) · Delete removes",
     "properties": "Properties",
     "canvas": "Canvas",
     "orientation": "Orientation",
-    "orientations": { "landscape": "Landscape", "portrait": "Portrait" },
+    "orientations": {
+      "landscape": "Landscape",
+      "portrait": "Portrait"
+    },
     "background": "Background",
     "changeResolution": "Change resolution",
     "choose": "Choose…",
     "selectHint": "Select a zone on the canvas or in Layers to edit it.",
     "notFound": "Layout not found.",
     "zoneName": "Zone name",
-    "geometry": { "x": "Left %", "y": "Top %", "w": "Width %", "h": "Height %" },
+    "geometry": {
+      "x": "Left %",
+      "y": "Top %",
+      "w": "Width %",
+      "h": "Height %"
+    },
     "bringForward": "Bring forward",
     "sendBackward": "Send backward",
     "forward": "Forward",
@@ -140,7 +167,11 @@
     "changeMedia": "Change media",
     "fit": "Fit",
     "fitHint": "Cover fills the zone and may crop; Contain shows everything with bars.",
-    "fitOptions": { "contain": "Contain", "cover": "Cover", "fill": "Stretch" },
+    "fitOptions": {
+      "contain": "Contain",
+      "cover": "Cover",
+      "fill": "Stretch"
+    },
     "playlist": "Playlist",
     "playlistHint": "Only playlists without layouts can play inside a zone.",
     "choosePlaylist": "Choose a playlist…",
@@ -151,10 +182,18 @@
     "transparent": "Transparent",
     "textSize": "Text size",
     "align": "Alignment",
-    "alignOptions": { "start": "Left", "center": "Centre", "end": "Right" },
+    "alignOptions": {
+      "start": "Left",
+      "center": "Centre",
+      "end": "Right"
+    },
     "bold": "Bold",
     "clockFormat": "Show",
-    "clockFormats": { "time": "Time", "date": "Date", "datetime": "Date and time" },
+    "clockFormats": {
+      "time": "Time",
+      "date": "Date",
+      "datetime": "Date and time"
+    },
     "timezone": "Time zone",
     "showSeconds": "Show seconds",
     "qrValue": "QR content",
@@ -178,7 +217,19 @@
     "addRow": "Add row",
     "addColumn": "Add column",
     "tableHintGrid": "Up to 10 columns and 50 rows. The first row is the heading.",
-    "tableSensorHint": "Up to 10 columns and 50 rows. Use the sensor button in a cell to show a live sensor value with its unit."
+    "tableSensorHint": "Up to 10 columns and 50 rows. Use the sensor button in a cell to show a live sensor value with its unit.",
+    "buttonLabel": "Button label",
+    "buttonHint": "What the button says. Choose what a tap does under \"When tapped\".",
+    "tap": {
+      "label": "When tapped",
+      "hint": "Touch screens only. Taps open another layout as a page, go back, or go to the home page.",
+      "notInPlan": "Touch screens are not in your plan; this tap action is ignored. Choose \"Nothing\" to remove it.",
+      "none": "Nothing",
+      "open": "Open \"{{name}}\"",
+      "missing": "Open a deleted layout",
+      "back": "Go back",
+      "home": "Go to the home page"
+    }
   },
   "playlists": {
     "description": "Sequences of media, layouts and widgets that play in a loop.",
@@ -200,11 +251,22 @@
     "addLayout": "Add layout",
     "addWidget": "Add widget…",
     "noItems": "Add media, layouts or widgets to build the playlist.",
-    "kinds": { "image": "Image", "video": "Video", "audio": "Audio", "media": "Media", "layout": "Layout", "widget": "Widget" },
+    "kinds": {
+      "image": "Image",
+      "video": "Video",
+      "audio": "Audio",
+      "media": "Media",
+      "layout": "Layout",
+      "widget": "Widget"
+    },
     "seconds": "Seconds",
     "durationFor": "Duration of {{name}} in seconds",
     "transition": "Transition",
-    "transitions": { "none": "Cut", "fade": "Fade", "slide": "Slide" },
+    "transitions": {
+      "none": "Cut",
+      "fade": "Fade",
+      "slide": "Slide"
+    },
     "moveUp": "Move up",
     "moveDown": "Move down",
     "remove": "Remove from playlist",
@@ -235,7 +297,15 @@
     "noTargets": "None created yet — add them under Sites & Groups.",
     "pickTarget": "Choose at least one.",
     "everyDay": "Every day",
-    "days": { "0": "Sun", "1": "Mon", "2": "Tue", "3": "Wed", "4": "Thu", "5": "Fri", "6": "Sat" },
+    "days": {
+      "0": "Sun",
+      "1": "Mon",
+      "2": "Tue",
+      "3": "Wed",
+      "4": "Thu",
+      "5": "Fri",
+      "6": "Sat"
+    },
     "daysLabel": "Days",
     "daysHint": "None selected = every day.",
     "allDay": "All day",
@@ -306,7 +376,12 @@
     "someScreens": "Selected screens",
     "choose": "Choose",
     "duration": "Ends",
-    "durations": { "15": "After 15 minutes", "60": "After 1 hour", "240": "After 4 hours", "1440": "After 24 hours" },
+    "durations": {
+      "15": "After 15 minutes",
+      "60": "After 1 hour",
+      "240": "After 4 hours",
+      "1440": "After 24 hours"
+    },
     "untilEnded": "until ended manually",
     "impact_one": "{{count}} screen will switch within about 30 seconds.",
     "impact_other": "{{count}} screens will switch within about 30 seconds.",
@@ -331,7 +406,13 @@
       "diagnostics": "Diagnostics",
       "install_update": "Install player update"
     },
-    "status": { "pending": "Waiting", "delivered": "Sent to player", "done": "Done", "failed": "Failed", "expired": "Expired" },
+    "status": {
+      "pending": "Waiting",
+      "delivered": "Sent to player",
+      "done": "Done",
+      "failed": "Failed",
+      "expired": "Expired"
+    },
     "confirmTitle": "{{command}}?",
     "confirmBody": {
       "restart_app": "The screen goes black for a few seconds while the player restarts.",
@@ -359,7 +440,12 @@
   "screens": {
     "rotation": "Rotate output",
     "rotationHint": "For a portrait LED wall driven by a landscape HDMI output, choose 90° or 270° (whichever matches how the wall is mounted). The player turns everything it shows.",
-    "rotations": { "r0": "No rotation", "r90": "90° clockwise", "r180": "180° (upside down)", "r270": "270° clockwise (90° anticlockwise)" },
+    "rotations": {
+      "r0": "No rotation",
+      "r90": "90° clockwise",
+      "r180": "180° (upside down)",
+      "r270": "270° clockwise (90° anticlockwise)"
+    },
     "sentForApproval": "Publishing needs approval in this organization. Your request was sent to the approvers.",
     "description": "Android players connected to your LED walls and displays.",
     "add": "Add screen",
@@ -403,7 +489,19 @@
     "recentErrors": "Recent errors reported by the player",
     "remove": "Remove screen",
     "removeConfirm": "Remove screen",
-    "removeBody": "The screen is removed and its player is disconnected permanently. To use the box again, reset the app and pair it as a new screen."
+    "removeBody": "The screen is removed and its player is disconnected permanently. To use the box again, reset the app and pair it as a new screen.",
+    "touch": {
+      "title": "Touch screen",
+      "home": "Home page",
+      "homeHint": "A layout that visitors start from. Its tappable zones open the other pages.",
+      "off": "Off (not a touch screen)",
+      "idle": "Back after (seconds idle)",
+      "idleHint": "Between 10 and 3600.",
+      "attract": "Play the schedule while nobody is using it",
+      "attractOn": "The screen plays its schedule; a touch shows the home page. It returns to the schedule when idle.",
+      "attractOff": "The home page stays on screen; when idle it returns to the home page.",
+      "inSyncGroup": "This screen is in a sync group. Remove it from the group to make it a touch screen."
+    }
   },
   "groups": {
     "title": "Screen groups",

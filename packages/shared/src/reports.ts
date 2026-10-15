@@ -8,8 +8,8 @@ import { z } from 'zod';
 const id = z.string().min(1).max(128).regex(/^[A-Za-z0-9_-]+$/);
 const HOUR_MS = 3_600_000;
 
-/** What is counted: a media item (image/video) or a whole layout. */
-export const PLAY_KINDS = ['media', 'layout'] as const;
+/** What is counted: a media item (image/video), a whole layout, or taps on a touch page (id = layout). */
+export const PLAY_KINDS = ['media', 'layout', 'tap'] as const;
 export type PlayKind = (typeof PLAY_KINDS)[number];
 
 /** One content item in one UTC hour on one screen. */

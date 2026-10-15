@@ -72,6 +72,8 @@ const HttpsUrl = z
 
 export const Widget = z.discriminatedUnion('type', [
   z.object({ type: z.literal('text'), text: z.string().max(2000), style: TextStyle }),
+  /** A clear tap target for touch screens (the zone's action says what a tap does). */
+  z.object({ type: z.literal('button'), label: z.string().trim().min(1).max(80), style: TextStyle }),
   z.object({
     type: z.literal('clock'),
     /** 'time' | 'date' | 'datetime'; rendered with the screen's locale. */
@@ -169,6 +171,7 @@ export type WidgetType = Widget['type'];
 /** Widgets usable today. Others are part of the contract but ship in later phases. */
 export const AVAILABLE_WIDGETS = [
   'text',
+  'button',
   'clock',
   'qr',
   'table',
@@ -200,6 +203,14 @@ export const ZoneContent = z.discriminatedUnion('kind', [
 ]);
 export type ZoneContent = z.infer<typeof ZoneContent>;
 
+/** What tapping a zone does on a touch screen: open another layout (page), go back, or go home. */
+export const ZoneAction = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('page'), layoutId: z.string().min(1) }),
+  z.object({ kind: z.literal('back') }),
+  z.object({ kind: z.literal('home') }),
+]);
+export type ZoneAction = z.infer<typeof ZoneAction>;
+
 export const Zone = z.object({
   id: z.string().min(1).max(40),
   name: z.string().max(60),
@@ -209,6 +220,8 @@ export const Zone = z.object({
   h: Size,
   z: z.number().int().min(0).max(100),
   content: ZoneContent,
+  /** Touch screens only (interactive.touch); ignored elsewhere. */
+  action: ZoneAction.optional(),
 });
 export type Zone = z.infer<typeof Zone>;
 
@@ -346,5 +359,10 @@ export const Manifest = z.object({
   rotation: z.union([z.literal(0), z.literal(90), z.literal(180), z.literal(270)]).default(0),
   /** Set when the screen plays in a sync group (players before 0.16.0 ignore it). */
   sync: ManifestSync.nullable().default(null),
+  /**
+   * Touch kiosk (players 0.17.0+): the home layout opened on a touch, how long a visit lasts
+   * without touches, and whether the normal schedule plays in between (attract loop).
+   */
+  touch: z.object({ homeLayoutId: z.string(), idleSec: z.number().int().min(10).max(3600), attract: z.boolean() }).nullable().default(null),
 });
 export type Manifest = z.infer<typeof Manifest>;

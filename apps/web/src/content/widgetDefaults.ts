@@ -1,7 +1,7 @@
 import type { DataBinding, Widget } from '@wallx-play/layout-spec';
 import type { SensorChannelDoc } from '@wallx-play/shared';
 
-export type EditableWidgetType = 'text' | 'clock' | 'qr' | 'table' | 'web';
+export type EditableWidgetType = 'text' | 'clock' | 'qr' | 'table' | 'web' | 'button';
 
 /** Sensible starting configuration for each widget the editor offers. */
 export function defaultWidget(type: EditableWidgetType, timezone: string): Widget {
@@ -21,6 +21,8 @@ export function defaultWidget(type: EditableWidgetType, timezone: string): Widge
       };
     case 'web':
       return { type: 'web', url: 'https://example.com' };
+    case 'button':
+      return { type: 'button', label: 'Tap here', style: { color: '#FFFFFF', background: '#4F46E5', bold: true } };
   }
 }
 

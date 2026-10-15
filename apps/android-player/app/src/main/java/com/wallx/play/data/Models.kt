@@ -40,7 +40,12 @@ data class Manifest(
     val rotation: Int = 0,
     /** Multi-screen sync (0.16.0): play on the group's shared timeline, as a wall tile when set. */
     val sync: SyncInfo? = null,
+    /** Touch kiosk (0.17.0). */
+    val touch: TouchInfo? = null,
 )
+
+@Serializable
+data class TouchInfo(val homeLayoutId: String, val idleSec: Int = 60, val attract: Boolean = true)
 
 @Serializable
 data class SyncInfo(val groupId: String, val mode: String, val anchor: Long, val tile: WallTile? = null)
@@ -68,7 +73,13 @@ data class Zone(
     val h: Double,
     val z: Int,
     val content: JsonObject,
+    /** Touch screens: what a tap on this zone does (0.17.0). */
+    val action: ZoneAction? = null,
 )
+
+/** kind: page (open layoutId) / back / home. */
+@Serializable
+data class ZoneAction(val kind: String, val layoutId: String? = null)
 
 @Serializable
 data class Playlist(val id: String, val items: List<PlaylistItem>)

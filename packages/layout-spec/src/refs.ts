@@ -61,7 +61,9 @@ export function layoutRefs(layout: Pick<LayoutBody, 'zones'>): ContentRefs {
   const widgetTypes: Widget['type'][] = [];
   const sensors: SensorRef[] = [];
   const dataSourceIds: string[] = [];
+  const layoutIds: string[] = [];
   for (const zone of layout.zones) {
+    if (zone.action?.kind === 'page') layoutIds.push(zone.action.layoutId);
     const c = zone.content;
     if (c.kind === 'media') mediaIds.push(c.mediaId);
     if (c.kind === 'playlist') playlistIds.push(c.playlistId);
@@ -75,7 +77,8 @@ export function layoutRefs(layout: Pick<LayoutBody, 'zones'>): ContentRefs {
   return {
     mediaIds: uniq(mediaIds),
     playlistIds: uniq(playlistIds),
-    layoutIds: [],
+    /** Pages that tap actions open. */
+    layoutIds: uniq(layoutIds),
     widgetTypes: uniq(widgetTypes),
     sensors: uniqRefs(sensors),
     dataSourceIds: uniq(dataSourceIds),

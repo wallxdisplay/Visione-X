@@ -93,6 +93,8 @@ export interface ScreenDoc {
   offlineAlertedAt: number | null;
   /** The sync group the screen plays in (multi-screen sync), if any. */
   syncGroupId?: string | null;
+  /** Touch kiosk settings (interactive.touch), if the screen is a touch screen. */
+  touch?: ScreenTouch | null;
   createdBy: string;
   createdAt: number;
   updatedAt: number;
@@ -121,11 +123,22 @@ const ScreenFields = {
 };
 
 export const ClaimDeviceInput = z.object({ orgId: id, pairingCode: PairingCode, ...ScreenFields });
+/** Touch kiosk: the page (layout) a touch opens, the idle time that ends a visit, attract loop. */
+export const ScreenTouch = z.object({
+  homeLayoutId: id,
+  idleSec: z.number().int().min(10).max(3600).default(60),
+  /** Play the normal schedule until someone touches the screen; off = always show the home page. */
+  attract: z.boolean().default(true),
+});
+export type ScreenTouch = z.infer<typeof ScreenTouch>;
+
 export const UpdateScreenInput = z.object({
   orgId: id,
   screenId: id,
   ...ScreenFields,
   defaultPlaylistId: id.nullable(),
+  /** Omitted = unchanged; null = not a touch screen. */
+  touch: ScreenTouch.nullable().optional(),
 });
 export const ScreenRefInput = z.object({ orgId: id, screenId: id });
 export const PublishScreensInput = z.object({

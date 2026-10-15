@@ -16,7 +16,7 @@ import { ScreenCommands } from './ScreenCommands';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router';
-import { usePlaylists, useScreenGroups, useScreens, useSites } from '../../content/data';
+import { useLayouts, usePlaylists, useScreenGroups, useScreens, useSites } from '../../content/data';
 import { call, errorMessage } from '../../lib/api';
 import { fieldErrors, formatDateTime } from '../../lib/format';
 import { useOrg } from '../../org/OrgProvider';
@@ -37,6 +37,10 @@ interface ScreenForm {
   rotation: ScreenRotation;
   preset: string;
   defaultPlaylistId: string;
+  /** Touch screen: home page layout ('' = off). */
+  touchHome: string;
+  touchIdle: string;
+  touchAttract: boolean;
 }
 
 function resolutionFor(form: ScreenForm) {
@@ -227,7 +231,9 @@ export function Screens() {
 /** Add (pair) a screen when `code` is given, otherwise edit `screen`. */
 function ScreenDialog({ code, screen, onClose }: { code?: string; screen?: ScreenDoc; onClose: () => void }) {
   const { t } = useTranslation();
-  const { orgId, can, siteScope } = useOrg();
+  const { orgId, can, siteScope, entitlements } = useOrg();
+  const touchInPlan = !!entitlements?.features.includes('interactive.touch');
+  const layouts = useLayouts(orgId);
   const allSites = useSites(orgId);
   // Scoped members place screens only at their own sites (a site is then required).
   const siteChoices = siteScope.length ? allSites.data.filter((x) => siteScope.includes(x.id)) : allSites.data;
@@ -247,6 +253,9 @@ function ScreenDialog({ code, screen, onClose }: { code?: string; screen?: Scree
           Math.max(p.width, p.height) === Math.max(screen?.resolution.width ?? DEFAULT_SCREEN_RESOLUTION.width, screen?.resolution.height ?? 0),
       )?.id ?? 'fhd',
     defaultPlaylistId: screen?.defaultPlaylistId ?? '',
+    touchHome: screen?.touch?.homeLayoutId ?? '',
+    touchIdle: String(screen?.touch?.idleSec ?? 60),
+    touchAttract: screen?.touch?.attract ?? true,
   }));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
@@ -268,7 +277,13 @@ function ScreenDialog({ code, screen, onClose }: { code?: string; screen?: Scree
     setError(null);
     try {
       if (screen) {
-        await call('updateScreen', { ...base, screenId: screen.id, defaultPlaylistId: form.defaultPlaylistId || null });
+        // Touch settings are sent only on plans with touch screens (otherwise left as they are).
+        const touch = touchInPlan
+          ? form.touchHome
+            ? { homeLayoutId: form.touchHome, idleSec: Math.min(3600, Math.max(10, Math.round(Number(form.touchIdle) || 60))), attract: form.touchAttract }
+            : null
+          : undefined;
+        await call('updateScreen', { ...base, screenId: screen.id, defaultPlaylistId: form.defaultPlaylistId || null, ...(touch !== undefined ? { touch } : {}) });
       } else {
         const parsed = ClaimDeviceInput.safeParse({ ...base, pairingCode });
         if (!parsed.success) {
@@ -397,6 +412,44 @@ function ScreenDialog({ code, screen, onClose }: { code?: string; screen?: Scree
           value={form.defaultPlaylistId}
           onChange={(e) => set('defaultPlaylistId', e.target.value)}
         />
+      ) : null}
+      {screen && touchInPlan ? (
+        <fieldset className="touch-settings">
+          <legend className="wxp-field__label">{t('screens.touch.title')}</legend>
+          {screen.syncGroupId ? (
+            <p className="wxp-muted">{t('screens.touch.inSyncGroup')}</p>
+          ) : (
+            <>
+              <SelectField
+                label={t('screens.touch.home')}
+                hint={t('screens.touch.homeHint')}
+                disabled={!editable}
+                options={[{ value: '', label: t('screens.touch.off') }, ...layouts.data.map((l) => ({ value: l.id, label: l.name }))]}
+                value={form.touchHome}
+                onChange={(e) => set('touchHome', e.target.value)}
+              />
+              {form.touchHome ? (
+                <div className="wxp-form__row">
+                  <TextField
+                    label={t('screens.touch.idle')}
+                    hint={t('screens.touch.idleHint')}
+                    type="number"
+                    min={10}
+                    max={3600}
+                    disabled={!editable}
+                    value={form.touchIdle}
+                    onChange={(e) => set('touchIdle', e.target.value)}
+                  />
+                  <label className="checkbox-row">
+                    <input type="checkbox" disabled={!editable} checked={form.touchAttract} onChange={(e) => set('touchAttract', e.target.checked)} />
+                    {t('screens.touch.attract')}
+                  </label>
+                </div>
+              ) : null}
+              {form.touchHome ? <p className="wxp-field__hint">{t(form.touchAttract ? 'screens.touch.attractOn' : 'screens.touch.attractOff')}</p> : null}
+            </>
+          )}
+        </fieldset>
       ) : null}
       {screen ? (
         <dl className="wxp-dl">

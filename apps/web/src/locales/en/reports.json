@@ -29,7 +29,8 @@
     "type": "Type",
     "kinds": {
       "media": "Media",
-      "layout": "Layout"
+      "layout": "Layout",
+      "tap": "Taps (touch page)"
     },
     "deletedMedia": "Deleted media",
     "deletedLayout": "Deleted layout",
@@ -56,6 +57,7 @@
       "contentId": "Content ID",
       "plays": "Plays",
       "seconds": "Seconds on screen"
-    }
+    },
+    "deletedPage": "Deleted page"
   }
 }

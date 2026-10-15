@@ -247,6 +247,9 @@ Players 0.14.0+ add per-hour uptime to the same hourly upload: seconds the playe
 ## 13d. Multi-screen sync (Enterprise, `screen.multiSync`)
 A sync group (`orgs/{orgId}/syncGroups`) plays one playlist on up to 16 screens, mirrored or as a video wall (cols × rows ≤ 4 × 4); a screen belongs to at most one group (`screen.syncGroupId`). The manifest of a member carries `sync {groupId, mode, anchor, tile}` and the group's playlist replaces its schedules (emergencies still win). Players (0.16.0+) derive the current item from the shared timeline (anchor + durations), so no player-to-player link is needed and a restarted player rejoins in place; every playlist on screen (also zone playlists) follows it. The server clock comes from NTP-style samples of `GET /api/v1/devices/time` (best of 5, every 10 min, monotonic clock). Videos are checked every second: drift > 40 ms is corrected by playing 5 % faster/slower, > 500 ms by a seek. A wall tile lays the content out at full wall size, shifted and clipped. Publishing any member republishes the whole group, so a group never runs two versions.
 
+## 13e. Interactive / touch (Enterprise, `interactive.touch`)
+Layouts become pages: a zone may carry a tap `action` (`page` → open another layout, `back`, `home`) and the `button` widget draws a labelled button (both need the feature to save; page targets must exist; a layout keeps `layoutIds` of the pages it opens, so a linked page or a screen's home page cannot be deleted). A screen's `touch {homeLayoutId, idleSec 10–3600, attract}` makes it a kiosk; its manifest gets the same `touch` block plus the home page and every page reachable from it (≤ 6 links deep, ≤ 60 pages). Touch screens cannot join a sync group. Players (0.17.0+): with `attract` the schedule plays until a touch opens the home page; otherwise the home page stays up. Taps move through pages with a back history; idle for `idleSec` ends the visit. Emergencies still take the screen. Taps are counted in proof-of-play as `tap` per page.
+
 ## 14. Internationalization
 `i18next` with JSON resources in `apps/web/src/locales/{en,hi,mr}`; all UI strings externalized. The language is chosen per browser (top bar) and Hindi/Marathi load on demand; missing keys fall back to English, and a unit test keeps every translation's keys and `{{placeholders}}` identical to English. Dates follow the language (`en-IN`, `hi-IN`, `mr-IN` with Latin digits). Screen content (clock, weather, charts) follows the player and stays English. Hindi and Marathi are machine-drafted and need review by native speakers. Fonts: Inter (UI) + Noto Sans Devanagari (content, bundled on player).
 
@@ -273,7 +276,7 @@ Feature catalogue stores `releaseStatus` (what WallX has built) separately from 
 | Proof-of-play reports, diagnostics | v1.1 | – | – | ✓ | ✓ |
 | API keys & webhooks | v1.1 | – | – | – | ✓ |
 | Hindi / Marathi UI | later | — all plans — |
-| Multi-screen sync ✅ (player 0.16.0); interactive/touch, MQTT | later | – | – | – | ✓ |
+| Multi-screen sync ✅ (player 0.16.0); interactive/touch ✅ (player 0.17.0); MQTT | later | – | – | – | ✓ |
 | Self-service reseller portal, white-label | later | – | – | – | ✓ |
 *Plan columns are a proposal — confirm or edit.*
 

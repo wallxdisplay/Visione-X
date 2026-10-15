@@ -20,6 +20,7 @@ import {
   type LayoutDoc,
   type MediaDoc,
   type PlaylistDoc,
+  type ScreenDoc,
   type SaveLayoutInput,
   type SavePlaylistInput,
   type ScheduleDoc,
@@ -46,6 +47,7 @@ function checkWidgets(refs: ContentRefs, entitlements: EntitlementsDoc) {
   if (refs.widgetTypes.includes('rss')) requireFeature(entitlements, 'widget.rss', 'The RSS widget');
   // Air quality comes with weather in the plans (same provider and place search).
   if (refs.widgetTypes.includes('aqi')) requireFeature(entitlements, 'widget.weather', 'The air quality widget');
+  if (refs.widgetTypes.includes('button')) requireFeature(entitlements, 'interactive.touch', 'Buttons for touch screens');
 }
 
 const SOURCE_LABEL = { weather: 'weather', rss: 'RSS', air_quality: 'air quality' } as const;
@@ -119,6 +121,10 @@ export async function saveLayout(
     await checkMedia(tx, db, input.orgId, refs.mediaIds);
     await checkSensors(tx, db, input.orgId, widgetsOf(input.layout.zones), refs);
     await checkDataSources(tx, db, input.orgId, widgetsOf(input.layout.zones));
+    // Tap actions (touch screens) need the feature, and their pages must exist in this org.
+    if (input.layout.zones.some((z) => z.action)) requireFeature(entitlements, 'interactive.touch', 'Tap actions for touch screens');
+    const pages = await Promise.all(refs.layoutIds.filter((id) => id !== ref.id).map((id) => tx.get(db.doc(paths.layout(input.orgId, id)))));
+    if (pages.some((p) => !p.exists)) throw new HttpsError('invalid-argument', 'A tap action opens a layout that no longer exists.');
 
     // A playlist shown inside a zone may not itself contain layouts (no nesting/cycles).
     const playlists = await Promise.all(refs.playlistIds.map((id) => tx.get(db.doc(paths.playlist(input.orgId, id)))));
@@ -141,7 +147,7 @@ export async function saveLayout(
       zones: input.layout.zones,
       mediaIds: refs.mediaIds,
       playlistIds: refs.playlistIds,
-      layoutIds: [],
+      layoutIds: refs.layoutIds,
       sensorDeviceIds: sensorDeviceIds(refs),
       dataSourceIds: refs.dataSourceIds,
       ...meta(actor, at, existing?.data() as LayoutDoc | undefined),
@@ -178,6 +184,20 @@ export async function deleteLayout(
     if (!usedBy.empty) {
       const names = usedBy.docs.map((d) => `“${(d.data() as PlaylistDoc).name}”`).join(', ');
       throw new HttpsError('failed-precondition', `This layout is used in playlist ${names}. Remove it there first.`);
+    }
+    // Touch screens: other pages open it, or it is a screen's home page.
+    const [linkedFrom, homeOf] = await Promise.all([
+      tx.get(db.collection(paths.layouts(input.orgId)).where('layoutIds', 'array-contains', input.layoutId).limit(5)),
+      tx.get(db.collection(paths.screens(input.orgId)).where('touch.homeLayoutId', '==', input.layoutId).limit(5)),
+    ]);
+    const linking = linkedFrom.docs.filter((d) => d.id !== input.layoutId);
+    if (linking.length) {
+      const names = linking.map((d) => `“${(d.data() as LayoutDoc).name}”`).join(', ');
+      throw new HttpsError('failed-precondition', `Tap actions in layout ${names} open this layout. Change them first.`);
+    }
+    if (!homeOf.empty) {
+      const names = homeOf.docs.map((d) => `“${(d.data() as ScreenDoc).name}”`).join(', ');
+      throw new HttpsError('failed-precondition', `This layout is the touch home page of screen ${names}. Choose another one first.`);
     }
     tx.delete(ref);
     audit(input.orgId, {

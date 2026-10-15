@@ -24,10 +24,11 @@ export const isDataChoice = (c: string): c is DataWidgetType => (DATA_WIDGET_TYP
 
 /**
  * Widget types to offer, in menu order. Sensor and data widgets appear only when the plan has
- * them, and are disabled until a channel / data source exists.
+ * them, and are disabled until a channel / data source exists. Buttons are offered for layout
+ * zones (`zone`) on plans with touch screens.
  */
-export function widgetChoices({ sensors, dataSources }: WidgetSources): Array<{ type: WidgetChoice; disabled: boolean }> {
-  const core: EditableWidgetType[] = ['text', 'clock', 'qr', 'table', 'web'];
+export function widgetChoices({ sensors, dataSources, touch }: WidgetSources, { zone = false } = {}): Array<{ type: WidgetChoice; disabled: boolean }> {
+  const core: EditableWidgetType[] = ['text', 'clock', 'qr', 'table', 'web', ...(zone && touch ? (['button'] as const) : [])];
   return [
     ...core.map((type) => ({ type, disabled: false })),
     ...(sensors ? SENSOR_WIDGET_TYPES.map((type) => ({ type, disabled: !sensors.length })) : []),
@@ -148,6 +149,13 @@ export function WidgetEditor({
         <>
           <TextAreaField label={t('studio.text')} hint={t('studio.textHint')} value={w.text} disabled={readOnly} maxLength={2000} onChange={(e) => onChange({ ...w, text: e.target.value })} />
           {styleEditor(w.style, (style) => onChange({ ...w, style }), 0.4)}
+        </>
+      );
+    case 'button':
+      return (
+        <>
+          <TextField label={t('studio.buttonLabel')} hint={t('studio.buttonHint')} value={w.label} disabled={readOnly} maxLength={80} onChange={(e) => onChange({ ...w, label: e.target.value })} />
+          {styleEditor(w.style, (style) => onChange({ ...w, style }), 0.36)}
         </>
       );
     case 'clock':

@@ -22,6 +22,8 @@ import {
   type ScreenDoc,
   type SyncGroupDoc,
   type SyncMember,
+  type EntitlementsDoc,
+  type ScreenTouch,
 } from '@wallx-play/shared';
 import type { Deps } from '../lib/context';
 import { downloadUrl } from '../lib/storageUrl';
@@ -62,6 +64,8 @@ export interface ManifestSources {
   emergency?: EmergencyDoc | null;
   /** The sync group the screen plays in (enabled, with this screen as a member), if any. */
   sync?: { group: SyncGroupDoc; member: SyncMember } | null;
+  /** Touch kiosk settings (only when the plan has interactive.touch). */
+  touch?: ScreenTouch | null;
 }
 
 /**
@@ -166,6 +170,10 @@ export function assembleManifest(src: ManifestSources): Manifest {
     liveChannels: liveChannelsOf(layouts, playlists),
     dataSources: dataSourcesOf(layouts, playlists),
     rotation: src.screen.rotation ?? 0,
+    touch:
+      !group && src.touch && src.layouts.has(src.touch.homeLayoutId)
+        ? { homeLayoutId: src.touch.homeLayoutId, idleSec: src.touch.idleSec, attract: src.touch.attract }
+        : null,
     sync: group
       ? {
           groupId: group.group.id,
@@ -176,6 +184,10 @@ export function assembleManifest(src: ManifestSources): Manifest {
       : null,
   });
 }
+
+/** Touch kiosks: how deep tap links are followed, and how many pages a screen gets at most. */
+const MAX_PAGE_DEPTH = 6;
+const MAX_PAGES = 60;
 
 async function getMany<T>(db: Firestore, pathFor: (id: string) => string, ids: Iterable<string>): Promise<Map<string, T>> {
   const unique = [...new Set(ids)];
@@ -210,7 +222,18 @@ export async function compileManifest(
   if (sync) playlistIds.add(sync.group.playlistId);
   if (emergency?.content.kind === 'playlist') playlistIds.add(emergency.content.playlistId);
   const playlists = await getMany<PlaylistDoc>(db, (id) => paths.playlist(orgId, id), playlistIds);
-  const layouts = await getMany<LayoutDoc>(db, (id) => paths.layout(orgId, id), [...playlists.values()].flatMap((p) => p.layoutIds));
+  // Touch screens also get their home page and every page a tap can reach (a few levels deep).
+  const ent = screen.touch ? ((await db.doc(paths.orgEntitlements(orgId)).get()).data() as EntitlementsDoc | undefined) : undefined;
+  const touch = screen.touch && !sync && ent?.features.includes('interactive.touch') ? screen.touch : null;
+  const layouts = await getMany<LayoutDoc>(db, (id) => paths.layout(orgId, id), [
+    ...[...playlists.values()].flatMap((p) => p.layoutIds),
+    ...(touch ? [touch.homeLayoutId] : []),
+  ]);
+  for (let depth = 0; touch && depth < MAX_PAGE_DEPTH && layouts.size < MAX_PAGES; depth++) {
+    const next = [...new Set([...layouts.values()].flatMap((l) => l.layoutIds ?? []))].filter((id) => !layouts.has(id));
+    if (!next.length) break;
+    for (const [id, l] of await getMany<LayoutDoc>(db, (lid) => paths.layout(orgId, lid), next.slice(0, MAX_PAGES - layouts.size))) layouts.set(id, l);
+  }
   const zonePlaylistIds = [...layouts.values()].flatMap((l) => l.playlistIds).filter((id) => !playlists.has(id));
   for (const [id, p] of await getMany<PlaylistDoc>(db, (pid) => paths.playlist(orgId, pid), zonePlaylistIds)) playlists.set(id, p);
 
@@ -223,5 +246,5 @@ export async function compileManifest(
       .map(async (m) => assetUrls.set(m.id, await downloadUrl(bucket, m.display!.path))),
   );
 
-  return assembleManifest({ orgId, screen, version, now: now(), schedules, playlists, layouts, media, assetUrls, emergency, sync });
+  return assembleManifest({ orgId, screen, version, now: now(), schedules, playlists, layouts, media, assetUrls, emergency, sync, touch });
 }

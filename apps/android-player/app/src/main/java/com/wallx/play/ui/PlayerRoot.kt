@@ -19,6 +19,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -27,6 +28,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -35,8 +39,11 @@ import androidx.compose.ui.unit.sp
 import com.wallx.play.R
 import com.wallx.play.core.PlayerEngine
 import com.wallx.play.core.Schedule
+import com.wallx.play.core.TouchState
 import com.wallx.play.core.UiState
+import com.wallx.play.data.Manifest
 import com.wallx.play.data.Playing
+import com.wallx.play.data.Playlist
 import kotlinx.coroutines.delay
 import java.text.DateFormat
 import java.util.Date
@@ -96,8 +103,56 @@ private fun Playback(state: UiState.Playing, engine: PlayerEngine) {
     val resolution = Schedule.resolvePlaylist(m.schedules, m.defaultPlaylistId, m.emergency, now)
     val ctx = remember(m, state.library) { RenderContext(m, state.library, engine.live, engine::serverNow, engine.data) }
     val playlist = resolution.playlistId?.let { ctx.playlists[it] }
+
+    // Touch screen: a touch starts a visit on the home page; taps open pages; idle ends it.
+    // An emergency override takes the screen as usual.
+    val touch = m.touch?.takeIf { resolution.source != "emergency" }
+    var touchState by remember(m.touch) { mutableStateOf(TouchState()) }
+    val page = touch?.let { touchState.page(it) }?.let { ctx.layouts[it] }
+    val endsAt = touch?.let { touchState.endsAt(it) }
+    LaunchedEffect(endsAt) {
+        if (endsAt != null) {
+            delay((endsAt - System.currentTimeMillis()).coerceAtLeast(0))
+            touchState = touchState.ended()
+        }
+    }
+    if (touch != null) {
+        val nav = remember(touch) {
+            TouchNav { action, pageId ->
+                engine.plays.end(engine.plays.start("tap", pageId))
+                touchState = touchState.act(touch, action, System.currentTimeMillis())
+            }
+        }
+        Box(
+            Modifier.fillMaxSize().pointerInput(touch) {
+                // Observe every touch (without consuming it): keeps the visit going or starts one.
+                awaitPointerEventScope {
+                    while (true) {
+                        val e = awaitPointerEvent(PointerEventPass.Initial)
+                        if (e.type == PointerEventType.Press) touchState = touchState.touched(touch, System.currentTimeMillis())
+                    }
+                }
+            },
+        ) {
+            if (page != null) {
+                engine.nowPlaying = Playing(null, page.id, "touch")
+                Rotated(m.rotation) {
+                    CompositionLocalProvider(LocalPlayLog provides engine.plays, LocalTouchNav provides nav) { LayoutView(page, ctx) }
+                }
+            } else {
+                // Attract loop: the schedule plays until someone touches the screen.
+                SchedulePlayback(playlist, resolution.source, m, ctx, engine)
+            }
+        }
+        return
+    }
+    SchedulePlayback(playlist, resolution.source, m, ctx, engine)
+}
+
+@Composable
+private fun SchedulePlayback(playlist: Playlist?, source: String, m: Manifest, ctx: RenderContext, engine: PlayerEngine) {
     if (playlist == null) {
-        engine.nowPlaying = Playing(null, null, resolution.source)
+        engine.nowPlaying = Playing(null, null, source)
         Box(Modifier.fillMaxSize().background(Color.Black))
         return
     }
@@ -107,7 +162,7 @@ private fun Playback(state: UiState.Playing, engine: PlayerEngine) {
         CompositionLocalProvider(LocalPlayLog provides engine.plays, LocalSyncClock provides syncClock) {
             val player: @Composable () -> Unit = {
                 PlaylistPlayer(playlist.items, ctx) { item ->
-                    engine.nowPlaying = Playing(playlist.id, item?.id, resolution.source)
+                    engine.nowPlaying = Playing(playlist.id, item?.id, source)
                 }
             }
             val tile = m.sync?.tile
