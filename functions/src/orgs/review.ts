@@ -82,8 +82,11 @@ export async function reviewOrgSignup(
     }
 
     // Reads for approval must happen before any write.
+    // App store: new organizations use app pricing (every app free in the trial) once the app
+    // catalog is set up; before that, plan pricing as before.
+    const appPricing = input.decision === 'approve' && (await tx.get(db.collection(paths.apps()).where('base', '==', true).limit(1))).size > 0;
     const entitlements =
-      input.decision === 'approve' ? await computeEntitlements(tx, db, orgId, TRIAL_PLAN_ID, at) : null;
+      input.decision === 'approve' ? await computeEntitlements(tx, db, orgId, TRIAL_PLAN_ID, at, undefined, appPricing ? { lines: [], trialing: true } : undefined) : null;
 
     const next: Record<typeof input.decision, { org: OrgStatus; request: SignupRequestDoc['status'] }> = {
       approve: { org: 'active', request: 'approved' },
@@ -95,7 +98,7 @@ export async function reviewOrgSignup(
     // Trial on the trial plan; the screen limit comes from the plan.
     let subscription: SubscriptionDoc | null = null;
     if (entitlements) {
-      const sub = trialSubscription(TRIAL_PLAN_ID, TRIAL_DAYS, entitlements.limits.screens ?? 1, at, actor.uid);
+      const sub = trialSubscription(TRIAL_PLAN_ID, TRIAL_DAYS, entitlements.limits.screens ?? 1, at, actor.uid, appPricing ? 'apps' : 'plan');
       const state = billingState(sub, at);
       subscription = { ...sub, status: state.status, nextTransitionAt: state.nextTransitionAt };
     }

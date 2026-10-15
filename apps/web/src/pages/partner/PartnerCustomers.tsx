@@ -17,6 +17,7 @@ import { fieldErrors, formatDate, timezoneOptions } from '../../lib/format';
 import { rememberOrg } from '../../org/OrgProvider';
 import { usePartner } from '../../partner/PartnerProvider';
 import { STATUS_TONE } from '../billing/Billing';
+import { AppQuantitiesEditor, quantitiesOf, quantityProblems, toLines, type SellableApp } from '../../content/apps';
 import { AccountStanding } from './PartnerBilling';
 import './partner.css';
 
@@ -189,6 +190,11 @@ export function PartnerCustomers() {
   );
 }
 
+/** Apps a reseller can sell, at its dealer prices. */
+function sellableOf(overview: PartnerOverview): SellableApp[] {
+  return overview.apps.map((a) => ({ id: a.id, name: a.name, unit: a.unit as SellableApp['unit'], priceMinor: a.dealerPriceMinor, requires: a.requires }));
+}
+
 function planOptions(overview: PartnerOverview, t: (k: string, o?: Record<string, unknown>) => string) {
   return overview.plans.map((p) => ({
     value: p.id,
@@ -222,6 +228,7 @@ function NewCustomerDialog({
     quantity: '1',
     trial: true,
   });
+  const [apps, setApps] = useState<Record<string, number>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -230,7 +237,7 @@ function NewCustomerDialog({
   const paidUp = overview.account.billingStatus === 'active' || overview.account.billingStatus === 'past_due';
 
   async function save() {
-    const parsed = CreatePartnerOrgInput.safeParse({ ...v, accountId, quantity: Number(v.quantity) });
+    const parsed = CreatePartnerOrgInput.safeParse({ ...v, accountId, quantity: Number(v.quantity), apps: toLines(apps) });
     if (!parsed.success) {
       setErrors(fieldErrors(parsed.error.issues));
       return;
@@ -255,7 +262,7 @@ function NewCustomerDialog({
       footer={
         <>
           <Button onClick={onClose}>{t('common.cancel')}</Button>
-          <Button variant="primary" disabled={busy || !v.orgName.trim() || !v.planId} onClick={() => void save()}>
+          <Button variant="primary" disabled={busy || !v.orgName.trim() || !v.planId || quantityProblems(sellableOf(overview), apps, Number(v.quantity) || 0).length > 0} onClick={() => void save()}>
             {t('partner.customers.create')}
           </Button>
         </>
@@ -293,6 +300,12 @@ function NewCustomerDialog({
           onChange={(e) => set('quantity', e.target.value)}
         />
       </div>
+      {overview.apps.length ? (
+        <>
+          <h3 className="section-title">{t('appBilling.chooseApps')}</h3>
+          <AppQuantitiesEditor apps={sellableOf(overview)} value={apps} screens={Number(v.quantity) || 0} onChange={setApps} />
+        </>
+      ) : null}
       <label className="checkbox-row">
         <input type="checkbox" checked={v.trial} onChange={(e) => set('trial', e.target.checked)} />
         {t('partner.customers.trial', { days: PARTNER_TRIAL_DAYS })}
@@ -319,17 +332,19 @@ function PlanDialog({
   const { t } = useTranslation();
   const [planId, setPlanId] = useState(overview.plans.some((p) => p.id === customer.planId) ? customer.planId : (overview.plans[0]?.id ?? ''));
   const [quantity, setQuantity] = useState(String(customer.quantity));
+  const [apps, setApps] = useState<Record<string, number>>(quantitiesOf(customer.apps));
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const plan = overview.plans.find((p) => p.id === planId);
   const n = Number(quantity);
-  const ok = Number.isInteger(n) && n >= Math.max(1, customer.screensUsed);
+  const appPricing = customer.pricing === 'apps';
+  const ok = Number.isInteger(n) && n >= Math.max(1, customer.screensUsed) && (!appPricing || quantityProblems(sellableOf(overview), apps, n).length === 0);
 
   async function save() {
     setBusy(true);
     setError(null);
     try {
-      await call('setPartnerSubscription', { accountId, orgId: customer.orgId, planId, quantity: n });
+      await call('setPartnerSubscription', { accountId, orgId: customer.orgId, planId, quantity: n, ...(appPricing ? { apps: toLines(apps) } : {}) });
       onSaved();
     } catch (err) {
       setError(errorMessage(err));
@@ -361,7 +376,12 @@ function PlanDialog({
         value={quantity}
         onChange={(e) => setQuantity(e.target.value)}
       />
-      {plan && ok && !customer.trialing && plan.dealerPriceMinor !== null ? (
+      {appPricing ? (
+        <>
+          <h3 className="section-title">{t('appBilling.chooseApps')}</h3>
+          <AppQuantitiesEditor apps={sellableOf(overview)} value={apps} screens={Number.isInteger(n) ? n : 0} onChange={setApps} />
+        </>
+      ) : plan && ok && !customer.trialing && plan.dealerPriceMinor !== null ? (
         <p className="wxp-muted">{t('partner.customers.newMonthly', { amount: formatInr(plan.dealerPriceMinor * n) })}</p>
       ) : null}
     </Dialog>

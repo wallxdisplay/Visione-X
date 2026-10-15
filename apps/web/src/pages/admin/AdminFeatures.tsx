@@ -207,6 +207,7 @@ function PlanDialog({ plan, onClose, onSaved }: { plan: Plan | null; onClose: ()
   const [name, setName] = useState(plan?.name ?? '');
   const [tier, setTier] = useState<Plan['tier']>(plan?.tier ?? 'custom');
   const [price, setPrice] = useState(rupees(plan?.pricePerScreenMonthlyMinor ?? null));
+  const [appsBase, setAppsBase] = useState(rupees(plan?.appsBasePriceMinor ?? null));
   const [annual, setAnnual] = useState(String((plan?.annualDiscountBps ?? 1500) / 100));
   const [trialDays, setTrialDays] = useState(String(plan?.trialDays ?? 0));
   const [limits, setLimits] = useState<Record<LimitKey, string>>(
@@ -219,11 +220,13 @@ function PlanDialog({ plan, onClose, onSaved }: { plan: Plan | null; onClose: ()
   const [busy, setBusy] = useState(false);
 
   const priceMinor = price.trim() ? parseRupees(price) : null;
+  const appsBaseMinor = appsBase.trim() ? parseRupees(appsBase) : null;
   const limitValues = Object.fromEntries(LIMIT_KEYS.map((k) => [k, limits[k].trim() === '' ? null : Number(limits[k])])) as Record<LimitKey, number | null>;
   const valid =
     /^[a-z0-9-]{2,40}$/.test(id) &&
     name.trim().length >= 2 &&
     (price.trim() === '' || priceMinor !== null) &&
+    (appsBase.trim() === '' || appsBaseMinor !== null) &&
     Object.values(limitValues).every((v) => v === null || (Number.isInteger(v) && v >= 0)) &&
     reason.trim().length >= 5;
 
@@ -237,6 +240,7 @@ function PlanDialog({ plan, onClose, onSaved }: { plan: Plan | null; onClose: ()
         name,
         tier,
         pricePerScreenMonthlyMinor: priceMinor,
+        appsBasePriceMinor: appsBaseMinor,
         annualDiscountBps: Math.round(Number(annual) * 100),
         trialDays: Number(trialDays),
         limits: limitValues,
@@ -277,6 +281,14 @@ function PlanDialog({ plan, onClose, onSaved }: { plan: Plan | null; onClose: ()
           onChange={(e) => setPrice(e.target.value)}
         />
       </div>
+      <TextField
+        label={t('appBilling.planBasePrice')}
+        hint={t('appBilling.planBasePriceHint')}
+        inputMode="decimal"
+        value={appsBase}
+        error={appsBase.trim() && appsBaseMinor === null ? t('adminBilling.amountInvalid') : undefined}
+        onChange={(e) => setAppsBase(e.target.value)}
+      />
       <div className="wxp-form__row">
         <TextField label={t('adminFeatures.annualDiscount')} type="number" min={0} max={100} step="0.01" value={annual} onChange={(e) => setAnnual(e.target.value)} />
         <TextField label={t('adminFeatures.trialDays')} type="number" min={0} max={90} value={trialDays} onChange={(e) => setTrialDays(e.target.value)} />

@@ -75,6 +75,8 @@ export const Plan = z.object({
   tier: z.enum(['trial', 'starter', 'professional', 'enterprise', 'custom']),
   currency: z.literal('INR'),
   pricePerScreenMonthlyMinor: z.number().int().nonnegative().nullable(),
+  /** App pricing: base price per screen for this package (null = the Screen app price). */
+  appsBasePriceMinor: z.number().int().nonnegative().nullable().optional(),
   /** Annual discount in basis points (1500 = 15%). */
   annualDiscountBps: z.number().int().min(0).max(10000),
   trialDays: z.number().int().nonnegative(),

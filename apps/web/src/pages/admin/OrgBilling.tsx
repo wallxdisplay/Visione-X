@@ -1,4 +1,13 @@
-import { Alert, Button, Dialog, PageHeader, SelectField, Spinner, StatusChip, TextAreaField, TextField } from '@wallx-play/ui';
+import {
+  Alert,
+  Button,
+  Dialog,
+  PageHeader,
+  SelectField,
+  Spinner,
+  StatusChip,
+  TextAreaField,
+  TextField } from '@wallx-play/ui';
 import {
   FEATURE_KEYS,
   LIMIT_KEYS,
@@ -17,9 +26,13 @@ import {
   type PaymentDoc,
   type PaymentMethod,
   type SubscriptionDoc,
+  appsBasePriceMinor,
+  billLines,
+  type AppDoc,
+  type BillLine,
 } from '@wallx-play/shared';
 import { ArrowLeft } from 'lucide-react';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
 import { useAuth } from '../../auth/AuthProvider';
@@ -28,6 +41,7 @@ import { call, errorMessage } from '../../lib/api';
 import { formatDate, formatDateTime } from '../../lib/format';
 import { useDoc, type WithId } from '../../lib/hooks';
 import { STATUS_TONE } from '../billing/Billing';
+import { AppQuantitiesEditor, BillLinesTable, quantitiesOf, quantityProblems, toLines, useAppCatalog, type SellableApp } from '../../content/apps';
 import '../billing/billing.css';
 
 /** "YYYY-MM-DD" ⇄ epoch ms. Dates are India dates: `end` = 23:59:59 IST, else 12:00 IST. */
@@ -102,7 +116,7 @@ function ActionDialog({
   );
 }
 
-type Open = 'plan' | 'payment' | 'dates' | 'cancel' | 'overrides' | { void: PaymentDoc } | { resolve: BillingRequestDoc } | null;
+type Open = 'plan' | 'payment' | 'dates' | 'cancel' | 'overrides' | 'moveToApps' | { void: PaymentDoc } | { resolve: BillingRequestDoc } | null;
 
 export function OrgBilling() {
   const { t } = useTranslation();
@@ -115,6 +129,7 @@ export function OrgBilling() {
   const payments = usePayments(orgId);
   const requests = useBillingRequests(orgId);
   const plans = usePlans(true);
+  const appCatalog = useAppCatalog();
   const [open, setOpen] = useState<Open>(null);
   const edit = hasPlatformPermission(platformRole, 'billing.override');
   const editLimits = hasPlatformPermission(platformRole, 'org.limits.edit');
@@ -132,6 +147,16 @@ export function OrgBilling() {
     );
   }
   const plan = plans.data.find((p) => p.id === s.planId);
+  const lines =
+    s.pricing === 'apps' && plan
+      ? billLines({
+          screens: s.quantity,
+          basePriceMinor: appsBasePriceMinor(plan, appCatalog.data.find((a) => a.base), s.customPriceMinor),
+          lines: s.apps ?? [],
+          adjustmentMinor: s.adjustmentMinor ?? 0,
+          catalog: appCatalog.data,
+        })
+      : null;
 
   return (
     <>
@@ -152,6 +177,8 @@ export function OrgBilling() {
             <dd className="wxp-tabular">{s.quantity}</dd>
             <dt>{t('adminBilling.screenLimit')}</dt>
             <dd className="wxp-tabular">{ent.data?.limits.screens ?? '∞'}</dd>
+            <dt>{t('appBilling.pricingMode')}</dt>
+            <dd>{t(`appBilling.modes.${s.pricing ?? 'plan'}`)}</dd>
             <dt>{t('adminBilling.pricing')}</dt>
             <dd>
               {s.customPriceMinor !== null ? t('adminBilling.customPerScreen', { price: formatInr(s.customPriceMinor) }) : t('adminBilling.listPrice')}
@@ -175,10 +202,17 @@ export function OrgBilling() {
               </Button>
               <Button onClick={() => setOpen('plan')}>{t('adminBilling.changePlan')}</Button>
               <Button onClick={() => setOpen('dates')}>{t('adminBilling.adjustDates')}</Button>
+              {s.pricing !== 'apps' ? <Button onClick={() => setOpen('moveToApps')}>{t('appBilling.moveToApps')}</Button> : null}
               <Button variant="tertiary" onClick={() => setOpen('cancel')}>
                 {s.cancelAtPeriodEnd ? t('adminBilling.undoCancel') : t('adminBilling.cancelAtEnd')}
               </Button>
             </div>
+          ) : null}
+          {lines ? (
+            <>
+              <h3 className="section-title">{t('appBilling.lines')}</h3>
+              <BillLinesTable lines={lines} />
+            </>
           ) : null}
         </section>
 
@@ -283,7 +317,8 @@ export function OrgBilling() {
         </div>
       )}
 
-      {open === 'plan' ? <PlanDialog orgId={orgId} sub={s} onClose={() => setOpen(null)} /> : null}
+      {open === 'plan' ? <PlanDialog orgId={orgId} sub={s} catalog={appCatalog.data} onClose={() => setOpen(null)} /> : null}
+      {open === 'moveToApps' ? <MoveToAppsDialog orgId={orgId} onClose={() => setOpen(null)} /> : null}
       {open === 'payment' ? <PaymentDialog orgId={orgId} sub={s} onClose={() => setOpen(null)} /> : null}
       {open === 'dates' ? <DatesDialog orgId={orgId} sub={s} onClose={() => setOpen(null)} /> : null}
       {open === 'cancel' ? (
@@ -316,9 +351,18 @@ export function OrgBilling() {
   );
 }
 
-function PlanDialog({ orgId, sub, onClose }: { orgId: string; sub: SubscriptionDoc; onClose: () => void }) {
+function PlanDialog({ orgId, sub, catalog, onClose }: { orgId: string; sub: SubscriptionDoc; catalog: AppDoc[]; onClose: () => void }) {
   const { t } = useTranslation();
   const plans = usePlans(true);
+  const [pricing, setPricing] = useState<'plan' | 'apps'>(sub.pricing === 'apps' ? 'apps' : 'plan');
+  const [apps, setApps] = useState<Record<string, number>>(quantitiesOf(sub.apps));
+  const [adjustment, setAdjustment] = useState(sub.adjustmentMinor ? (sub.adjustmentMinor / 100).toFixed(2) : '');
+  const [reprice, setReprice] = useState(false);
+  const locked = new Map((sub.apps ?? []).map((l) => [l.appId, l.unitPriceMinor]));
+  const sellable: SellableApp[] = catalog
+    .filter((a) => !a.base && (a.active || locked.has(a.id)))
+    .map((a) => ({ id: a.id, name: a.name, unit: a.unit, priceMinor: !reprice && locked.has(a.id) ? locked.get(a.id)! : a.priceMinor, requires: a.requires }));
+  const adjustmentMinor = adjustment.trim() === '' ? 0 : /^-?\d+(\.\d{1,2})?$/.test(adjustment.trim()) ? Math.round(Number(adjustment) * 100) : null;
   const [planId, setPlanId] = useState(sub.planId);
   const [interval, setInterval] = useState<BillingInterval>(sub.interval);
   const [quantity, setQuantity] = useState(String(sub.quantity));
@@ -327,7 +371,8 @@ function PlanDialog({ orgId, sub, onClose }: { orgId: string; sub: SubscriptionD
   const q = Number(quantity);
   const customMinor = custom.trim() ? parseRupees(custom) : null;
   const d = Number(discount);
-  const valid = Number.isInteger(q) && q >= 1 && (custom.trim() === '' || customMinor !== null) && d >= 0 && d <= 100;
+  const appsOk = pricing === 'plan' || (quantityProblems(sellable, apps, q).length === 0 && adjustmentMinor !== null);
+  const valid = Number.isInteger(q) && q >= 1 && (custom.trim() === '' || customMinor !== null) && d >= 0 && d <= 100 && appsOk;
   return (
     <ActionDialog
       open
@@ -336,7 +381,17 @@ function PlanDialog({ orgId, sub, onClose }: { orgId: string; sub: SubscriptionD
       canSubmit={valid}
       onClose={onClose}
       onSubmit={(reason) =>
-        call('updateSubscription', { orgId, planId, interval, quantity: q, customPriceMinor: customMinor, discountBps: Math.round(d * 100), reason })
+        call('updateSubscription', {
+          orgId,
+          planId,
+          interval,
+          quantity: q,
+          customPriceMinor: customMinor,
+          discountBps: Math.round(d * 100),
+          pricing,
+          ...(pricing === 'apps' ? { apps: toLines(apps), adjustmentMinor: adjustmentMinor ?? 0, repriceApps: reprice } : {}),
+          reason,
+        })
       }
     >
       <div className="wxp-form__row">
@@ -368,6 +423,32 @@ function PlanDialog({ orgId, sub, onClose }: { orgId: string; sub: SubscriptionD
         error={custom.trim() && customMinor === null ? t('adminBilling.amountInvalid') : undefined}
         onChange={(e) => setCustom(e.target.value)}
       />
+      <SelectField
+        label={t('appBilling.pricingMode')}
+        hint={t('appBilling.pricingModeHint')}
+        options={(['plan', 'apps'] as const).map((m) => ({ value: m, label: t(`appBilling.modes.${m}`) }))}
+        value={pricing}
+        onChange={(e) => setPricing(e.target.value as 'plan' | 'apps')}
+      />
+      {pricing === 'apps' ? (
+        <>
+          <AppQuantitiesEditor apps={sellable} value={apps} screens={Number.isInteger(q) ? q : 0} onChange={setApps} />
+          <div className="wxp-form__row">
+            <TextField
+              label={t('appBilling.adjustmentLabel')}
+              hint={t('appBilling.adjustmentHint')}
+              inputMode="decimal"
+              value={adjustment}
+              error={adjustmentMinor === null ? t('adminBilling.amountInvalid') : undefined}
+              onChange={(e) => setAdjustment(e.target.value)}
+            />
+            <label className="checkbox-row">
+              <input type="checkbox" checked={reprice} onChange={(e) => setReprice(e.target.checked)} />
+              {t('appBilling.reprice')}
+            </label>
+          </div>
+        </>
+      ) : null}
     </ActionDialog>
   );
 }
@@ -550,6 +631,36 @@ function OverridesDialog({ orgId, current, onClose }: { orgId: string; current: 
           />
         ))}
       </div>
+    </ActionDialog>
+  );
+}
+
+/** Staff: preview, then move a plan-priced organization to app pricing at the same price. */
+function MoveToAppsDialog({ orgId, onClose }: { orgId: string; onClose: () => void }) {
+  const { t } = useTranslation();
+  const [preview, setPreview] = useState<{ lines: BillLine[]; oldMonthlyMinor: number | null; newMonthlyMinor: number; adjustmentMinor: number } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    call<{ lines: BillLine[]; oldMonthlyMinor: number | null; newMonthlyMinor: number; adjustmentMinor: number }>('moveToAppPricing', { orgId, apply: false })
+      .then(setPreview)
+      .catch((err) => setError(errorMessage(err)));
+  }, [orgId]);
+  return (
+    <ActionDialog
+      open
+      title={t('appBilling.moveToApps')}
+      submitLabel={t('appBilling.moveConfirm')}
+      canSubmit={!!preview}
+      onClose={onClose}
+      onSubmit={(reason) => call('moveToAppPricing', { orgId, apply: true, reason })}
+    >
+      {error ? <Alert tone="danger">{error}</Alert> : null}
+      {preview ? (
+        <>
+          <p>{preview.oldMonthlyMinor === null ? t('appBilling.moveTrial') : t('appBilling.moveSamePrice', { amount: formatInr(preview.oldMonthlyMinor) })}</p>
+          <BillLinesTable lines={preview.lines} />
+        </>
+      ) : null}
     </ActionDialog>
   );
 }

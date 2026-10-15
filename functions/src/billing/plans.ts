@@ -20,7 +20,7 @@ import {
 } from '@wallx-play/shared';
 import { getOrg, requirePlatform } from '../lib/authz';
 import type { Actor, Deps } from '../lib/context';
-import { computeEntitlements } from '../lib/entitlements';
+import { entitlementsForSub } from '../lib/entitlements';
 import { auditedTransaction, platformAudit } from '../lib/audit';
 
 /** Recomputes entitlements for every org (or only those on `planId`). Returns how many. */
@@ -36,7 +36,7 @@ export async function recomputeEntitlements({ db, now }: Deps, planId?: string):
         const raw = (await tx.get(doc.ref)).data() as SubscriptionDoc | undefined;
         if (!raw) return;
         const sub = normalizeSubscription(raw);
-        tx.set(db.doc(paths.orgEntitlements(orgId)), await computeEntitlements(tx, db, orgId, sub.planId, now(), sub.quantity));
+        tx.set(db.doc(paths.orgEntitlements(orgId)), await entitlementsForSub(tx, db, orgId, sub, now()));
       });
       done++;
     } catch (err) {
@@ -62,6 +62,7 @@ export async function savePlan(deps: Deps, actor: Actor, input: z.infer<typeof S
       tier: input.tier,
       currency: 'INR',
       pricePerScreenMonthlyMinor: input.pricePerScreenMonthlyMinor,
+      appsBasePriceMinor: input.appsBasePriceMinor ?? existing?.appsBasePriceMinor ?? null,
       annualDiscountBps: input.annualDiscountBps,
       trialDays: input.trialDays,
       limits: input.limits,
@@ -135,6 +136,6 @@ export async function setEntitlementOverrides({ db, now }: Deps, actor: Actor, i
   // Recompute after the overrides are committed (a transaction cannot read its own writes).
   await db.runTransaction(async (tx) => {
     const sub = normalizeSubscription((await tx.get(db.doc(paths.orgSubscription(input.orgId)))).data() as SubscriptionDoc);
-    tx.set(db.doc(paths.orgEntitlements(input.orgId)), await computeEntitlements(tx, db, input.orgId, sub.planId, at, sub.quantity));
+    tx.set(db.doc(paths.orgEntitlements(input.orgId)), await entitlementsForSub(tx, db, input.orgId, sub, at));
   });
 }

@@ -9,7 +9,17 @@ import type { Firestore, Transaction } from 'firebase-admin/firestore';
 import type { z } from 'zod';
 import { subscriptionAmountMinor } from '@wallx-play/billing-core';
 import {
+  appsBasePriceMinor,
+  billLines,
+  billTotalMinor,
   billingState,
+  lineProblems,
+  linesForPlanFeatures,
+  type AppDoc,
+  type AppLine,
+  type BillLine,
+  type EntitlementsDoc,
+  type MoveToAppPricingInput,
   isLegacySubscription,
   isRestricted,
   normalizeSubscription,
@@ -33,7 +43,7 @@ import { userAudit } from '../content/media';
 import { auditedTransaction, platformAudit, type RecordAudit } from '../lib/audit';
 import { getOrg, requireOrgPermission, requirePlatform } from '../lib/authz';
 import type { Actor, Deps } from '../lib/context';
-import { computeEntitlements } from '../lib/entitlements';
+import { entitlementsForSub } from '../lib/entitlements';
 import { notify } from '../lib/notify';
 
 /** Price per billing period before GST; null when neither the plan nor the deal has a price. */
@@ -57,6 +67,18 @@ export const summaryOf = (sub: SubscriptionDoc): OrgBillingSummary => ({
   currentPeriodEnd: sub.currentPeriodEnd,
   resellerBilled: !!sub.billedTo,
 });
+
+/**
+ * App pricing: every app is free in the trial, so starting or ending it changes what the
+ * organization may use. Returns the entitlements to write with `draft`, or null when nothing
+ * changes. Reads only: call it before the transaction's first write.
+ */
+export async function trialEntitlements(tx: Transaction, db: Firestore, orgId: string, before: Pick<SubscriptionDoc, 'status'>, draft: SubscriptionDoc, now: number): Promise<EntitlementsDoc | null> {
+  if (draft.pricing !== 'apps') return null;
+  const status = billingState(draft, now).status;
+  if ((before.status === 'trialing') === (status === 'trialing')) return null;
+  return entitlementsForSub(tx, db, orgId, { ...draft, status }, now);
+}
 
 /** Applies derived status + next transition and writes subscription and org summary. */
 export function writeSubscription(tx: Transaction, db: Firestore, orgId: string, sub: SubscriptionDoc, now: number): SubscriptionDoc {
@@ -98,7 +120,61 @@ function auditBilling(audit: RecordAudit, actor: Actor, orgId: string, action: s
   });
 }
 
-/** Plan, interval, screens purchased and pricing (billing staff). */
+/** The app catalog (reads only). */
+export async function readAppCatalog(tx: Transaction, db: Firestore): Promise<AppDoc[]> {
+  return (await tx.get(db.collection(paths.apps()))).docs.map((d) => d.data() as AppDoc);
+}
+
+/** Bill lines of an app-priced subscription (monthly, before discounts). */
+export function subscriptionLines(plan: Plan, sub: SubscriptionDoc, catalog: AppDoc[]): BillLine[] {
+  return billLines({
+    screens: sub.quantity,
+    basePriceMinor: appsBasePriceMinor(plan, catalog.find((a) => a.base), sub.customPriceMinor),
+    lines: sub.apps ?? [],
+    adjustmentMinor: sub.adjustmentMinor ?? 0,
+    catalog,
+  });
+}
+
+/** Price per billing period before GST in either pricing mode. */
+export function subscriptionAmount(plan: Plan, sub: SubscriptionDoc, catalog: AppDoc[]): number | null {
+  if (sub.pricing !== 'apps') return periodAmount(plan, sub);
+  return subscriptionAmountMinor({
+    pricePerScreenMonthlyMinor: billTotalMinor(subscriptionLines(plan, sub, catalog)),
+    screens: 1,
+    interval: sub.interval,
+    annualDiscountBps: plan.annualDiscountBps,
+    extraDiscountBps: sub.discountBps,
+  });
+}
+
+/**
+ * Turns requested lines into priced lines. A line already owned keeps its locked price (unless
+ * repricing); a new one takes today's catalog price. Lines at quantity 0 are dropped.
+ */
+export function priceLines(requested: Array<{ appId: string; quantity: number }>, existing: AppLine[], catalog: AppDoc[], at: number, reprice = false): AppLine[] {
+  return requested
+    .filter((r) => r.quantity > 0)
+    .map((r) => {
+      const had = existing.find((l) => l.appId === r.appId);
+      const app = catalog.find((a) => a.id === r.appId);
+      if (had && !reprice) return { ...had, quantity: r.quantity };
+      return { appId: r.appId, quantity: r.quantity, unitPriceMinor: app?.priceMinor ?? had?.unitPriceMinor ?? 0, addedAt: had?.addedAt ?? at };
+    });
+}
+
+/** Refuses lines that do not fit the catalog, the screens bought or the sensor devices in use (reads only). */
+export async function checkLines(tx: Transaction, db: Firestore, orgId: string, lines: AppLine[], catalog: AppDoc[], screens: number, owned: string[]) {
+  const problems = lineProblems(lines, catalog, screens, owned);
+  if (problems.length) throw new HttpsError('invalid-argument', problems[0]!);
+  const devicesBought = lines.filter((l) => catalog.find((a) => a.id === l.appId)?.unit === 'sensor_device').reduce((s, l) => s + l.quantity, 0);
+  const devices = (await tx.get(db.collection(paths.sensorDevices(orgId)).count())).data().count;
+  if (devices > devicesBought) {
+    throw new HttpsError('failed-precondition', `The organization has ${devices} sensor devices; buy at least ${devices} or delete some first.`);
+  }
+}
+
+/** Plan, interval, screens purchased and pricing (billing staff), in plan or app pricing. */
 export async function updateSubscription({ db, now }: Deps, actor: Actor, input: z.infer<typeof UpdateSubscriptionInput>): Promise<SubscriptionDoc> {
   requirePlatform(actor, 'billing.override');
   const at = now();
@@ -116,8 +192,10 @@ export async function updateSubscription({ db, now }: Deps, actor: Actor, input:
         `${org.name} has ${authorized.data().count} authorized screens; this plan allows ${allowed}. Remove screens first or buy more.`,
       );
     }
-    const entitlements = await computeEntitlements(tx, db, input.orgId, plan.id, at, input.quantity);
-
+    const pricing = input.pricing ?? sub.pricing ?? 'plan';
+    const catalog = pricing === 'apps' ? await readAppCatalog(tx, db) : [];
+    const lines = pricing === 'apps' ? priceLines(input.apps ?? (sub.apps ?? []), sub.apps ?? [], catalog, at, input.repriceApps ?? false) : [];
+    if (pricing === 'apps') await checkLines(tx, db, input.orgId, lines, catalog, input.quantity, (sub.apps ?? []).map((l) => l.appId));
     const draft: SubscriptionDoc = {
       ...sub,
       planId: plan.id,
@@ -125,19 +203,66 @@ export async function updateSubscription({ db, now }: Deps, actor: Actor, input:
       quantity: input.quantity,
       customPriceMinor: input.customPriceMinor,
       discountBps: input.discountBps,
+      pricing,
+      apps: lines,
+      adjustmentMinor: pricing === 'apps' ? (input.adjustmentMinor ?? sub.adjustmentMinor ?? 0) : 0,
       amountPerPeriodMinor: null,
       updatedAt: at,
       updatedBy: actor.uid,
     };
-    draft.amountPerPeriodMinor = periodAmount(plan, draft);
+    draft.amountPerPeriodMinor = subscriptionAmount(plan, draft, catalog);
+    const entitlements = await entitlementsForSub(tx, db, input.orgId, draft, at);
     const next = writeSubscription(tx, db, input.orgId, draft, at);
     tx.set(db.doc(paths.orgEntitlements(input.orgId)), entitlements);
     notifyStatusChange(tx, db, input.orgId, sub.status, next.status, at);
     auditBilling(audit, actor, input.orgId, 'billing.subscription.updated', input.reason, {
-      from: { planId: sub.planId, interval: sub.interval, quantity: sub.quantity, customPriceMinor: sub.customPriceMinor, discountBps: sub.discountBps },
-      to: { planId: plan.id, interval: input.interval, quantity: input.quantity, customPriceMinor: input.customPriceMinor, discountBps: input.discountBps },
+      from: { planId: sub.planId, interval: sub.interval, quantity: sub.quantity, customPriceMinor: sub.customPriceMinor, discountBps: sub.discountBps, pricing: sub.pricing, apps: sub.apps, adjustmentMinor: sub.adjustmentMinor },
+      to: { planId: plan.id, interval: input.interval, quantity: input.quantity, customPriceMinor: input.customPriceMinor, discountBps: input.discountBps, pricing, apps: lines, adjustmentMinor: draft.adjustmentMinor },
     }, at);
     return next;
+  });
+}
+
+/**
+ * Staff: moves a plan-priced organization to app pricing with the same features (the apps its
+ * plan included) and, for a paying customer, an adjustment that keeps today's monthly price
+ * (grandfathered). With `apply: false` only returns the preview.
+ */
+export async function moveToAppPricing(
+  { db, now }: Deps,
+  actor: Actor,
+  input: z.infer<typeof MoveToAppPricingInput>,
+): Promise<{ lines: BillLine[]; oldMonthlyMinor: number | null; newMonthlyMinor: number; adjustmentMinor: number; applied: boolean }> {
+  requirePlatform(actor, 'billing.override');
+  const at = now();
+  return auditedTransaction(db, [input.orgId], async (tx, audit) => {
+    await getOrg(tx, db, input.orgId);
+    const sub = await readSubscription(tx, db, input.orgId);
+    if (sub.pricing === 'apps') throw new HttpsError('failed-precondition', 'This organization already uses app pricing.');
+    const plan = await readPlan(tx, db, sub.planId);
+    const catalog = await readAppCatalog(tx, db);
+    if (!catalog.some((a) => a.base)) throw new HttpsError('failed-precondition', 'Set up the app catalog first (Admin → App catalog).');
+    const devices = (await tx.get(db.collection(paths.sensorDevices(input.orgId)).count())).data().count;
+    const lines = linesForPlanFeatures(plan.featureKeys, catalog, sub.quantity, devices, at);
+    const trialing = sub.status === 'trialing' && sub.currentPeriodEnd === null;
+    // What the customer pays per month today (before the annual / extra discounts, applied again after).
+    const planPrice = sub.customPriceMinor ?? plan.pricePerScreenMonthlyMinor;
+    const oldMonthlyMinor = trialing || planPrice === null ? null : planPrice * sub.quantity;
+    const draft: SubscriptionDoc = { ...sub, pricing: 'apps', apps: lines, adjustmentMinor: 0, customPriceMinor: null };
+    const newMonthlyMinor = billTotalMinor(subscriptionLines(plan, draft, catalog));
+    const adjustmentMinor = oldMonthlyMinor === null ? 0 : oldMonthlyMinor - newMonthlyMinor;
+    draft.adjustmentMinor = adjustmentMinor;
+    const preview = { lines: subscriptionLines(plan, draft, catalog), oldMonthlyMinor, newMonthlyMinor, adjustmentMinor };
+    if (!input.apply) return { ...preview, applied: false };
+    if (!input.reason || input.reason.trim().length < 5) throw new HttpsError('invalid-argument', 'Give a reason of at least 5 characters.');
+    draft.amountPerPeriodMinor = trialing ? null : subscriptionAmount(plan, draft, catalog);
+    draft.updatedAt = at;
+    draft.updatedBy = actor.uid;
+    const entitlements = await entitlementsForSub(tx, db, input.orgId, draft, at);
+    writeSubscription(tx, db, input.orgId, draft, at);
+    tx.set(db.doc(paths.orgEntitlements(input.orgId)), entitlements);
+    auditBilling(audit, actor, input.orgId, 'billing.pricing.movedToApps', input.reason, { apps: lines, adjustmentMinor, oldMonthlyMinor, newMonthlyMinor }, at);
+    return { ...preview, applied: true };
   });
 }
 
@@ -168,24 +293,21 @@ export async function recordPayment({ db, now }: Deps, actor: Actor, input: z.in
       createdAt: at,
       voided: null,
     };
+    const paid: SubscriptionDoc = {
+      ...sub,
+      currentPeriodStart: period.start,
+      currentPeriodEnd: period.end,
+      // Paying ends the trial; the paid period takes over.
+      trialEndsAt: null,
+      cancelAtPeriodEnd: false,
+      lastPaymentAt: input.paidAt,
+      updatedAt: at,
+      updatedBy: actor.uid,
+    };
+    const entitlements = await trialEntitlements(tx, db, input.orgId, sub, paid, at);
     tx.create(ref, payment);
-    const next = writeSubscription(
-      tx,
-      db,
-      input.orgId,
-      {
-        ...sub,
-        currentPeriodStart: period.start,
-        currentPeriodEnd: period.end,
-        // Paying ends the trial; the paid period takes over.
-        trialEndsAt: null,
-        cancelAtPeriodEnd: false,
-        lastPaymentAt: input.paidAt,
-        updatedAt: at,
-        updatedBy: actor.uid,
-      },
-      at,
-    );
+    const next = writeSubscription(tx, db, input.orgId, paid, at);
+    if (entitlements) tx.set(db.doc(paths.orgEntitlements(input.orgId)), entitlements);
     notify(tx, db, input.orgId, 'billing_payment_recorded', { amount: input.amountMinor, until: period.end }, '/billing', at);
     auditBilling(audit, actor, input.orgId, 'billing.payment.recorded', undefined, {
       paymentId: ref.id,
@@ -220,21 +342,18 @@ export async function adjustBillingDates({ db, now }: Deps, actor: Actor, input:
   const at = now();
   return auditedTransaction(db, [input.orgId], async (tx, audit) => {
     const sub = await readSubscription(tx, db, input.orgId);
-    const next = writeSubscription(
-      tx,
-      db,
-      input.orgId,
-      {
-        ...sub,
-        ...(input.trialEndsAt !== undefined ? { trialEndsAt: input.trialEndsAt } : {}),
-        ...(input.currentPeriodEnd !== undefined
-          ? { currentPeriodEnd: input.currentPeriodEnd, currentPeriodStart: input.currentPeriodEnd === null ? null : (sub.currentPeriodStart ?? at) }
-          : {}),
-        updatedAt: at,
-        updatedBy: actor.uid,
-      },
-      at,
-    );
+    const adjusted: SubscriptionDoc = {
+      ...sub,
+      ...(input.trialEndsAt !== undefined ? { trialEndsAt: input.trialEndsAt } : {}),
+      ...(input.currentPeriodEnd !== undefined
+        ? { currentPeriodEnd: input.currentPeriodEnd, currentPeriodStart: input.currentPeriodEnd === null ? null : (sub.currentPeriodStart ?? at) }
+        : {}),
+      updatedAt: at,
+      updatedBy: actor.uid,
+    };
+    const entitlements = await trialEntitlements(tx, db, input.orgId, sub, adjusted, at);
+    const next = writeSubscription(tx, db, input.orgId, adjusted, at);
+    if (entitlements) tx.set(db.doc(paths.orgEntitlements(input.orgId)), entitlements);
     notifyStatusChange(tx, db, input.orgId, sub.status, next.status, at);
     auditBilling(audit, actor, input.orgId, 'billing.dates.adjusted', input.reason, {
       from: { trialEndsAt: sub.trialEndsAt, currentPeriodEnd: sub.currentPeriodEnd },
@@ -329,9 +448,12 @@ export async function resolveBillingRequest({ db, now }: Deps, actor: Actor, inp
 }
 
 /** Subscription for a newly approved organization (trial on the trial plan). */
-export function trialSubscription(planId: string, trialDays: number, quantity: number, at: number, by: string): SubscriptionDoc {
+export function trialSubscription(planId: string, trialDays: number, quantity: number, at: number, by: string, pricing: 'plan' | 'apps' = 'plan'): SubscriptionDoc {
   return {
     planId,
+    pricing,
+    apps: [],
+    adjustmentMinor: 0,
     status: 'trialing',
     interval: 'monthly',
     quantity,

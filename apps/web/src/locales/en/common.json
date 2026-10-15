@@ -370,7 +370,8 @@
       "support": "Support Access",
       "audit": "Audit Logs",
       "settings": "Platform Settings",
-      "whiteLabel": "White label"
+      "whiteLabel": "White label",
+      "apps": "App catalog"
     },
     "partner": {
       "customers": "Customers",

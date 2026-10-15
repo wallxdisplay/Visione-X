@@ -3,7 +3,7 @@ import { billingState, normalizeSubscription, paths, type SubscriptionDoc } from
 import { auditedTransaction } from '../lib/audit';
 import type { Deps } from '../lib/context';
 import { notify } from '../lib/notify';
-import { notifyStatusChange, writeSubscription } from './billing';
+import { notifyStatusChange, trialEntitlements, writeSubscription } from './billing';
 
 /**
  * Billing part of the periodic monitor: subscriptions whose `nextTransitionAt` has passed get
@@ -24,7 +24,10 @@ export async function runBillingMonitor({ db, now }: Deps): Promise<{ transition
         if (!raw) return;
         const sub = normalizeSubscription(raw);
         const state = billingState(sub, at);
+        // App pricing: every app is free in the trial; when it ends only the apps bought remain.
+        const entitlements = await trialEntitlements(tx, db, orgId, sub, sub, at);
         const next = writeSubscription(tx, db, orgId, { ...sub, reminders: state.reminder ? [...sub.reminders, state.reminder.key] : sub.reminders }, at);
+        if (entitlements) tx.set(db.doc(paths.orgEntitlements(orgId)), entitlements);
         // Customers of a reseller are not reminded of renewals: the reseller pays (and is told in the portal).
         if (state.reminder && !(state.reminder.kind === 'due_soon' && sub.billedTo)) {
           reminders++;

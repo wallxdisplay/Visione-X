@@ -74,3 +74,21 @@ tr.is-voided td .wxp-chip {
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: var(--space-3);
 }
+
+.billing-apps {
+  margin-top: 24px;
+}
+.bill-lines tfoot td {
+  border-top: 2px solid var(--color-border);
+}
+.app-quantities {
+  margin: 8px 0 12px;
+}
+.app-quantities__qty {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.app-quantities__qty input {
+  width: 84px;
+}

@@ -15,7 +15,8 @@
  */
 import { z } from 'zod';
 import type { Brand } from './branding';
-import { PAYMENT_METHODS, type BillingStatus, type PaymentMethod } from './billing';
+import { AppLineInput, PAYMENT_METHODS, type BillingStatus, type PaymentMethod } from './billing';
+import type { BillLine } from './apps';
 import { StateCode, Timezone } from './api';
 import { GSTIN, type Plan } from './schemas';
 
@@ -154,6 +155,11 @@ export interface PartnerCustomer {
   monthlyMinor: number | null;
   partnerAccess: boolean;
   createdAt: number;
+  /** App pricing: the customer's monthly lines at dealer prices (empty for plan pricing). */
+  lines: BillLine[];
+  /** Apps bought, for editing. */
+  apps: Array<{ appId: string; quantity: number }>;
+  pricing: 'plan' | 'apps';
 }
 
 /** partnerOverview callable. */
@@ -168,6 +174,8 @@ export interface PartnerOverview {
     dealerDiscountBps: number;
   };
   customers: PartnerCustomer[];
+  /** Apps a reseller can sell, with list and dealer prices per unit. */
+  apps: Array<{ id: string; name: string; unit: string; listPriceMinor: number; dealerPriceMinor: number; requires: string[] }>;
   /** Plans a reseller can sell, with the dealer price. */
   plans: Array<{ id: string; name: string; listPriceMinor: number | null; dealerPriceMinor: number | null; screenLimit: number | null }>;
   /** Sum of the monthly amounts of paid customers (null when a price is missing). */
@@ -231,6 +239,8 @@ export const CreatePartnerOrgInput = z.object({
   quantity: z.number().int().min(1).max(100_000),
   /** Start with a free trial (not billed to the reseller until billing starts). */
   trial: z.boolean().default(true),
+  /** Apps for the customer (app pricing). */
+  apps: z.array(AppLineInput).max(30).default([]),
 });
 
 export const SetPartnerSubscriptionInput = z.object({
@@ -238,6 +248,8 @@ export const SetPartnerSubscriptionInput = z.object({
   orgId: id,
   planId: id,
   quantity: z.number().int().min(1).max(100_000),
+  /** Apps for the customer (omit to keep the current ones). */
+  apps: z.array(AppLineInput).max(30).optional(),
 });
 export const PartnerOrgRefInput = z.object({ accountId: id, orgId: id });
 export const PartnerOverviewInput = z.object({ accountId: id });

@@ -21,3 +21,4 @@ export * from './publicApi';
 export * from './sync';
 export * from './mqtt';
 export * from './branding';
+export * from './apps';

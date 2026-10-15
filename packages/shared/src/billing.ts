@@ -15,6 +15,7 @@
 import { z } from 'zod';
 import { FEATURE_KEYS, LIMIT_KEYS, RELEASE_STATUSES } from './features';
 import type { OrgPermission } from './permissions';
+import { PRICING_MODES, type AppLine, type PricingMode } from './apps';
 
 const id = z.string().min(1).max(128).regex(/^[A-Za-z0-9_-]+$/);
 const reason = z.string().trim().min(5, 'Give a reason of at least 5 characters').max(500);
@@ -69,6 +70,12 @@ export interface SubscriptionDoc {
   gateway: 'manual';
   /** Reseller account that pays for this organization (wholesale); its paid period is copied here. */
   billedTo?: string | null;
+  /** App store: priced by plan (absent / "plan") or by apps (base screens + app lines). */
+  pricing?: PricingMode;
+  /** Apps bought (app pricing), with locked unit prices. */
+  apps?: AppLine[];
+  /** Signed monthly adjustment in paise (e.g. to keep a migrated customer's price). */
+  adjustmentMinor?: number;
   /** When the status or a reminder next changes (the monitor picks it up then). */
   nextTransitionAt: number | null;
   /** Reminder keys already sent, e.g. "trial:<ms>", "due:<ms>". */
@@ -204,6 +211,9 @@ export function billingState(
 
 const money = z.number().int().min(0).max(1_000_000_000_00);
 
+/** An app line as requested (the unit price is set by the server). */
+export const AppLineInput = z.object({ appId: z.string().regex(/^[a-z0-9-]{2,40}$/), quantity: z.number().int().min(0).max(100_000) });
+
 export const UpdateSubscriptionInput = z.object({
   orgId: id,
   planId: id,
@@ -211,8 +221,17 @@ export const UpdateSubscriptionInput = z.object({
   quantity: z.number().int().min(1).max(100_000),
   customPriceMinor: money.nullable(),
   discountBps: z.number().int().min(0).max(10_000),
+  /** App pricing (omit to keep the current mode and lines). */
+  pricing: z.enum(PRICING_MODES).optional(),
+  apps: z.array(AppLineInput).max(30).optional(),
+  adjustmentMinor: z.number().int().min(-1_000_000_000).max(1_000_000_000).optional(),
+  /** Move existing app lines to today's catalog prices. */
+  repriceApps: z.boolean().default(false),
   reason,
 });
+
+/** Staff: preview (apply false) or apply the move from plan pricing to app pricing. */
+export const MoveToAppPricingInput = z.object({ orgId: id, apply: z.boolean(), reason: z.string().trim().max(500).optional() });
 
 export const RecordPaymentInput = z.object({
   orgId: id,
@@ -266,6 +285,7 @@ export const SavePlanInput = z.object({
   name: z.string().trim().min(2).max(60),
   tier: z.enum(['trial', 'starter', 'professional', 'enterprise', 'custom']),
   pricePerScreenMonthlyMinor: money.nullable(),
+  appsBasePriceMinor: money.nullable().optional(),
   annualDiscountBps: z.number().int().min(0).max(10_000),
   trialDays: z.number().int().min(0).max(90),
   limits: LimitsInput,
@@ -309,6 +329,9 @@ export function normalizeSubscription(raw: Partial<SubscriptionDoc> & { planId: 
     cancelAtPeriodEnd: raw.cancelAtPeriodEnd ?? false,
     gateway: 'manual',
     billedTo: raw.billedTo ?? null,
+    pricing: raw.pricing ?? 'plan',
+    apps: raw.apps ?? [],
+    adjustmentMinor: raw.adjustmentMinor ?? 0,
     nextTransitionAt: raw.nextTransitionAt ?? null,
     reminders: raw.reminders ?? [],
     lastPaymentAt: raw.lastPaymentAt ?? null,

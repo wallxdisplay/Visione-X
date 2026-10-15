@@ -125,13 +125,13 @@ describe('reseller team and customers', () => {
 
 describe('wholesale billing', () => {
   it('the reseller pays WallX; its paid customers follow its paid period', async () => {
-    const { orgId } = await newCustomer();
+    const { orgId } = await newCustomer({ apps: [{ appId: 'weather', quantity: 3 }] });
     // Nothing paid yet: billing cannot start.
     await expectCode(partners.startPartnerBilling(deps, ravi, { accountId, orgId }), 'failed-precondition');
 
     const { paidThrough } = await accounts.recordAccountPayment(deps, billingStaff, {
       accountId,
-      amountMinor: 3 * 47_920,
+      amountMinor: 3 * 23_920 + 3 * 3_920,
       method: 'bank_transfer',
       reference: 'NEFT-1',
       paidAt: deps.now(),
@@ -143,14 +143,16 @@ describe('wholesale billing', () => {
     await partners.startPartnerBilling(deps, ravi, { accountId, orgId });
     expect(await sub(orgId)).toMatchObject({ status: 'active', trialEndsAt: null, currentPeriodEnd: paidThrough });
 
-    // Dealer price: 20 % off ₹599 = ₹479.20 per screen per month.
+    // App pricing, dealer prices 20 % off: Screen ₹299 → ₹239.20; Weather ₹49 → ₹39.20 (on 3 screens).
     let overview = await partners.partnerOverview(deps, ravi, { accountId });
-    expect(overview.customers[0]).toMatchObject({ dealerPriceMinor: 47_920, monthlyMinor: 3 * 47_920, trialing: false, resellerBilled: true });
-    expect(overview.monthlyTotalMinor).toBe(3 * 47_920);
+    expect(overview.customers[0]).toMatchObject({ pricing: 'apps', dealerPriceMinor: 23_920, monthlyMinor: 3 * 23_920 + 3 * 3_920, trialing: false, resellerBilled: true });
+    expect(overview.customers[0]!.lines.map((l) => [l.name, l.quantity, l.unitPriceMinor])).toEqual([['Screen', 3, 23_920], ['Weather & air quality', 3, 3_920]]);
+    expect(overview.monthlyTotalMinor).toBe(3 * 23_920 + 3 * 3_920);
+    expect(overview.apps.find((a) => a.id === 'weather')).toMatchObject({ listPriceMinor: 4_900, dealerPriceMinor: 3_920 });
     expect(overview.account).toMatchObject({ billingStatus: 'active' });
 
     // The reseller changes plan and screens; the customer's limits follow.
-    await partners.setPartnerSubscription(deps, ravi, { accountId, orgId, planId: 'starter', quantity: 5 });
+    await partners.setPartnerSubscription(deps, ravi, { accountId, orgId, planId: 'starter', quantity: 5, apps: [] });
     expect(((await db.doc(paths.orgEntitlements(orgId)).get()).data() as EntitlementsDoc).limits.screens).toBe(5);
     overview = await partners.partnerOverview(deps, ravi, { accountId });
     expect(overview.monthlyTotalMinor).toBe(5 * 23_920);

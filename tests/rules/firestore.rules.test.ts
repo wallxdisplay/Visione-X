@@ -443,3 +443,20 @@ describe('reseller accounts', () => {
     await assertFails(setDoc(doc(ravi, 'accounts/acc1/members/mallory'), { uid: 'mallory', role: 'owner' }));
   });
 });
+
+describe('app catalog', () => {
+  it('signed-in users read apps; only billing staff read costs; nobody writes', async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await setDoc(doc(db, 'apps/weather'), { name: 'Weather', priceMinor: 4900 });
+      await setDoc(doc(db, 'appCosts/weather'), { costMinor: 2784 });
+    });
+    const alice = env.authenticatedContext('alice').firestore();
+    const bill = env.authenticatedContext('bill', staffToken('billing')).firestore();
+    await assertSucceeds(getDoc(doc(alice, 'apps/weather')));
+    await assertFails(getDoc(doc(env.unauthenticatedContext().firestore(), 'apps/weather')));
+    await assertFails(getDoc(doc(alice, 'appCosts/weather')));
+    await assertSucceeds(getDoc(doc(bill, 'appCosts/weather')));
+    await assertFails(setDoc(doc(bill, 'apps/weather'), { priceMinor: 1 }));
+  });
+});

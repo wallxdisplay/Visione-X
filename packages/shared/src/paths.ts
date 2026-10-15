@@ -15,6 +15,10 @@ export const paths = {
   playerRelease: (id: string) => `playerReleases/${id}`,
   /** The release APK in Storage. */
   playerApk: (id: string) => `playerReleases/${id}/player.apk`,
+  apps: () => 'apps',
+  app: (appId: string) => `apps/${appId}`,
+  appCosts: () => 'appCosts',
+  appCost: (appId: string) => `appCosts/${appId}`,
   plans: () => 'plans',
   plan: (planId: string) => `plans/${planId}`,
   userProfile: (uid: string) => `users/${uid}`,

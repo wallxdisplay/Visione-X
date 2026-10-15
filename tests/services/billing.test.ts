@@ -83,7 +83,8 @@ describe('trial and payments', () => {
   });
 
   it('plan changes set the screen limit to the screens purchased and price the period', async () => {
-    await billing.updateSubscription(deps, billingStaff, { orgId, planId: 'professional', interval: 'annual', quantity: 5, customPriceMinor: null, discountBps: 1000, reason: 'Annual deal, 10% extra' });
+    // Plan pricing (new organizations start on app pricing; see apps.test.ts).
+    await billing.updateSubscription(deps, billingStaff, { orgId, planId: 'professional', interval: 'annual', quantity: 5, customPriceMinor: null, discountBps: 1000, pricing: 'plan', reason: 'Annual deal, 10% extra' });
     expect((await ent()).limits.screens).toBe(5);
     expect((await ent()).features).toContain('content.approvals');
     // ₹599 × 5 × 12 = ₹35,940; −15% annual = ₹30,549; −10% extra = ₹27,494.10

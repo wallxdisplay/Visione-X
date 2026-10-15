@@ -20,7 +20,7 @@ import {
   type SubscriptionDoc,
   type VoidAccountPaymentInput,
 } from '@wallx-play/shared';
-import { notifyStatusChange, writeSubscription } from '../billing/billing';
+import { notifyStatusChange, trialEntitlements, writeSubscription } from '../billing/billing';
 import { auditedTransaction, platformAudit } from '../lib/audit';
 import { getOrg, requirePlatform } from '../lib/authz';
 import type { Actor, Deps } from '../lib/context';
@@ -104,17 +104,18 @@ export async function setOrgAccount(deps: Deps, actor: Actor, input: z.infer<typ
     const billedTo = resellerBilled ? input.accountId : null;
     if (org.parentAccountId === input.accountId && (sub?.billedTo ?? null) === billedTo) return;
     const at = now();
+    // Wholesale: a paid customer takes the reseller's paid period; trials stay as they are.
+    const billingChanges = !!sub && (sub.billedTo ?? null) !== billedTo;
+    const paid = !!sub && (sub.trialEndsAt === null || sub.currentPeriodEnd !== null);
+    const moved: SubscriptionDoc | null = sub && billingChanges
+      ? { ...sub, billedTo, ...(billedTo && paid ? { currentPeriodEnd: account!.paidThrough ?? null, trialEndsAt: null } : {}), updatedAt: at, updatedBy: actor.uid }
+      : null;
+    // Reads first (a transaction cannot read after writing).
+    const entitlements = sub && moved ? await trialEntitlements(tx, db, input.orgId, sub, moved, at) : null;
     tx.update(db.doc(paths.org(input.orgId)), { parentAccountId: input.accountId, updatedAt: at });
-    if (sub && (sub.billedTo ?? null) !== billedTo) {
-      // Wholesale: a paid customer takes the reseller's paid period; trials stay as they are.
-      const paid = sub.trialEndsAt === null || sub.currentPeriodEnd !== null;
-      const next = writeSubscription(
-        tx,
-        db,
-        input.orgId,
-        { ...sub, billedTo, ...(billedTo && paid ? { currentPeriodEnd: account!.paidThrough ?? null, trialEndsAt: null } : {}), updatedAt: at, updatedBy: actor.uid },
-        at,
-      );
+    if (sub && moved) {
+      const next = writeSubscription(tx, db, input.orgId, moved, at);
+      if (entitlements) tx.set(db.doc(paths.orgEntitlements(input.orgId)), entitlements);
       notifyStatusChange(tx, db, input.orgId, sub.status, next.status, at);
     }
     const entry = {
@@ -150,7 +151,10 @@ export async function propagateAccountBilling({ db, now }: Deps, accountId: stri
       const paidThrough = account.paidThrough ?? null;
       if (sub.currentPeriodEnd === paidThrough) return;
       const at = now();
-      const next = writeSubscription(tx, db, o.id, { ...sub, currentPeriodEnd: paidThrough, trialEndsAt: null, updatedAt: at, updatedBy: by }, at);
+      const synced: SubscriptionDoc = { ...sub, currentPeriodEnd: paidThrough, trialEndsAt: null, updatedAt: at, updatedBy: by };
+      const entitlements = await trialEntitlements(tx, db, o.id, sub, synced, at);
+      const next = writeSubscription(tx, db, o.id, synced, at);
+      if (entitlements) tx.set(db.doc(paths.orgEntitlements(o.id)), entitlements);
       notifyStatusChange(tx, db, o.id, sub.status, next.status, at);
       audit(o.id, {
         at,

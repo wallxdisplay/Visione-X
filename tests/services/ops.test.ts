@@ -194,7 +194,9 @@ describe('monitoring and notifications', () => {
 
 describe('publish approvals', () => {
   it('needs the plan feature; editor publishes become requests that an approver decides', async () => {
-    // Trial plan does not include approvals.
+    // Without the feature (every app is free in the trial, so remove it to test the gate).
+    const trialEnt = (await db.doc(paths.orgEntitlements(orgId)).get()).data()!;
+    await db.doc(paths.orgEntitlements(orgId)).update({ features: (trialEnt.features as string[]).filter((f) => f !== 'content.approvals') });
     await expectCode(updateOrgSettings(deps, alice, { orgId, name: 'Acme', timezone: 'Asia/Kolkata', requirePublishApproval: true }), 'permission-denied');
 
     // Simulate Professional: grant the feature.

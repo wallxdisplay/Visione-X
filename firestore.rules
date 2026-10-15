@@ -118,6 +118,17 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // App catalog (App store): prices are public to signed-in users; costs only to billing staff.
+    match /apps/{appId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    match /appCosts/{appId} {
+      allow read: if isBillingStaff();
+      allow write: if false;
+    }
+
     match /platform/featureCatalog {
       allow read: if signedIn();
       allow write: if false;

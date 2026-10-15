@@ -2,6 +2,8 @@ import { Alert, Button, Dialog, EmptyState, PageHeader, SelectField, Spinner, St
 import {
   BILLING_GRACE_DAYS,
   BILLING_REQUEST_KINDS,
+  appsBasePriceMinor,
+  billLines,
   formatInr,
   type BillingInterval,
   type BillingRequestKind,
@@ -11,6 +13,7 @@ import { CreditCard, Send } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBillingRequests, usePayments, usePlans, useSubscription } from '../../content/billing';
+import { BillLinesTable, useAppCatalog } from '../../content/apps';
 import { useScreens } from '../../content/data';
 import { call, errorMessage } from '../../lib/api';
 import { formatDate } from '../../lib/format';
@@ -36,6 +39,7 @@ export function Billing() {
   const payments = usePayments(view ? orgId : null);
   const requests = useBillingRequests(view ? orgId : null);
   const plans = usePlans();
+  const appCatalog = useAppCatalog(view);
   const allScreens = useScreens(orgId, siteScope);
   const screens = { ...allScreens, data: allScreens.data.filter((s) => s.status === 'authorized') };
   const [requesting, setRequesting] = useState(false);
@@ -63,6 +67,17 @@ export function Billing() {
   }
   const plan = plans.data.find((p) => p.id === s.planId);
   const limit = entitlements?.limits.screens ?? s.quantity;
+  // App pricing: the monthly bill as lines (base screens + apps).
+  const lines =
+    s.pricing === 'apps' && plan
+      ? billLines({
+          screens: s.quantity,
+          basePriceMinor: appsBasePriceMinor(plan, appCatalog.data.find((a) => a.base), s.customPriceMinor),
+          lines: s.apps ?? [],
+          adjustmentMinor: s.adjustmentMinor ?? 0,
+          catalog: appCatalog.data,
+        })
+      : null;
   // Wholesale: the reseller pays WallX and bills the customer itself.
   const reseller = s.billedTo ? (org?.partnerName ?? t('billing.yourReseller')) : null;
 
@@ -126,6 +141,15 @@ export function Billing() {
         </dl>
         <p className="wxp-muted billing-summary__note">{t(`billing.statusHelp.${s.status}`)}</p>
       </div>
+
+      {lines ? (
+        <section className="billing-apps">
+          <h2 className="section-title">{t('appBilling.yourApps')}</h2>
+          {s.status === 'trialing' ? <Alert tone="info">{t('appBilling.trialAllApps', { date: formatDate(s.trialEndsAt) })}</Alert> : null}
+          <BillLinesTable lines={lines} />
+          <p className="wxp-muted">{t('appBilling.linesNote')}</p>
+        </section>
+      ) : null}
 
       {reseller ? null : <h2 className="section-title">{t('billing.payments')}</h2>}
       {reseller ? null : payments.data.length === 0 && !payments.loading ? (

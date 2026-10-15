@@ -17,9 +17,12 @@ import {
   dealerPriceMinor,
   hasPlatformPermission,
   isScreenOnline,
+  billTotalMinor,
   normalizeSubscription,
   paths,
   publicBrand,
+  type AppDoc,
+  type BillLine,
   type AccountDoc,
   type AccountInviteDoc,
   type AccountInviteRefInput,
@@ -42,13 +45,13 @@ import {
   type SubscriptionDoc,
   type UserAccountMembership,
 } from '@wallx-play/shared';
-import { notifyStatusChange, trialSubscription, writeSubscription } from '../billing/billing';
+import { checkLines, notifyStatusChange, priceLines, readAppCatalog, subscriptionAmount, subscriptionLines, trialEntitlements, trialSubscription, writeSubscription } from '../billing/billing';
+import { entitlementsForSub } from '../lib/entitlements';
 import { auditedTransaction, platformAudit } from '../lib/audit';
 import { getOrg, requireOrgPermission, requireVerifiedEmail } from '../lib/authz';
 import type { Actor, Deps } from '../lib/context';
 import { mailAppUrl, mailProduct, sendMail } from '../lib/email';
 import { accountMailBrand } from '../branding/branding';
-import { computeEntitlements } from '../lib/entitlements';
 import { readMembers, setMembership } from '../lib/profiles';
 import { hashToken } from '../members/members';
 
@@ -315,12 +318,17 @@ export async function createPartnerOrg(deps: Deps, actor: Actor, input: z.infer<
     const trial = input.trial ?? true;
     if (!trial) requirePaidUp(account, at);
     const team = (await tx.get(db.collection(paths.accountMembers(input.accountId)))).docs.map((d) => d.data() as AccountMemberDoc);
-    const entitlements = await computeEntitlements(tx, db, orgId, plan.id, at, input.quantity);
+    // App pricing when the catalog is set up: the reseller picks the customer's apps.
+    const catalog = await readAppCatalog(tx, db);
+    const appPricing = catalog.some((a) => a.base);
+    const lines = appPricing ? priceLines(input.apps ?? [], [], catalog, at) : [];
+    if (appPricing) await checkLines(tx, db, orgId, lines, catalog, input.quantity, []);
 
-    const base = trialSubscription(plan.id, PARTNER_TRIAL_DAYS, input.quantity, at, actor.uid);
+    const base = trialSubscription(plan.id, PARTNER_TRIAL_DAYS, input.quantity, at, actor.uid, appPricing ? 'apps' : 'plan');
     const draft: SubscriptionDoc = trial
-      ? { ...base, billedTo: input.accountId }
-      : { ...base, billedTo: input.accountId, trialEndsAt: null, currentPeriodStart: at, currentPeriodEnd: account.paidThrough ?? null };
+      ? { ...base, apps: lines, billedTo: input.accountId }
+      : { ...base, apps: lines, billedTo: input.accountId, trialEndsAt: null, currentPeriodStart: at, currentPeriodEnd: account.paidThrough ?? null };
+    const entitlements = await entitlementsForSub(tx, db, orgId, { ...draft, status: trial ? 'trialing' : 'active' }, at);
     const org: OrgDoc = {
       id: orgId,
       name: input.orgName,
@@ -404,8 +412,13 @@ export async function setPartnerSubscription(deps: Deps, actor: Actor, input: z.
       throw new HttpsError('failed-precondition', `${org.name} has ${authorized} screens in use; remove some first or keep at least ${authorized}.`);
     }
     const at = now();
-    const entitlements = await computeEntitlements(tx, db, input.orgId, plan.id, at, input.quantity);
-    const next = writeSubscription(tx, db, input.orgId, { ...sub, planId: plan.id, quantity: input.quantity, updatedAt: at, updatedBy: actor.uid }, at);
+    const catalog = sub.pricing === 'apps' ? await readAppCatalog(tx, db) : [];
+    const lines = sub.pricing === 'apps' ? priceLines(input.apps ?? (sub.apps ?? []), sub.apps ?? [], catalog, at) : [];
+    if (sub.pricing === 'apps') await checkLines(tx, db, input.orgId, lines, catalog, input.quantity, (sub.apps ?? []).map((l) => l.appId));
+    const draft: SubscriptionDoc = { ...sub, planId: plan.id, quantity: input.quantity, apps: lines, updatedAt: at, updatedBy: actor.uid };
+    draft.amountPerPeriodMinor = sub.pricing === 'apps' && sub.status !== 'trialing' ? subscriptionAmount(plan, draft, catalog) : sub.amountPerPeriodMinor;
+    const entitlements = await entitlementsForSub(tx, db, input.orgId, draft, at);
+    const next = writeSubscription(tx, db, input.orgId, draft, at);
     tx.set(db.doc(paths.orgEntitlements(input.orgId)), entitlements);
     audit(input.orgId, {
       at,
@@ -413,7 +426,7 @@ export async function setPartnerSubscription(deps: Deps, actor: Actor, input: z.
       orgId: input.orgId,
       action: 'billing.partner.subscriptionChanged',
       target: { type: 'subscription', id: input.orgId },
-      data: { accountId: input.accountId, from: { planId: sub.planId, quantity: sub.quantity }, to: { planId: plan.id, quantity: input.quantity } },
+      data: { accountId: input.accountId, from: { planId: sub.planId, quantity: sub.quantity, apps: sub.apps }, to: { planId: plan.id, quantity: input.quantity, apps: lines } },
     });
     return next;
   });
@@ -428,7 +441,10 @@ export async function startPartnerBilling(deps: Deps, actor: Actor, input: z.inf
     if (sub.trialEndsAt === null) throw new HttpsError('failed-precondition', 'Billing has already started for this customer.');
     const at = now();
     requirePaidUp(account, at);
-    const next = writeSubscription(tx, db, input.orgId, { ...sub, trialEndsAt: null, currentPeriodStart: at, currentPeriodEnd: account.paidThrough ?? null, updatedAt: at, updatedBy: actor.uid }, at);
+    const started: SubscriptionDoc = { ...sub, trialEndsAt: null, currentPeriodStart: at, currentPeriodEnd: account.paidThrough ?? null, updatedAt: at, updatedBy: actor.uid };
+    const entitlements = await trialEntitlements(tx, db, input.orgId, sub, started, at);
+    const next = writeSubscription(tx, db, input.orgId, started, at);
+    if (entitlements) tx.set(db.doc(paths.orgEntitlements(input.orgId)), entitlements);
     notifyStatusChange(tx, db, input.orgId, sub.status, next.status, at);
     audit(input.orgId, {
       at,
@@ -453,8 +469,15 @@ export async function partnerOverview({ db, now }: Deps, actor: Actor, input: z.
     if (!memberSnap.exists) throw new HttpsError('permission-denied', 'You are not on this reseller’s team.');
     if (!portalOpen(account)) throw new HttpsError('failed-precondition', 'The partner portal is not available for this reseller. Contact WallX.');
   }
-  const [planSnaps, orgSnaps] = await Promise.all([db.collection(paths.plans()).get(), db.collection(paths.orgs()).where('parentAccountId', '==', input.accountId).get()]);
+  const [planSnaps, orgSnaps, appSnaps] = await Promise.all([
+    db.collection(paths.plans()).get(),
+    db.collection(paths.orgs()).where('parentAccountId', '==', input.accountId).get(),
+    db.collection(paths.apps()).get(),
+  ]);
   const plans = new Map(planSnaps.docs.map((d) => [d.id, d.data() as Plan]));
+  const catalog = appSnaps.docs.map((d) => d.data() as AppDoc);
+  const discount = account.dealerDiscountBps ?? 0;
+  const dealer = (minor: number) => Math.round((minor * (10_000 - discount)) / 10_000);
 
   const customers: PartnerCustomer[] = [];
   for (const o of orgSnaps.docs) {
@@ -465,8 +488,18 @@ export async function partnerOverview({ db, now }: Deps, actor: Actor, input: z.
     const plan = plans.get(sub.planId);
     const resellerBilled = sub.billedTo === input.accountId;
     const trialing = sub.trialEndsAt !== null && sub.currentPeriodEnd === null;
-    const price = plan && resellerBilled ? dealerPriceMinor(plan, account) : null;
     const screens = screenSnap.docs.map((d) => d.data() as ScreenDoc);
+    // App pricing: the bill lines at dealer prices (a fixed dealer price per app, else the discount).
+    const lines: BillLine[] =
+      plan && sub.pricing === 'apps' && resellerBilled
+        ? subscriptionLines(plan, sub, catalog).map((l) => {
+            const app = catalog.find((a) => a.id === l.appId);
+            const unit = l.kind === 'app' && app?.dealerPriceMinor != null ? app.dealerPriceMinor : l.kind === 'adjustment' ? l.unitPriceMinor : dealer(l.unitPriceMinor);
+            return { ...l, unitPriceMinor: unit, totalMinor: unit * l.quantity };
+          })
+        : [];
+    const price = !plan || !resellerBilled ? null : sub.pricing === 'apps' ? (lines[0]?.unitPriceMinor ?? null) : dealerPriceMinor(plan, account);
+    const linesTotal = billTotalMinor(lines);
     customers.push({
       orgId: org.id,
       name: org.name,
@@ -480,9 +513,12 @@ export async function partnerOverview({ db, now }: Deps, actor: Actor, input: z.
       resellerBilled,
       trialing,
       dealerPriceMinor: price,
-      monthlyMinor: !resellerBilled ? null : trialing ? 0 : price === null ? null : price * sub.quantity,
+      monthlyMinor: !resellerBilled ? null : trialing ? 0 : sub.pricing === 'apps' ? linesTotal : price === null ? null : price * sub.quantity,
       partnerAccess: org.partnerAccess !== false,
       createdAt: org.createdAt,
+      lines,
+      apps: (sub.apps ?? []).map((l) => ({ appId: l.appId, quantity: l.quantity })),
+      pricing: sub.pricing === 'apps' ? 'apps' : 'plan',
     });
   }
   customers.sort((a, b) => a.name.localeCompare(b.name));
@@ -499,6 +535,10 @@ export async function partnerOverview({ db, now }: Deps, actor: Actor, input: z.
       dealerDiscountBps: account.dealerDiscountBps ?? 0,
     },
     customers,
+    apps: catalog
+      .filter((a) => a.active && !a.base)
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map((a) => ({ id: a.id, name: a.name, unit: a.unit, listPriceMinor: a.priceMinor, dealerPriceMinor: a.dealerPriceMinor ?? dealer(a.priceMinor), requires: a.requires })),
     plans: [...plans.values()]
       .filter((p) => p.active && p.tier !== 'trial')
       .sort((a, b) => (a.pricePerScreenMonthlyMinor ?? Infinity) - (b.pricePerScreenMonthlyMinor ?? Infinity))
