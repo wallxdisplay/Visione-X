@@ -96,7 +96,7 @@ export const FeatureCatalogEntry = z.object({
 export const AuditLogEntry = z.object({
   id: z.string(),
   at: millis,
-  actorType: z.enum(['user', 'platform_user', 'device', 'system', 'support_session']),
+  actorType: z.enum(['user', 'platform_user', 'device', 'system', 'support_session', 'api_key']),
   actorId: z.string(),
   orgId: z.string().nullable(),
   action: z.string(),

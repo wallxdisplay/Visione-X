@@ -31,6 +31,8 @@ export interface ApiRequest {
   headers: Record<string, string | string[] | undefined>;
   body: unknown;
   ip: string;
+  /** Query string values (public API reports). */
+  query?: Record<string, unknown>;
 }
 export interface ApiResult {
   status: number;

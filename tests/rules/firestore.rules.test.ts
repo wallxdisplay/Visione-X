@@ -379,3 +379,28 @@ describe('screen diagnostics history', () => {
     await assertFails(setDoc(doc(env.authenticatedContext('alice').firestore(), 'orgs/org1/screens/s1/events/e2'), { type: 'error' }));
   });
 });
+
+describe('public API keys and webhooks', () => {
+  it('members with apikey.manage read them; others cannot; nobody writes or reads secrets', async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await setDoc(doc(db, 'orgs/org1/members/alice'), { role: 'owner', status: 'active', permissions: ['apikey.manage'], siteScope: [] });
+      await setDoc(doc(db, 'orgs/org1/members/vic'), { role: 'viewer', status: 'active', permissions: ['screen.view'], siteScope: [] });
+      await setDoc(doc(db, 'orgs/org1/apiKeys/k1'), { name: 'BMS' });
+      await setDoc(doc(db, 'orgs/org1/webhooks/w1'), { url: 'https://x' });
+      await setDoc(doc(db, 'orgs/org1/webhooks/w1/deliveries/d1'), { ok: true });
+      await setDoc(doc(db, 'apiKeyHashes/h1'), { orgId: 'org1' });
+      await setDoc(doc(db, 'webhookSecrets/org1_w1'), { secret: 's' });
+    });
+    const alice = env.authenticatedContext('alice').firestore();
+    const vic = env.authenticatedContext('vic').firestore();
+    await assertSucceeds(getDoc(doc(alice, 'orgs/org1/apiKeys/k1')));
+    await assertSucceeds(getDoc(doc(alice, 'orgs/org1/webhooks/w1')));
+    await assertSucceeds(getDoc(doc(alice, 'orgs/org1/webhooks/w1/deliveries/d1')));
+    await assertFails(getDoc(doc(vic, 'orgs/org1/apiKeys/k1')));
+    await assertFails(getDoc(doc(vic, 'orgs/org1/webhooks/w1')));
+    await assertFails(getDoc(doc(alice, 'apiKeyHashes/h1')));
+    await assertFails(getDoc(doc(alice, 'webhookSecrets/org1_w1')));
+    await assertFails(setDoc(doc(alice, 'orgs/org1/apiKeys/k2'), { name: 'x' }));
+  });
+});

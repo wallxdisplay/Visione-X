@@ -292,6 +292,7 @@
     "alerts": "Alerts",
     "reports": "Playback Reports",
     "analytics": "Analytics",
+    "api": "API & webhooks",
     "team": "Team & Permissions",
     "billing": "Subscription & Billing",
     "settings": "Organization Settings",

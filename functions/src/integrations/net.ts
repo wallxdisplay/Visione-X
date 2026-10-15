@@ -101,3 +101,37 @@ export async function safeGet(
   }
   throw new FetchError('Too many redirects.');
 }
+
+/** Checks that a customer-given address is public (webhook URLs are checked when saved, too). */
+export const checkPublicUrl = (deps: Deps, rawUrl: string) => assertPublic(deps, new URL(rawUrl));
+
+/**
+ * POST to a customer's HTTPS endpoint (webhooks), with the same SSRF checks as safeGet. Redirects
+ * are not followed (a redirect is reported as its status) and the response body is not read.
+ * Returns the HTTP status.
+ */
+export async function safePost(
+  deps: Deps,
+  rawUrl: string,
+  body: string,
+  headers: Record<string, string>,
+  timeoutMs = 10_000,
+): Promise<number> {
+  const url = new URL(rawUrl);
+  if (url.protocol !== 'https:') throw new FetchError('Webhooks need an https:// address.');
+  await assertPublic(deps, url);
+  let res: Response;
+  try {
+    res = await (deps.fetch ?? fetch)(url, {
+      method: 'POST',
+      redirect: 'manual',
+      signal: AbortSignal.timeout(timeoutMs),
+      headers: { 'Content-Type': 'application/json', 'User-Agent': 'WallX Play Webhooks/1.0 (+https://wallx-play.web.app)', ...headers },
+      body,
+    });
+  } catch (err) {
+    throw new FetchError((err as Error).name === 'TimeoutError' ? 'The server took too long to answer.' : 'The server could not be reached.');
+  }
+  await res.body?.cancel().catch(() => undefined);
+  return res.status;
+}

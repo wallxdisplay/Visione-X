@@ -147,7 +147,7 @@ export interface AuditDoc {
   chainId: string;
   seq: number;
   at: number;
-  actorType: 'user' | 'platform_user' | 'system';
+  actorType: 'user' | 'platform_user' | 'system' | 'api_key';
   actorId: string;
   actorEmail?: string;
   orgId: string | null;

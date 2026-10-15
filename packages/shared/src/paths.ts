@@ -55,6 +55,15 @@ export const paths = {
   playStat: (orgId: string, date: string, screenId: string) => `orgs/${orgId}/playStats/${date}_${screenId}`,
   /** Processed play uploads, so a retried upload counts once (TTL). */
   playBatch: (deviceId: string, batchId: string) => `devices/${deviceId}/playBatches/${batchId}`,
+  /** Public API (publicApi.ts). Lookups and secrets are server-only. */
+  apiKeys: (orgId: string) => `orgs/${orgId}/apiKeys`,
+  apiKey: (orgId: string, keyId: string) => `orgs/${orgId}/apiKeys/${keyId}`,
+  apiKeyHash: (hash: string) => `apiKeyHashes/${hash}`,
+  apiUsage: (orgId: string, day: string) => `apiUsage/${orgId}_${day}`,
+  webhooks: (orgId: string) => `orgs/${orgId}/webhooks`,
+  webhook: (orgId: string, webhookId: string) => `orgs/${orgId}/webhooks/${webhookId}`,
+  webhookDeliveries: (orgId: string, webhookId: string) => `orgs/${orgId}/webhooks/${webhookId}/deliveries`,
+  webhookSecret: (orgId: string, webhookId: string) => `webhookSecrets/${orgId}_${webhookId}`,
   rateLimit: (key: string) => `rateLimits/${key}`,
   emergencies: (orgId: string) => `orgs/${orgId}/emergencies`,
   emergency: (orgId: string, id: string) => `orgs/${orgId}/emergencies/${id}`,

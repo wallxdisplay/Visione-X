@@ -203,6 +203,22 @@ service cloud.firestore {
         }
       }
 
+      // Public API keys (never the key itself) and webhooks (never the signing secret).
+      match /apiKeys/{keyId} {
+        allow read: if hasPerm(orgId, 'apikey.manage');
+        allow write: if false;
+      }
+
+      match /webhooks/{webhookId} {
+        allow read: if hasPerm(orgId, 'apikey.manage');
+        allow write: if false;
+
+        match /deliveries/{deliveryId} {
+          allow read: if hasPerm(orgId, 'apikey.manage');
+          allow write: if false;
+        }
+      }
+
       match /alerts/{alertId} {
         allow read: if hasPerm(orgId, 'sensor.view') && inSiteScope(orgId, resource.data.get('siteId', null));
         allow write: if false;

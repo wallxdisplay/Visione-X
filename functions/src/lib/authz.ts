@@ -1,6 +1,7 @@
 import type { Firestore, Transaction } from 'firebase-admin/firestore';
 import { HttpsError } from 'firebase-functions/v2/https';
 import {
+  API_SCOPE_PERMISSIONS,
   BILLING_LOCKED_PERMISSIONS,
   ORG_WIDE_PERMISSIONS,
   hasPlatformPermission,
@@ -68,6 +69,24 @@ export async function getMember(
 }
 
 /**
+ * An API key acts like a member of its own organization holding exactly the permissions its
+ * scopes grant, on all sites; never in any other organization.
+ */
+export function apiKeyMember(actor: Actor, orgId: string): MemberDoc | null {
+  if (!actor.apiKey || actor.apiKey.orgId !== orgId) return null;
+  return {
+    uid: actor.uid,
+    email: '',
+    role: 'custom',
+    permissions: actor.apiKey.scopes.map((s) => API_SCOPE_PERMISSIONS[s]),
+    siteScope: [],
+    status: 'active',
+    joinedAt: 0,
+    invitedBy: null,
+  };
+}
+
+/**
  * Permission + active org in one call (reads only; safe before transaction writes).
  * While billing is restricted, editing and publishing permissions are refused.
  */
@@ -98,7 +117,7 @@ export async function requireOrgPermission(
   orgId: string,
   permission: OrgPermission,
 ): Promise<MemberDoc> {
-  const member = await getMember(tx, db, orgId, actor.uid);
+  const member = actor.apiKey ? apiKeyMember(actor, orgId) : await getMember(tx, db, orgId, actor.uid);
   if (!member || member.status !== 'active' || !member.permissions.includes(permission) || supportExpired(member)) {
     throw new HttpsError('permission-denied', 'You do not have permission for this action.');
   }

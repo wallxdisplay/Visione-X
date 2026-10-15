@@ -14,6 +14,7 @@ import { ingest } from '../sensors/ingest';
 import { deviceLive, deviceLiveHistory } from '../sensors/live';
 import { deviceData } from '../integrations/dataSources';
 import { devicePlays } from '../reports/plays';
+import { handlePublicApi, isPublicApiPath } from '../publicApi/router';
 
 export type RouteResult = ApiResult;
 
@@ -46,6 +47,11 @@ export function findRoute(method: string, rawPath: string): Handler | null {
 
 export async function handle(deps: Deps, req: ApiRequest): Promise<ApiResult> {
   const handler = findRoute(req.method, req.path);
-  if (!handler) return { status: 404, body: { error: 'not_found' } };
+  if (!handler) {
+    // Organization API (API keys): screens, publish, emergencies, reports.
+    const path = normalizePath(req.path);
+    if (isPublicApiPath(path)) return handlePublicApi(deps, req, path);
+    return { status: 404, body: { error: 'not_found' } };
+  }
   return handler(deps, req);
 }

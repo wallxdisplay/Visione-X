@@ -25,7 +25,7 @@ const GIB = 1024 ** 3;
 
 export function userAudit(actor: Actor) {
   return {
-    actorType: 'user' as const,
+    actorType: actor.apiKey ? ('api_key' as const) : ('user' as const),
     actorId: actor.uid,
     ...(actor.email ? { actorEmail: actor.email } : {}),
   };

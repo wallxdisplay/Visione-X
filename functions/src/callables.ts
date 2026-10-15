@@ -73,6 +73,11 @@ import {
   UpsertSiteInput,
   PlaybackReportInput,
   ScreenAnalyticsInput,
+  CreateApiKeyInput,
+  ApiKeyRefInput,
+  SaveWebhookInput,
+  WebhookRefInput,
+  ApiOverviewInput,
   type PlatformRole,
 } from '@wallx-play/shared';
 import { setPlatformRole as setPlatformRoleSvc } from './admin/platformUsers';
@@ -100,6 +105,9 @@ import * as plans from './billing/plans';
 import * as integrations from './integrations/dataSources';
 import * as reports from './reports/plays';
 import * as analytics from './reports/analytics';
+import * as apiKeys from './publicApi/keys';
+import * as webhooks from './publicApi/webhooks';
+import { apiOverview as apiOverviewSvc } from './publicApi/overview';
 import { BASE_OPTIONS, MAIL_SECRETS, WEATHER_SECRETS, enforceAppCheck } from './options';
 
 export function actorFrom(request: CallableRequest): Actor {
@@ -246,3 +254,12 @@ export const previewDataSource = callable(DataSourceRefInput, integrations.previ
 // Reports (v1.1)
 export const playbackReport = callable(PlaybackReportInput, reports.playbackReport, { memory: '512MiB', timeoutSeconds: 120 });
 export const screenAnalytics = callable(ScreenAnalyticsInput, analytics.screenAnalytics, { memory: '512MiB', timeoutSeconds: 120 });
+
+// Public API: keys and webhooks (v1.1)
+export const createApiKey = callable(CreateApiKeyInput, apiKeys.createApiKey);
+export const revokeApiKey = callable(ApiKeyRefInput, apiKeys.revokeApiKey);
+export const saveWebhook = callable(SaveWebhookInput, webhooks.saveWebhook);
+export const deleteWebhook = callable(WebhookRefInput, webhooks.deleteWebhook);
+export const rotateWebhookSecret = callable(WebhookRefInput, webhooks.rotateWebhookSecret);
+export const testWebhook = callable(WebhookRefInput, webhooks.testWebhook, { timeoutSeconds: 60 });
+export const apiOverview = callable(ApiOverviewInput, apiOverviewSvc);

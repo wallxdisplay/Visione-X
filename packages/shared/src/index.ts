@@ -17,3 +17,4 @@ export * from './platform';
 export * from './support';
 export * from './accounts';
 export * from './reports';
+export * from './publicApi';

@@ -17,6 +17,8 @@ import { Billing } from './pages/billing/Billing';
 import { Integrations } from './pages/integrations/Integrations';
 import { PlaybackReports } from './pages/reports/PlaybackReports';
 import { Analytics } from './pages/analytics/Analytics';
+import { ApiAccess } from './pages/api/ApiAccess';
+import { AdminApi } from './pages/admin/AdminApi';
 import { ApprovalReview } from './pages/admin/ApprovalReview';
 import { Approvals } from './pages/admin/Approvals';
 import { AuditLogs } from './pages/admin/AuditLogs';
@@ -63,6 +65,7 @@ const PAGES: Record<string, ReactNode> = {
   '/integrations': <Integrations />,
   '/reports': <PlaybackReports />,
   '/analytics': <Analytics />,
+  '/developers': <ApiAccess />,
   '/team': <Team />,
   '/help': <Help />,
   '/sites': <Sites />,
@@ -79,6 +82,7 @@ const PAGES: Record<string, ReactNode> = {
   '/admin/support': <AdminSupport />,
   '/admin/resellers': <AdminResellers />,
   '/admin/features': <AdminFeatures />,
+  '/admin/integrations': <AdminApi />,
 };
 
 function navRoutes(nav: NavGroup[], base: string): RouteObject[] {

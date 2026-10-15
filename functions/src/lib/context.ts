@@ -2,6 +2,7 @@ import type { Auth } from 'firebase-admin/auth';
 import type { Firestore } from 'firebase-admin/firestore';
 import type { Bucket } from '@google-cloud/storage';
 import type { PlatformRole } from '@wallx-play/shared';
+import type { ApiScope } from '@wallx-play/shared';
 import type { Mail } from './email';
 
 /** Injected into every service so tests can pass emulator-backed clients and a fixed clock. */
@@ -26,4 +27,6 @@ export interface Actor {
   platformRole: PlatformRole | null;
   /** Second factor used for this sign-in ('totp', 'phone'), from the ID token; absent without one. */
   secondFactor?: string | null;
+  /** Set when an organization API key makes the call (public API); uid is `apikey_<keyId>`. */
+  apiKey?: { orgId: string; keyId: string; name: string; scopes: ApiScope[] };
 }
