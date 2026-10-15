@@ -52,7 +52,7 @@ function SitePicker({ sites, value, onChange }: { sites: Array<{ id: string; nam
 export function Team() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { orgId, member: me, can, entitlements } = useOrg();
+  const { orgId, org, member: me, can, entitlements } = useOrg();
   const manage = can('member.manage');
 
   const members = useQueryData<MemberDoc>(`members:${orgId}`, () => query(collection(db, paths.members(orgId))));
@@ -124,7 +124,8 @@ export function Team() {
       <PageHeader
         title={t('nav.team')}
         description={t('team.description', {
-          count: members.data.length,
+          // WallX support and reseller staff are not users of the plan.
+          count: members.data.filter((m) => !m.support && !m.partner).length,
           limit: entitlements?.limits.users ?? '∞',
         })}
         actions={
@@ -136,6 +137,24 @@ export function Team() {
         }
       />
       {error && !inviteOpen ? <Alert tone="danger">{error}</Alert> : null}
+      {org?.parentAccountId ? (
+        <div className="wxp-card partner-access">
+          <div>
+            <strong>{t('team.partnerAccess', { name: org.partnerName ?? t('billing.yourReseller') })}</strong>
+            <p className="wxp-muted">{t(org.partnerAccess === false ? 'team.partnerAccessOff' : 'team.partnerAccessOn')}</p>
+          </div>
+          {me?.role === 'owner' ? (
+            <Button
+              size="sm"
+              variant={org.partnerAccess === false ? 'primary' : 'secondary'}
+              disabled={busy}
+              onClick={() => void run(() => call('setPartnerAccess', { orgId, enabled: org.partnerAccess === false }))}
+            >
+              {org.partnerAccess === false ? t('team.partnerAccessEnable') : t('team.partnerAccessDisable')}
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
 
       <div className="wxp-table-wrap">
         <table className="wxp-table">
@@ -151,12 +170,14 @@ export function Team() {
           <tbody>
             {members.data.map((m) => {
               const isMe = m.uid === user?.uid;
-              const canEditRole = manage && !isMe && !m.support && (m.role !== 'owner' || me?.role === 'owner');
+              const managed = !!m.support || !!m.partner;
+              const canEditRole = manage && !isMe && !managed && (m.role !== 'owner' || me?.role === 'owner');
               return (
                 <tr key={m.uid}>
                   <td>
                     {m.email} {isMe ? <span className="wxp-muted">({t('team.you')})</span> : null}
                     {m.support ? <div className="wxp-muted">{t('team.supportMember', { until: formatDate(m.support.expiresAt) })}</div> : null}
+                    {m.partner ? <div className="wxp-muted">{t('team.partnerMember', { name: org?.partnerName ?? t('billing.yourReseller') })}</div> : null}
                   </td>
                   <td>
                     {canEditRole ? (
@@ -182,7 +203,7 @@ export function Team() {
                   </td>
                   <td>
                     {siteNames(m.siteScope)}
-                    {manage && !isMe && !m.support && m.role !== 'owner' ? (
+                    {manage && !isMe && !managed && m.role !== 'owner' ? (
                       <Button size="sm" variant="tertiary" onClick={() => setScoping({ member: m, sites: m.siteScope ?? [] })}>
                         {t('common.edit')}
                       </Button>
@@ -190,7 +211,7 @@ export function Team() {
                   </td>
                   <td className="wxp-tabular">{formatDate(m.joinedAt)}</td>
                   <td className="wxp-actions">
-                    {(manage && !isMe && !m.support) || isMe ? (
+                    {(manage && !isMe && !managed) || (isMe && !m.partner) ? (
                       <Button size="sm" variant="tertiary" onClick={() => setRemoving(m)}>
                         {isMe ? t('team.leave') : t('team.remove')}
                       </Button>

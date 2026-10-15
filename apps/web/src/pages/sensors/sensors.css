@@ -141,8 +141,8 @@
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.02em;
-  background: var(--wxp-color-surface-muted, rgba(79, 70, 229, 0.1));
-  color: var(--wxp-color-text-muted, inherit);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
 }
 .mqtt-section {
   margin-top: 32px;

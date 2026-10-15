@@ -50,7 +50,11 @@ import { Onboarding } from './pages/onboarding/Onboarding';
 import { Placeholder } from './pages/Placeholder';
 import { PlayerRegistration } from './pages/PlayerRegistration';
 import { AppShell } from './shell/AppShell';
-import { adminNav, customerNav, type NavGroup } from './shell/nav';
+import { adminNav, customerNav, partnerNav, type NavGroup } from './shell/nav';
+import { PartnerGate } from './partner/PartnerProvider';
+import { PartnerBilling } from './pages/partner/PartnerBilling';
+import { PartnerCustomers } from './pages/partner/PartnerCustomers';
+import { PartnerTeam } from './pages/partner/PartnerTeam';
 
 /** Built pages; every other nav entry renders its "coming in phase N" placeholder. */
 const PAGES: Record<string, ReactNode> = {
@@ -85,6 +89,9 @@ const PAGES: Record<string, ReactNode> = {
   '/admin/resellers': <AdminResellers />,
   '/admin/features': <AdminFeatures />,
   '/admin/integrations': <AdminApi />,
+  '/partner': <PartnerCustomers />,
+  '/partner/billing': <PartnerBilling />,
+  '/partner/team': <PartnerTeam />,
 };
 
 function navRoutes(nav: NavGroup[], base: string): RouteObject[] {
@@ -137,6 +144,11 @@ export const router = createBrowserRouter([
                     ],
                   },
                 ],
+              },
+              {
+                path: '/partner',
+                element: <PartnerGate />,
+                children: [{ element: <AppShell nav={partnerNav} variant="partner" />, children: navRoutes(partnerNav, '/partner') }],
               },
               {
                 path: '/',

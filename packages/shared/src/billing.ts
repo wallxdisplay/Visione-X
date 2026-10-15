@@ -67,6 +67,8 @@ export interface SubscriptionDoc {
   currentPeriodEnd: number | null;
   cancelAtPeriodEnd: boolean;
   gateway: 'manual';
+  /** Reseller account that pays for this organization (wholesale); its paid period is copied here. */
+  billedTo?: string | null;
   /** When the status or a reminder next changes (the monitor picks it up then). */
   nextTransitionAt: number | null;
   /** Reminder keys already sent, e.g. "trial:<ms>", "due:<ms>". */
@@ -83,6 +85,8 @@ export interface OrgBillingSummary {
   planId: string;
   trialEndsAt: number | null;
   currentPeriodEnd: number | null;
+  /** A reseller pays for the organization (wholesale): billing questions go to the reseller. */
+  resellerBilled?: boolean;
 }
 
 /** orgs/{orgId}/payments/{id} — a payment recorded by billing staff. */
@@ -304,6 +308,7 @@ export function normalizeSubscription(raw: Partial<SubscriptionDoc> & { planId: 
     currentPeriodEnd: raw.currentPeriodEnd ?? null,
     cancelAtPeriodEnd: raw.cancelAtPeriodEnd ?? false,
     gateway: 'manual',
+    billedTo: raw.billedTo ?? null,
     nextTransitionAt: raw.nextTransitionAt ?? null,
     reminders: raw.reminders ?? [],
     lastPaymentAt: raw.lastPaymentAt ?? null,

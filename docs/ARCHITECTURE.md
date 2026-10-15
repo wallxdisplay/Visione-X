@@ -100,7 +100,8 @@ plans/{planId}                         name, currency, pricePerScreen{monthly,an
                                        featureKeys[], trialDays, active, version
 taxRates/{id}                          configurable (GST 18% placeholder — accountant to confirm)
 coupons/{id}
-accounts/{accountId}                   (future reseller/dealer) dealer pricing, child orgs
+accounts/{accountId}                   reseller: dealer pricing, paidThrough, portal flag (§13g)
+  members/{uid} invites/{id} payments/{id}
 orgs/{orgId}                           name, status, parentAccountId?, timezone, locale,
                                        branding, billingProfile{legalName,GSTIN,address,state},
                                        retentionPolicy, createdAt
@@ -253,6 +254,16 @@ Layouts become pages: a zone may carry a tap `action` (`page` → open another l
 ## 13f. MQTT sensors (Enterprise, `sensor.mqtt` + `sensor.esp32`)
 Customer brokers usually sit on the site network, out of the cloud's reach, so a screen at the site is the **bridge**. A broker (`orgs/{org}/mqttBrokers`: host, port, TLS, user name, bridge screen; at most 10 per org) keeps its password in the server-only `mqttBrokerSecrets/{id}`; it only reaches the bridge screen's player. A sensor device has `transport` http (API key, `POST /ingest`) or mqtt (no key, `mqttBrokerId`); an MQTT channel carries `mqtt {topic, path}` (exact topic, optional dot path into a JSON payload). Saving a broker, MQTT device or channel stamps the bridge screen's `mqttConfigAt`; `GET /devices/me` returns it and the player (0.18.0+, Eclipse Paho client, TCP or TLS, auto-reconnect) then fetches `GET /devices/mqtt` (credentials and subscriptions). The player keeps the latest value per channel, shows it at once on its own widgets and posts it every 15 s to `POST /devices/mqtt/readings`, which runs the ingest core (history, alerts, offline/stale, token bucket) after checking that the screen is the device's broker bridge. Bridge state per broker (connected / connecting / error, message count) comes with the heartbeat and is shown on the Sensors page. A bridge screen cannot be removed while a broker uses it, and a broker cannot be deleted while devices read from it.
 
+## 13g. Reseller partner portal (wholesale)
+Resellers (`accounts/{id}`) buy screens from WallX at a **dealer price** (a discount off each plan's list price, or a fixed price per plan) and bill their customers themselves. A customer organization the reseller pays for has `subscription.billedTo = accountId`. WallX billing staff record the reseller's payments (`accounts/{id}/payments`), which extend the account's `paidThrough` like an organization's paid period. That date is then copied to every paid (non-trial) customer, so the usual derived status (active / past due with 7-day grace / restricted) applies to the customers unchanged; renewal reminders are not sent to them. Customers of a reseller cannot send billing requests to WallX, and WallX cannot record payments on them directly.
+
+The reseller's team (`accounts/{id}/members`, owner or staff, invited by email with the same token links as org invites; WallX invites the first owner) uses the **partner portal** at `/partner` when staff switched `portal` on:
+- **Customers:** create a customer organization (approved at once, optional 14-day trial, optional owner invitation), set its plan and screens (the screen limit), start billing (ends the trial; needs a paid-up account), and open it. The `partnerOverview` callable lists customers, screens used and online, billing status, dealer prices and the monthly total.
+- **Billing:** account status, paid-through date, dealer prices, amount per customer, payments to WallX.
+- **Team:** owners invite and remove; everyone manages all customers.
+
+Access to customers uses **partner member records** (`MemberDoc.partner`, role admin, without billing.manage), the same pattern as WallX support access. Functions keep them in sync with the reseller's team, the account's status and portal flag, and the organization's `partnerAccess` (default on), which the customer's owner can switch off on the Team page. The reseller's name is copied to `orgs/{id}.partnerName` for the customer's pages. Partner members are not counted as users and cannot be edited on the customer's side. Changes are audited in the platform chain and in the organization's chain. Staff can also move an existing organization under a reseller, billed wholesale or still directly by WallX.
+
 ## 14. Internationalization
 `i18next` with JSON resources in `apps/web/src/locales/{en,hi,mr}`; all UI strings externalized. The language is chosen per browser (top bar) and Hindi/Marathi load on demand; missing keys fall back to English, and a unit test keeps every translation's keys and `{{placeholders}}` identical to English. Dates follow the language (`en-IN`, `hi-IN`, `mr-IN` with Latin digits). Screen content (clock, weather, charts) follows the player and stays English. Hindi and Marathi are machine-drafted and need review by native speakers. Fonts: Inter (UI) + Noto Sans Devanagari (content, bundled on player).
 
@@ -280,7 +291,7 @@ Feature catalogue stores `releaseStatus` (what WallX has built) separately from 
 | API keys & webhooks | v1.1 | – | – | – | ✓ |
 | Hindi / Marathi UI | later | — all plans — |
 | Multi-screen sync ✅ (player 0.16.0); interactive/touch ✅ (player 0.17.0); MQTT ✅ (player 0.18.0) | later | – | – | – | ✓ |
-| Self-service reseller portal, white-label | later | – | – | – | ✓ |
+| Self-service reseller portal ✅ (wholesale); white-label | later | – | – | – | ✓ |
 *Plan columns are a proposal — confirm or edit.*
 
 ## 17. Delivery order (your priority)

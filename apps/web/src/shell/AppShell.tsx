@@ -1,10 +1,11 @@
-import { HelpCircle, KeyRound, LogOut, Menu, ShieldCheck } from 'lucide-react';
+import { Briefcase, HelpCircle, KeyRound, LogOut, Menu, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, NavLink, Outlet } from 'react-router';
 import { useAuth } from '../auth/AuthProvider';
 import { SECURITY_PATH } from '../auth/mfa';
 import { useOrg } from '../org/OrgProvider';
+import { openAccounts, usePartner } from '../partner/PartnerProvider';
 import { BillingBanner } from './BillingBanner';
 import { EmergencyBanner } from './EmergencyBanner';
 import { LanguagePicker } from './LanguagePicker';
@@ -33,9 +34,26 @@ function OrgSwitcher() {
   );
 }
 
-export function AppShell({ nav, variant }: { nav: NavGroup[]; variant: 'customer' | 'admin' }) {
+function AccountSwitcher() {
   const { t } = useTranslation();
-  const { user, platformRole, signOut } = useAuth();
+  const { accountId, name, accounts, switchAccount } = usePartner();
+  if (accounts.length <= 1) return <span className="shell__org-name">{name}</span>;
+  return (
+    <select className="wxp-input shell__org-select" aria-label={t('shell.switchAccount')} value={accountId} onChange={(e) => switchAccount(e.target.value)}>
+      {accounts.map(([id, a]) => (
+        <option key={id} value={id}>
+          {a.name}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+export function AppShell({ nav, variant }: { nav: NavGroup[]; variant: 'customer' | 'admin' | 'partner' }) {
+  const { t } = useTranslation();
+  const { user, platformRole, profile, signOut } = useAuth();
+  const partnerPortal = openAccounts(profile?.accounts).length > 0;
+  const hasOrgs = Object.values(profile?.memberships ?? {}).some((m) => m.orgStatus === 'active');
   const [navOpen, setNavOpen] = useState(false);
 
   return (
@@ -51,6 +69,7 @@ export function AppShell({ nav, variant }: { nav: NavGroup[]; variant: 'customer
           </span>
         </div>
         {variant === 'admin' ? <div className="shell__admin-badge">{t('shell.adminBadge')}</div> : null}
+        {variant === 'partner' ? <div className="shell__admin-badge shell__partner-badge">{t('shell.partnerBadge')}</div> : null}
         <nav>
           {nav.map((group) => (
             <div className="shell__group" key={group.labelKey}>
@@ -59,7 +78,7 @@ export function AppShell({ nav, variant }: { nav: NavGroup[]; variant: 'customer
                 <NavLink
                   key={path}
                   to={path}
-                  end={path === '/' || path === '/admin'}
+                  end={path === '/' || path === '/admin' || path === '/partner'}
                   className="shell__link"
                   onClick={() => setNavOpen(false)}
                 >
@@ -83,7 +102,7 @@ export function AppShell({ nav, variant }: { nav: NavGroup[]; variant: 'customer
             <Menu size={20} />
           </button>
           <div className="shell__context">
-            {variant === 'customer' ? <OrgSwitcher /> : t(`platformRoles.${platformRole}`)}
+            {variant === 'customer' ? <OrgSwitcher /> : variant === 'partner' ? <AccountSwitcher /> : t(`platformRoles.${platformRole}`)}
           </div>
           <div className="shell__actions">
             {variant === 'customer' && platformRole ? (
@@ -91,7 +110,12 @@ export function AppShell({ nav, variant }: { nav: NavGroup[]; variant: 'customer
                 <ShieldCheck size={16} aria-hidden /> {t('shell.adminBadge')}
               </Link>
             ) : null}
-            {variant === 'admin' ? (
+            {variant === 'customer' && partnerPortal ? (
+              <Link to="/partner" className="wxp-btn wxp-btn--tertiary wxp-btn--sm">
+                <Briefcase size={16} aria-hidden /> {t('shell.partnerBadge')}
+              </Link>
+            ) : null}
+            {variant === 'admin' || (variant === 'partner' && hasOrgs) ? (
               <Link to="/" className="wxp-btn wxp-btn--tertiary wxp-btn--sm">
                 {t('shell.backToApp')}
               </Link>

@@ -1,6 +1,6 @@
 /**
- * Seeds the LOCAL EMULATORS with plans, the feature catalog, two test accounts and an approved
- * demo organization owned by the test owner.
+ * Seeds the LOCAL EMULATORS with plans, the feature catalog, test accounts, an approved demo
+ * organization owned by the test owner, and a demo reseller (partner portal) with its owner.
  * Run while `npm run emulators` is up:  npm run seed
  * Test credentials below are for the emulator only; they never exist in a real project.
  */
@@ -16,6 +16,9 @@ import { paths, type UserProfileDoc } from '@wallx-play/shared';
 import { applyPlatformRole } from '../src/admin/platformUsers';
 import { staffMfa } from '../src/lib/authz';
 import type { Actor, Deps } from '../src/lib/context';
+import { recordAccountPayment, saveAccount } from '../src/accounts/accounts';
+import { acceptAccountInvite, inviteAccountMember } from '../src/accounts/partners';
+import { hashToken } from '../src/members/members';
 import { reviewOrgSignup } from '../src/orgs/review';
 import { submitOrgSignup } from '../src/orgs/signup';
 import { seedPlatformData } from '../src/seed/seed';
@@ -27,6 +30,7 @@ staffMfa.required = false;
 const TEST_USERS = [
   { email: 'superadmin@wallx-play.test', password: 'Test-Admin-2026!', role: 'superadmin' as const },
   { email: 'owner@wallx-play.test', password: 'Test-Owner-2026!', role: null },
+  { email: 'partner@wallx-play.test', password: 'Test-Partner-2026!', role: null },
 ];
 
 /** Not created by the seed: used to exercise the sign-up flow by hand in the emulator. */
@@ -73,5 +77,29 @@ if (!profile || Object.keys(profile.memberships ?? {}).length === 0) {
   });
   await reviewOrgSignup(deps, admin, { requestId, decision: 'approve' });
   console.log('Demo organization ready: Demo Retail (sample)');
+}
+// Demo reseller with the partner test user as its owner, paid for a month (skipped if it exists).
+const partnerUid = uids['partner@wallx-play.test']!;
+const partnerProfile = (await db.doc(paths.userProfile(partnerUid)).get()).data() as UserProfileDoc | undefined;
+if (!partnerProfile?.accounts || Object.keys(partnerProfile.accounts).length === 0) {
+  const admin: Actor = { uid: uids['superadmin@wallx-play.test']!, email: 'superadmin@wallx-play.test', emailVerified: true, platformRole: 'superadmin' };
+  const partner: Actor = { uid: partnerUid, email: 'partner@wallx-play.test', emailVerified: true, platformRole: null };
+  const { accountId } = await saveAccount(deps, admin, {
+    name: 'Demo Reseller (sample)',
+    contactName: 'Demo Partner',
+    email: 'partner@wallx-play.test',
+    phone: '',
+    city: 'Mumbai',
+    gstin: null,
+    status: 'active',
+    notes: 'Emulator sample',
+    portal: true,
+    dealerDiscountBps: 2_000,
+    dealerPricesMinor: {},
+  });
+  const { inviteId, token } = await inviteAccountMember(deps, admin, { accountId, email: 'partner@wallx-play.test', role: 'owner' });
+  await acceptAccountInvite(deps, partner, { accountId, inviteId }, hashToken(token));
+  await recordAccountPayment(deps, admin, { accountId, amountMinor: 100_000, method: 'bank_transfer', reference: 'SEED-1', paidAt: Date.now(), months: 1 });
+  console.log('Demo reseller ready: Demo Reseller (sample)');
 }
 console.log('Done. Test passwords are in functions/scripts/seed-emulator.ts.');

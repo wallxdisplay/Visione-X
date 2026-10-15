@@ -16,12 +16,16 @@ export function BillingBanner() {
 
   let tone: 'danger' | 'warning' | 'info' | null = null;
   let text = '';
+  // Customers of a reseller settle billing with the reseller, not with WallX.
+  const reseller = b.resellerBilled ? (org?.partnerName ?? t('billing.yourReseller')) : null;
   if (b.restricted) {
     tone = 'danger';
-    text = t(b.status === 'cancelled' ? 'billingBanner.cancelled' : 'billingBanner.restricted');
+    text = reseller ? t('billingBanner.resellerRestricted', { name: reseller }) : t(b.status === 'cancelled' ? 'billingBanner.cancelled' : 'billingBanner.restricted');
   } else if (b.status === 'past_due' && b.currentPeriodEnd) {
     tone = 'warning';
-    text = t('billingBanner.pastDue', { date: formatDate(b.currentPeriodEnd + BILLING_GRACE_DAYS * DAY) });
+    text = reseller
+      ? t('billingBanner.resellerPastDue', { name: reseller, date: formatDate(b.currentPeriodEnd + BILLING_GRACE_DAYS * DAY) })
+      : t('billingBanner.pastDue', { date: formatDate(b.currentPeriodEnd + BILLING_GRACE_DAYS * DAY) });
   } else if (b.status === 'trialing' && b.trialEndsAt && b.trialEndsAt - Date.now() < TRIAL_REMINDER_DAYS * DAY) {
     tone = 'info';
     text = t('billingBanner.trialEnding', { date: formatDate(b.trialEndsAt) });

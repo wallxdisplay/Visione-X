@@ -94,7 +94,11 @@
     "session": "You are in {{org}} with WallX support access until {{until}}. The customer can see this and end it."
   },
   "adminSupport": {
-    "origins": { "customer": "given by the customer", "staff_request": "requested by {{email}}", "emergency": "emergency access by {{email}}" },
+    "origins": {
+      "customer": "given by the customer",
+      "staff_request": "requested by {{email}}",
+      "emergency": "emergency access by {{email}}"
+    },
     "description": "Customer organizations are visible to WallX staff only through time-limited access the customer can see and end.",
     "request": "Request access",
     "send": "Send request",
@@ -114,7 +118,7 @@
     "policy": "Owners and admins answer requests under Help & Support. Access ends on time automatically; support staff never see passwords or API keys."
   },
   "adminResellers": {
-    "description": "Partners who sell WallX Play, and the organizations they brought. Groundwork: a reseller portal and dealer pricing come later.",
+    "description": "Partners who sell WallX Play: their dealer prices and wholesale payments, their team, and the organizations they manage through the partner portal.",
     "new": "New reseller",
     "edit": "Edit reseller",
     "name": "Name",
@@ -133,7 +137,6 @@
     "orgs": "Organizations",
     "manageOrgs": "Organizations…",
     "none": "No resellers yet.",
-    "later": "Per-organization prices are set in each organization's subscription (Plans & billing).",
     "orgsOf": "Organizations of {{name}}",
     "reason": "Reason",
     "reasonHint": "Recorded in the audit log for each change, e.g. “Signed through partner”.",
@@ -144,7 +147,35 @@
     "assign": "Assign",
     "inactiveHint": "This reseller is inactive, so no organizations can be added.",
     "reseller": "Reseller",
-    "direct": "WallX direct"
+    "direct": "WallX direct",
+    "details": "Billing & team",
+    "paidThrough": "Paid through",
+    "portal": "Partner portal",
+    "portalOn": "Portal on",
+    "portalOff": "Portal off",
+    "portalLabel": "The reseller’s team can use the partner portal",
+    "howItWorks": "Resellers buy screens at their dealer price and bill their customers themselves. Invite the reseller’s owner under “Billing & team”; record their payments there, and their paid customers follow their paid period.",
+    "dealerPricing": "Dealer pricing",
+    "discount": "Dealer discount (%)",
+    "discountHint": "Off each plan’s list price per screen per month (0–90).",
+    "discountError": "Enter a percentage from 0 to 90.",
+    "fixedPrice": "{{plan}}: fixed dealer price (₹ per screen per month)",
+    "fixedPriceHint": "List {{list}}; with the discount {{auto}}. Leave empty to use the discount.",
+    "noListPrice": "This plan has no list price: set the dealer price here.",
+    "priceError": "Enter an amount in rupees, e.g. 450 or 450.50.",
+    "recordPayment": "Record payment",
+    "setPaidThrough": "Set paid-through date",
+    "paidThroughHint": "The reseller’s paid customers take this date. Leave empty to clear it.",
+    "reasonHint5": "At least 5 characters; recorded in the audit log.",
+    "amountHint": "Amount received in rupees, including GST.",
+    "months": "Months covered",
+    "paymentHelp": "The paid period is extended from its current end (if it has not lapsed) and copied to every customer the reseller pays for.",
+    "voidBody": "Mark the payment of {{amount}} as void (e.g. a bounced cheque). Correct the paid-through date separately.",
+    "customers": "Customers",
+    "wholesale": "Paid by the reseller",
+    "wholesaleLabel": "The reseller pays for this organization (wholesale)",
+    "billWholesale": "Reseller pays",
+    "billDirect": "Bill directly"
   },
   "adminSettings": {
     "description": "Settings that apply to all of WallX Play.",
@@ -152,13 +183,21 @@
     "saved": "Platform settings saved.",
     "supportTitle": "Support contacts",
     "supportHint": "Shown to every customer on the Help & Support page. Leave a field empty to hide it.",
-    "support": { "email": "Support email", "phone": "Support phone", "whatsapp": "WhatsApp number", "hours": "Support hours" },
+    "support": {
+      "email": "Support email",
+      "phone": "Support phone",
+      "whatsapp": "WhatsApp number",
+      "hours": "Support hours"
+    },
     "bannerTitle": "Notice for everyone",
     "bannerOn": "Show a notice at the top of every page",
     "bannerMessage": "Message",
     "bannerHint": "For example planned maintenance. People can dismiss it; a new message shows again.",
     "bannerTone": "Style",
-    "tones": { "info": "Information", "warning": "Warning" },
+    "tones": {
+      "info": "Information",
+      "warning": "Warning"
+    },
     "bannerUntil": "Hide after",
     "bannerUntilHint": "Optional. Leave empty to show it until you turn it off.",
     "signupsTitle": "New organizations",
@@ -189,7 +228,12 @@
     "changeRollout": "Rollout…",
     "none": "No releases yet.",
     "rolloutTitle": "Roll out v{{version}}",
-    "rollouts": { "draft": "Draft", "pilot": "Pilot", "all": "All screens", "withdrawn": "Withdrawn" },
+    "rollouts": {
+      "draft": "Draft",
+      "pilot": "Pilot",
+      "all": "All screens",
+      "withdrawn": "Withdrawn"
+    },
     "rolloutHints": {
       "draft": "No screen gets this version.",
       "pilot": "Only screens of the organizations below get it. Try a new version with a few friendly customers first.",
@@ -207,10 +251,22 @@
   },
   "adminDevices": {
     "description": "Every screen and player across all organizations: status, app version and health.",
-    "stats": { "all": "Screens", "online": "Online", "offline": "Offline", "pending": "Awaiting authorization" },
+    "stats": {
+      "all": "Screens",
+      "online": "Online",
+      "offline": "Offline",
+      "pending": "Awaiting authorization"
+    },
     "versions": "Player versions in the field:",
     "filter": "Filter screens",
-    "filters": { "all": "All", "online": "Online", "offline": "Offline", "pending": "Awaiting authorization", "neverSeen": "Not connected yet", "errors": "With errors" },
+    "filters": {
+      "all": "All",
+      "online": "Online",
+      "offline": "Offline",
+      "pending": "Awaiting authorization",
+      "neverSeen": "Not connected yet",
+      "errors": "With errors"
+    },
     "search": "Search screen, organization or box model",
     "screen": "Screen",
     "org": "Organization",
@@ -278,7 +334,8 @@
       "platform": "Platform",
       "customers": "Customers",
       "operations": "Operations",
-      "governance": "Governance"
+      "governance": "Governance",
+      "partner": "Partner"
     },
     "dashboard": "Dashboard",
     "screens": "Screens",
@@ -312,6 +369,11 @@
       "support": "Support Access",
       "audit": "Audit Logs",
       "settings": "Platform Settings"
+    },
+    "partner": {
+      "customers": "Customers",
+      "billing": "Billing",
+      "team": "Team"
     }
   },
   "shell": {
@@ -325,7 +387,9 @@
     "backToApp": "Back to app",
     "signOut": "Sign out",
     "switchOrg": "Switch organization",
-    "security": "Account security"
+    "security": "Account security",
+    "partnerBadge": "Partner portal",
+    "switchAccount": "Switch reseller"
   },
   "placeholder": {
     "title": "Coming in phase {{phase}}",
@@ -495,7 +559,12 @@
     "permissionCount_other": "{{count}} permissions",
     "startFrom": "Start from",
     "startFromHint": "Copies a built-in role’s permissions; adjust them below.",
-    "groups": { "screens": "Screens", "content": "Content", "sensors": "Sensors & integrations", "organization": "Organization & team" },
+    "groups": {
+      "screens": "Screens",
+      "content": "Content",
+      "sensors": "Sensors & integrations",
+      "organization": "Organization & team"
+    },
     "memberManageNote": "can give anyone, including themselves, any role except Owner",
     "billingNote": "Changing the plan or billing stays with owners.",
     "appliesNow_one": "{{count}} member has this role; changes apply to them immediately.",
@@ -599,7 +668,13 @@
     "leaveTitle": "Leave organization?",
     "removeTitle": "Remove member?",
     "removeBody": "{{email}} will lose access to this organization immediately.",
-    "emailNote": "Invitation emails are sent automatically once the notification service is enabled; until then, share the link yourself."
+    "emailNote": "Invitation emails are sent automatically once the notification service is enabled; until then, share the link yourself.",
+    "partnerMember": "Manages this organization for {{name}}",
+    "partnerAccess": "{{name}} manages this organization",
+    "partnerAccessOn": "Your reseller’s team can manage your screens and content. Changes they make appear in your audit log.",
+    "partnerAccessOff": "You switched your reseller’s access off. They can no longer open this organization.",
+    "partnerAccessDisable": "Switch access off",
+    "partnerAccessEnable": "Switch access on"
   },
   "sites": {
     "title": "Sites & Groups",
@@ -640,7 +715,10 @@
     },
     "approvals": {
       "description": "Every new organization must be approved before it can pair screens or publish content.",
-      "tabs": { "open": "Open", "decided": "Decided" },
+      "tabs": {
+        "open": "Open",
+        "decided": "Decided"
+      },
       "empty": "Nothing waiting for review.",
       "company": "Company",
       "requester": "Requested by",
@@ -654,7 +732,10 @@
       "approve": "Approve organization",
       "details": "Request details",
       "conversation": "Messages",
-      "from": { "requester": "Requester", "admin": "WallX" },
+      "from": {
+        "requester": "Requester",
+        "admin": "WallX"
+      },
       "confirm": {
         "approve": "Approve organization?",
         "reject": "Reject organization?",

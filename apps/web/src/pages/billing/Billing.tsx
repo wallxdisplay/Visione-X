@@ -30,7 +30,7 @@ export const STATUS_TONE: Record<BillingStatus, 'success' | 'info' | 'warning' |
 /** Customer view of the subscription: plan, usage, paid period, payments and change requests. */
 export function Billing() {
   const { t } = useTranslation();
-  const { orgId, can, entitlements, siteScope } = useOrg();
+  const { orgId, org, can, entitlements, siteScope } = useOrg();
   const view = can('billing.view');
   const sub = useSubscription(view ? orgId : null);
   const payments = usePayments(view ? orgId : null);
@@ -63,14 +63,16 @@ export function Billing() {
   }
   const plan = plans.data.find((p) => p.id === s.planId);
   const limit = entitlements?.limits.screens ?? s.quantity;
+  // Wholesale: the reseller pays WallX and bills the customer itself.
+  const reseller = s.billedTo ? (org?.partnerName ?? t('billing.yourReseller')) : null;
 
   return (
     <>
       <PageHeader
         title={t('nav.billing')}
-        description={t('billing.description')}
+        description={s.billedTo ? t('billing.descriptionReseller') : t('billing.description')}
         actions={
-          can('billing.manage') ? (
+          can('billing.manage') && !s?.billedTo ? (
             <Button variant="primary" onClick={() => setRequesting(true)}>
               <Send size={15} aria-hidden /> {t('billing.requestChange')}
             </Button>
@@ -78,6 +80,7 @@ export function Billing() {
         }
       />
       {sent ? <Alert tone="success">{t('billing.requestSent')}</Alert> : null}
+      {reseller ? <Alert tone="info">{t('billing.viaReseller', { name: reseller })}</Alert> : null}
 
       <div className="billing-summary wxp-card">
         <div className="billing-summary__head">
@@ -91,7 +94,9 @@ export function Billing() {
           <dd>{t(`billing.intervals.${s.interval}`)}</dd>
           <dt>{t('billing.price')}</dt>
           <dd>
-            {s.amountPerPeriodMinor !== null ? (
+            {reseller ? (
+              <span className="wxp-muted">{t('billing.priceViaReseller', { name: reseller })}</span>
+            ) : s.amountPerPeriodMinor !== null ? (
               <>
                 <strong>{formatInr(s.amountPerPeriodMinor)}</strong> {t(`billing.perInterval.${s.interval}`)}{' '}
                 <span className="wxp-muted">{t('billing.plusGst')}</span>
@@ -122,8 +127,8 @@ export function Billing() {
         <p className="wxp-muted billing-summary__note">{t(`billing.statusHelp.${s.status}`)}</p>
       </div>
 
-      <h2 className="section-title">{t('billing.payments')}</h2>
-      {payments.data.length === 0 && !payments.loading ? (
+      {reseller ? null : <h2 className="section-title">{t('billing.payments')}</h2>}
+      {reseller ? null : payments.data.length === 0 && !payments.loading ? (
         <p className="wxp-muted">{t('billing.noPayments')}</p>
       ) : (
         <div className="wxp-table-wrap">

@@ -27,6 +27,17 @@ import {
   SupportGrantRefInput,
   SaveAccountInput,
   SetOrgAccountInput,
+  InviteAccountMemberInput,
+  AccountMemberRefInput,
+  AccountInviteRefInput,
+  CreatePartnerOrgInput,
+  SetPartnerSubscriptionInput,
+  PartnerOrgRefInput,
+  PartnerOverviewInput,
+  RecordAccountPaymentInput,
+  VoidAccountPaymentInput,
+  SetAccountPaidThroughInput,
+  SetPartnerAccessInput,
   DeleteRoleInput,
   SetMemberSitesInput,
   SetFeatureReleaseInput,
@@ -97,6 +108,7 @@ import * as playerReleases from './players/releases';
 import * as platformSettings from './platform/settings';
 import * as support from './support/access';
 import * as accounts from './accounts/accounts';
+import * as partners from './accounts/partners';
 import { reviewOrgSignup as reviewSvc, setOrgStatus as setOrgStatusSvc } from './orgs/review';
 import * as settings from './orgs/settings';
 import * as signup from './orgs/signup';
@@ -195,9 +207,20 @@ export const respondSupportRequest = callable(RespondSupportRequestInput, suppor
 export const revokeSupportAccess = callable(SupportGrantRefInput, support.revokeSupportAccess);
 export const openSupportAccess = callable(SupportGrantRefInput, support.openSupportAccess);
 
-// Reseller accounts (groundwork)
-export const saveAccount = callable(SaveAccountInput, accounts.saveAccount);
+// Reseller accounts (staff) and the partner portal
+export const saveAccount = callable(SaveAccountInput, accounts.saveAccount, { timeoutSeconds: 300 });
 export const setOrgAccount = callable(SetOrgAccountInput, accounts.setOrgAccount);
+export const recordAccountPayment = callable(RecordAccountPaymentInput, accounts.recordAccountPayment, { timeoutSeconds: 300 });
+export const voidAccountPayment = callable(VoidAccountPaymentInput, accounts.voidAccountPayment);
+export const setAccountPaidThrough = callable(SetAccountPaidThroughInput, accounts.setAccountPaidThrough, { timeoutSeconds: 300 });
+export const inviteAccountMember = callable(InviteAccountMemberInput, partners.inviteAccountMember);
+export const revokeAccountInvite = callable(AccountInviteRefInput, partners.revokeAccountInvite);
+export const removeAccountMember = callable(AccountMemberRefInput, partners.removeAccountMember, { timeoutSeconds: 300 });
+export const createPartnerOrg = callable(CreatePartnerOrgInput, partners.createPartnerOrg);
+export const setPartnerSubscription = callable(SetPartnerSubscriptionInput, partners.setPartnerSubscription);
+export const startPartnerBilling = callable(PartnerOrgRefInput, partners.startPartnerBilling);
+export const partnerOverview = callable(PartnerOverviewInput, partners.partnerOverview, { timeoutSeconds: 120 });
+export const setPartnerAccess = callable(SetPartnerAccessInput, partners.setPartnerAccess);
 export const setPlatformRole = callable(SetPlatformRoleInput, setPlatformRoleSvc);
 
 // Content (phase 2)

@@ -32,8 +32,8 @@ import '../billing/billing.css';
 
 /** "YYYY-MM-DD" ⇄ epoch ms. Dates are India dates: `end` = 23:59:59 IST, else 12:00 IST. */
 const IST_MS = 5.5 * 3_600_000;
-const toDateInput = (ms: number | null) => (ms ? new Date(ms + IST_MS).toISOString().slice(0, 10) : '');
-function fromDateInput(s: string, end: boolean): number | null {
+export const toDateInput = (ms: number | null) => (ms ? new Date(ms + IST_MS).toISOString().slice(0, 10) : '');
+export function fromDateInput(s: string, end: boolean): number | null {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
   const [y, m, d] = s.split('-').map(Number) as [number, number, number];
   return Date.UTC(y, m - 1, d, end ? 23 : 12, end ? 59 : 0, end ? 59 : 0) - IST_MS;

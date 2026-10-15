@@ -85,10 +85,19 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // Reseller / dealer accounts (groundwork); written only by Cloud Functions.
+    // Reseller accounts: WallX staff and the reseller's own team (partner portal); written only by Functions.
+    function isAccountMember(accountId) {
+      return signedIn() && !isDevice() && exists(/databases/$(database)/documents/accounts/$(accountId)/members/$(request.auth.uid));
+    }
+
     match /accounts/{accountId} {
-      allow read: if isPlatformStaff();
+      allow read: if isPlatformStaff() || isAccountMember(accountId);
       allow write: if false;
+
+      match /{collection}/{docId} {
+        allow read: if collection in ['members', 'invites', 'payments'] && (isPlatformStaff() || isAccountMember(accountId));
+        allow write: if false;
+      }
     }
 
     // Player app releases (device.view roles); written only by Cloud Functions.

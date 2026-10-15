@@ -426,3 +426,18 @@
   cursor: pointer;
   max-width: 88px;
 }
+
+.shell__partner-badge {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+.partner-access {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.partner-access p {
+  margin: 4px 0 0;
+}

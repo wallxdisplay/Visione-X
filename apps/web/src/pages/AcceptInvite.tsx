@@ -18,9 +18,19 @@ export function AcceptInvite() {
     setBusy(true);
     setError(null);
     try {
-      const { orgId } = await call<{ orgId: string }>('acceptInvite', { token });
+      const r = await call<{ orgId: string } | { accountId: string }>('acceptInvite', { token });
+      // A reseller team invitation opens the partner portal.
+      if ('accountId' in r) {
+        try {
+          localStorage.setItem('wxp.currentAccount', r.accountId);
+        } catch {
+          /* ignore */
+        }
+        navigate('/partner', { replace: true });
+        return;
+      }
       try {
-        localStorage.setItem('wxp.currentOrg', orgId);
+        localStorage.setItem('wxp.currentOrg', r.orgId);
       } catch {
         /* ignore */
       }

@@ -37,3 +37,12 @@
 .admin-settings__section .section-title {
   margin: 0;
 }
+
+.dealer-prices {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: 12px 16px;
+  margin: 8px 0 0;
+  display: grid;
+  gap: 8px;
+}

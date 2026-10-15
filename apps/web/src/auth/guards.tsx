@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, Outlet, useLocation } from 'react-router';
 import { OrgProvider, pickActiveOrg } from '../org/OrgProvider';
+import { openAccounts } from '../partner/PartnerProvider';
 import { NotAuthorized } from '../pages/NotAuthorized';
 import { useAuth } from './AuthProvider';
 import { SECURITY_PATH, staffMfaRequired } from './mfa';
@@ -55,8 +56,8 @@ export function CustomerGate() {
   const { profile, profileLoading, platformRole } = useAuth();
   if (profileLoading) return <FullPageSpinner />;
   const orgId = pickActiveOrg(profile?.memberships);
-  // WallX staff usually have no customer org: send them to Super Admin, not onboarding.
-  if (!orgId) return <Navigate to={platformRole ? '/admin' : '/onboarding'} replace />;
+  // WallX staff usually have no customer org (Super Admin); reseller staff go to their portal.
+  if (!orgId) return <Navigate to={platformRole ? '/admin' : openAccounts(profile?.accounts).length ? '/partner' : '/onboarding'} replace />;
   return (
     <OrgProvider key={orgId} orgId={orgId}>
       <Outlet />

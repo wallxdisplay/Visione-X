@@ -9,6 +9,7 @@ import {
   FileClock,
   Gauge,
   Handshake,
+  Briefcase,
   HelpCircle,
   Images,
   KeyRound,
@@ -85,6 +86,18 @@ export const customerNav: NavGroup[] = [
       { labelKey: 'nav.settings', path: '/settings', icon: Settings, phase: 1 },
       { labelKey: 'nav.api', path: '/developers', icon: KeyRound, phase: 'v1.1' },
       { labelKey: 'nav.help', path: '/help', icon: HelpCircle, phase: 6 },
+    ],
+  },
+];
+
+/** Partner portal (reseller staff). */
+export const partnerNav: NavGroup[] = [
+  {
+    labelKey: 'nav.groups.partner',
+    items: [
+      { labelKey: 'nav.partner.customers', path: '/partner', icon: Briefcase, phase: 'v1.1' },
+      { labelKey: 'nav.partner.billing', path: '/partner/billing', icon: CreditCard, phase: 'v1.1' },
+      { labelKey: 'nav.partner.team', path: '/partner/team', icon: Users, phase: 'v1.1' },
     ],
   },
 ];

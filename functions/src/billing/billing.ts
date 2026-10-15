@@ -55,6 +55,7 @@ export const summaryOf = (sub: SubscriptionDoc): OrgBillingSummary => ({
   planId: sub.planId,
   trialEndsAt: sub.trialEndsAt,
   currentPeriodEnd: sub.currentPeriodEnd,
+  resellerBilled: !!sub.billedTo,
 });
 
 /** Applies derived status + next transition and writes subscription and org summary. */
@@ -149,6 +150,7 @@ export async function recordPayment({ db, now }: Deps, actor: Actor, input: z.in
   return auditedTransaction(db, [input.orgId], async (tx, audit) => {
     await getOrg(tx, db, input.orgId);
     const sub = await readSubscription(tx, db, input.orgId);
+    if (sub.billedTo) throw new HttpsError('failed-precondition', 'A reseller pays for this organization. Record the payment on the reseller account.');
     const period = paymentPeriod(sub, input.periods, at);
     const payment: PaymentDoc = {
       id: ref.id,
@@ -265,6 +267,11 @@ export async function requestBillingChange({ db, now }: Deps, actor: Actor, inpu
     const org = (await tx.get(db.doc(paths.org(input.orgId)))).data() as OrgDoc | undefined;
     if (!org || ['pending', 'info_requested', 'rejected'].includes(org.status)) {
       throw new HttpsError('failed-precondition', 'Billing requests are available once the organization is approved.');
+    }
+    const current = await readSubscription(tx, db, input.orgId);
+    if (current.billedTo) {
+      const account = (await tx.get(db.doc(paths.account(current.billedTo)))).data() as { name?: string } | undefined;
+      throw new HttpsError('failed-precondition', `Your plan is provided by ${account?.name ?? 'your reseller'}. Contact them for changes.`);
     }
     if (input.planId) await readPlan(tx, db, input.planId);
     const open = await tx.get(db.collection(paths.billingRequests(input.orgId)).where('status', '==', 'open').count());

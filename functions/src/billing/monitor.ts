@@ -25,7 +25,8 @@ export async function runBillingMonitor({ db, now }: Deps): Promise<{ transition
         const sub = normalizeSubscription(raw);
         const state = billingState(sub, at);
         const next = writeSubscription(tx, db, orgId, { ...sub, reminders: state.reminder ? [...sub.reminders, state.reminder.key] : sub.reminders }, at);
-        if (state.reminder) {
+        // Customers of a reseller are not reminded of renewals: the reseller pays (and is told in the portal).
+        if (state.reminder && !(state.reminder.kind === 'due_soon' && sub.billedTo)) {
           reminders++;
           const until = state.reminder.kind === 'trial_ending' ? sub.trialEndsAt! : sub.currentPeriodEnd!;
           notify(tx, db, orgId, state.reminder.kind === 'trial_ending' ? 'billing_trial_ending' : 'billing_due_soon', { until }, '/billing', at);

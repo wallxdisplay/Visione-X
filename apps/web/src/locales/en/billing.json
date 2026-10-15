@@ -6,8 +6,14 @@
     "none": "There is no subscription yet. It starts when the organization is approved.",
     "plan": "Plan",
     "interval": "Billing period",
-    "intervals": { "monthly": "Monthly", "annual": "Annual" },
-    "perInterval": { "monthly": "per month", "annual": "per year" },
+    "intervals": {
+      "monthly": "Monthly",
+      "annual": "Annual"
+    },
+    "perInterval": {
+      "monthly": "per month",
+      "annual": "per year"
+    },
     "screens": "Screens",
     "screensUsed": "{{used}} in use of {{limit}}",
     "screensN_one": "{{count}} screen",
@@ -59,7 +65,11 @@
       "cancel": "Cancel subscription",
       "other": "Other"
     },
-    "requestStatus": { "open": "Open", "done": "Done", "declined": "Declined" },
+    "requestStatus": {
+      "open": "Open",
+      "done": "Done",
+      "declined": "Declined"
+    },
     "wallxNote": "WallX: {{note}}",
     "requestChange": "Request a change",
     "requestHelp": "WallX billing will contact you to confirm the change and the payment.",
@@ -68,14 +78,20 @@
     "screensWanted": "Number of screens",
     "message": "Message",
     "send": "Send request",
-    "requestSent": "Request sent. WallX billing will get back to you."
+    "requestSent": "Request sent. WallX billing will get back to you.",
+    "yourReseller": "your reseller",
+    "viaReseller": "Your plan and screens are provided by {{name}}. Contact them for changes, invoices and payments.",
+    "priceViaReseller": "Agreed with {{name}}",
+    "descriptionReseller": "Your plan and screens."
   },
   "billingBanner": {
     "trialEnding": "Your free trial ends on {{date}}. Choose a plan to keep editing and publishing.",
     "pastDue": "Payment is due. Renew by {{date}} to avoid interruption.",
     "restricted": "Your subscription has lapsed: editing and publishing are paused. Screens keep playing their current content.",
     "cancelled": "Your subscription has ended: editing and publishing are paused. Screens keep playing their last content.",
-    "view": "View billing"
+    "view": "View billing",
+    "resellerPastDue": "Payment is overdue. Contact {{name}} before {{date}} to keep editing and publishing.",
+    "resellerRestricted": "Editing and publishing are paused. Your screens keep playing. Contact {{name}} to restore them."
   },
   "adminBilling": {
     "description": "Subscriptions of every organization and requests from customers. Payments are recorded here; invoices are issued in the invoicing app.",
@@ -122,7 +138,11 @@
     "limitOverrides": "Limits",
     "featureOverrides": "Features",
     "fromPlan": "From plan (or “unlimited”)",
-    "overrideModes": { "plan": "As in plan", "grant": "Grant", "revoke": "Revoke" },
+    "overrideModes": {
+      "plan": "As in plan",
+      "grant": "Grant",
+      "revoke": "Revoke"
+    },
     "resolve": "Resolve",
     "resolveTitle": "Resolve request",
     "resolveHelp": "Make the change first (plan, screens, payment), then mark the request done. The customer is notified.",
@@ -160,7 +180,13 @@
     "planIdHint": "Lowercase, e.g. retail-pro. Cannot be changed.",
     "planName": "Name",
     "tier": "Tier",
-    "tiers": { "trial": "Trial", "starter": "Starter", "professional": "Professional", "enterprise": "Enterprise", "custom": "Custom" },
+    "tiers": {
+      "trial": "Trial",
+      "starter": "Starter",
+      "professional": "Professional",
+      "enterprise": "Enterprise",
+      "custom": "Custom"
+    },
     "price": "Price per screen / month (₹)",
     "priceHint": "Excluding GST. Empty = custom pricing.",
     "custom": "Custom",
@@ -180,7 +206,11 @@
     "key": "Key",
     "status": "Status",
     "statusFor": "Release status for {{feature}}",
-    "statuses": { "planned": "Planned", "beta": "Beta", "ga": "Released (GA)" },
+    "statuses": {
+      "planned": "Planned",
+      "beta": "Beta",
+      "ga": "Released (GA)"
+    },
     "releaseTitle": "Set {{feature}} to {{status}}?",
     "releaseEffect": {
       "planned": "The feature is switched off for every organization.",

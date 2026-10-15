@@ -2,6 +2,7 @@
  * Shapes of documents as stored in Firestore (written by Cloud Functions).
  * Times are epoch millis so the same types work in Functions, web and Android.
  */
+import type { UserAccountMembership } from './accounts';
 import type { OrgSignupDetails } from './api';
 import type { OrgBillingSummary } from './billing';
 import type { Entitlements, FeatureOverrides } from './features';
@@ -19,6 +20,8 @@ export interface UserProfileDoc {
   uid: string;
   email: string;
   memberships: Record<string, UserMembership>;
+  /** Reseller accounts the user belongs to (partner portal). */
+  accounts?: Record<string, UserAccountMembership>;
   updatedAt: number;
 }
 
@@ -38,6 +41,12 @@ export interface OrgDoc {
   settings?: OrgSettings;
   /** Subscription summary (written by Functions; absent before approval). */
   billing?: OrgBillingSummary;
+  /** Under a reseller: its staff manage the organization (default on; the owner can switch it off). */
+  partnerAccess?: boolean;
+  /** The reseller's name (denormalized for the customer's billing and team pages). */
+  partnerName?: string | null;
+  /** Contact details given when a reseller created the organization. */
+  contact?: { name: string; phone: string; city: string; stateCode: string };
 }
 
 export interface OrgSettings {
@@ -56,6 +65,8 @@ export interface MemberDoc {
   customRoleId?: string;
   /** WallX support staff with a temporary grant: not counted as a user, ends at expiresAt. */
   support?: { grantId: string; expiresAt: number };
+  /** Reseller staff managing the organization for its partner account (kept in sync by Functions; not counted as a user). */
+  partner?: { accountId: string };
   permissions: OrgPermission[];
   siteScope: string[];
   status: 'active' | 'disabled';

@@ -422,3 +422,24 @@ describe('MQTT brokers', () => {
     await assertFails(setDoc(doc(alice, 'orgs/org1/mqttBrokers/b2'), { name: 'x' }));
   });
 });
+
+describe('reseller accounts', () => {
+  it('the reseller team and WallX staff read the account; nobody else; nobody writes', async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await setDoc(doc(db, 'accounts/acc1'), { name: 'Deccan Displays', status: 'active' });
+      await setDoc(doc(db, 'accounts/acc1/members/ravi'), { uid: 'ravi', role: 'owner' });
+      await setDoc(doc(db, 'accounts/acc1/payments/p1'), { amountMinor: 100 });
+      await setDoc(doc(db, 'accounts/acc1/invites/i1'), { email: 'x@example.com' });
+    });
+    const ravi = env.authenticatedContext('ravi').firestore();
+    const mallory = env.authenticatedContext('mallory').firestore();
+    for (const path of ['accounts/acc1', 'accounts/acc1/members/ravi', 'accounts/acc1/payments/p1', 'accounts/acc1/invites/i1']) {
+      await assertSucceeds(getDoc(doc(ravi, path)));
+      await assertFails(getDoc(doc(mallory, path)));
+    }
+    await assertSucceeds(getDoc(doc(env.authenticatedContext('root', staffToken('billing')).firestore(), 'accounts/acc1/payments/p1')));
+    await assertFails(setDoc(doc(ravi, 'accounts/acc1'), { name: 'x' }));
+    await assertFails(setDoc(doc(ravi, 'accounts/acc1/members/mallory'), { uid: 'mallory', role: 'owner' }));
+  });
+});

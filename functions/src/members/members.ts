@@ -28,6 +28,7 @@ import type { Actor, Deps } from '../lib/context';
 import { APP_URL, sendMail } from '../lib/email';
 import { readEntitlements } from '../lib/entitlements';
 import { setMembership } from '../lib/profiles';
+import { acceptAccountInvite, PARTNER_MANAGED } from '../accounts/partners';
 import { resolveRole } from './roles';
 
 const DAY_MS = 86_400_000;
@@ -75,7 +76,8 @@ export async function inviteMember(
     const org = await getOrg(tx, db, input.orgId);
     requireOrgActive(org);
     orgName = org.name;
-    if (input.role === 'owner' && me.role !== 'owner') {
+    // The customer's reseller may invite its owner (it manages the organization for them).
+    if (input.role === 'owner' && me.role !== 'owner' && !me.partner) {
       throw new HttpsError('permission-denied', 'Only owners can invite another owner.');
     }
     await checkSiteScope(tx, db, input.orgId, input.role, siteScope);
@@ -100,7 +102,7 @@ export async function inviteMember(
     }
     const liveInvites = pendingInvites.docs.filter((d) => (d.data() as InviteDoc).expiresAt > at).length;
     // WallX support staff with a temporary grant are not users of the plan.
-    const users = members.docs.filter((d) => !(d.data() as MemberDoc).support).length;
+    const users = members.docs.filter((d) => !(d.data() as MemberDoc).support && !(d.data() as MemberDoc).partner).length;
     if (!withinLimit(entitlements.limits, 'users', users + liveInvites + 1)) {
       throw new HttpsError('resource-exhausted', 'Your plan’s user limit has been reached.');
     }
@@ -143,17 +145,21 @@ Sign in or create an account with this email address (${input.email}) to accept.
 }
 
 export async function acceptInvite(
-  { db, now }: Deps,
+  deps: Deps,
   actor: Actor,
   input: z.infer<typeof AcceptInviteInput>,
-): Promise<{ orgId: string }> {
+): Promise<{ orgId: string } | { accountId: string }> {
+  const { db, now } = deps;
   requireVerifiedEmail(actor);
   const email = actor.email.toLowerCase();
   const at = now();
   const tokenRef = db.doc(paths.inviteToken(hashToken(input.token)));
   const lookup = await tokenRef.get();
   if (!lookup.exists) throw new HttpsError('not-found', 'This invitation is invalid or was already used.');
-  const { orgId, inviteId } = lookup.data() as { orgId: string; inviteId: string };
+  const found = lookup.data() as { orgId?: string; accountId?: string; inviteId: string };
+  // A reseller team invitation (partner portal).
+  if (found.accountId) return acceptAccountInvite(deps, actor, { accountId: found.accountId, inviteId: found.inviteId }, hashToken(input.token));
+  const { orgId, inviteId } = found as { orgId: string; inviteId: string };
 
   await auditedTransaction(db, [orgId], async (tx, audit) => {
     const tokenSnap = await tx.get(tokenRef);
@@ -252,6 +258,7 @@ export async function updateMemberRole(
     const target = await getMember(tx, db, input.orgId, input.uid);
     if (!target) throw new HttpsError('not-found', 'Member not found.');
     if (target.support) throw new HttpsError('failed-precondition', SUPPORT_MANAGED);
+    if (target.partner) throw new HttpsError('failed-precondition', PARTNER_MANAGED);
     if (target.role === input.role && target.customRoleId === input.customRoleId) return;
     if ((target.role === 'owner' || input.role === 'owner') && me.role !== 'owner') {
       throw new HttpsError('permission-denied', 'Only owners can grant or change the owner role.');
@@ -302,6 +309,7 @@ export async function removeMember(
     const target = self ? me : await getMember(tx, db, input.orgId, input.uid);
     if (!me || !target) throw new HttpsError('not-found', 'Member not found.');
     if (target.support && !self) throw new HttpsError('failed-precondition', SUPPORT_MANAGED);
+    if (target.partner && !self) throw new HttpsError('failed-precondition', PARTNER_MANAGED);
     if (target.role === 'owner') {
       if (!self && me.role !== 'owner') {
         throw new HttpsError('permission-denied', 'Only owners can remove an owner.');
@@ -337,6 +345,7 @@ export async function setMemberSites(
     const target = await getMember(tx, db, input.orgId, input.uid);
     if (!target) throw new HttpsError('not-found', 'Member not found.');
     if (target.support) throw new HttpsError('failed-precondition', SUPPORT_MANAGED);
+    if (target.partner) throw new HttpsError('failed-precondition', PARTNER_MANAGED);
     await checkSiteScope(tx, db, input.orgId, target.role, input.siteScope);
     tx.update(db.doc(paths.member(input.orgId, input.uid)), { siteScope: input.siteScope });
     audit(input.orgId, {
