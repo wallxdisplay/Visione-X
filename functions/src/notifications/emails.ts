@@ -21,7 +21,8 @@ import {
 } from '@wallx-play/shared';
 import { getDeps } from '../lib/admin';
 import type { Deps } from '../lib/context';
-import { APP_URL, sendMail } from '../lib/email';
+import { sendMail, mailAppUrl, mailProduct } from '../lib/email';
+import { orgMailBrand } from '../branding/branding';
 import { MAIL_SECRETS } from '../options';
 
 type Params = Record<string, string | number>;
@@ -187,13 +188,15 @@ export async function deliverNotificationEmail(
     typeof v === 'number' && Number.isFinite(v)
       ? (n.type === 'screen_offline' ? fmtTime : fmt).format(new Date(v))
       : s(v);
+  const brand = await orgMailBrand(db, orgId);
   const subject = `${template.subject(n.params, date)} · ${org.name}`;
-  const text = `${template.body(n.params, date)}\n\nOrganization: ${org.name}\n\nYou receive this because you manage this in ${PRODUCT_NAME}. An admin can turn off alert emails in Organization settings.`;
+  const text = `${template.body(n.params, date)}\n\nOrganization: ${org.name}\n\nYou receive this because you manage this in ${mailProduct(brand)}. An admin can turn off alert emails in Organization settings.`;
   const sent = await sendMail(deps, {
     to,
+    brand,
     subject,
     text,
-    action: { label: `Open ${PRODUCT_NAME}`, url: `${APP_URL}${n.link ?? '/'}` },
+    action: { label: `Open ${mailProduct(brand)}`, url: `${mailAppUrl(brand)}${n.link ?? '/'}` },
   });
   return sent ? to.length : 0;
 }

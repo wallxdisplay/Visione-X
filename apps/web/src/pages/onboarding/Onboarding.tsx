@@ -4,6 +4,7 @@ import { paths, signupsOpen, type OrgSignupDetails, type SignupRequestDoc } from
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
+import { BrandMark, useApplyBrand, useDomainBrand } from '../../brand/brand';
 import { useAuth } from '../../auth/AuthProvider';
 import { pickActiveOrg } from '../../org/OrgProvider';
 import { call, errorMessage } from '../../lib/api';
@@ -14,6 +15,8 @@ import { usePlatformSettings } from '../../lib/platformSettings';
 import { OrgSignupForm, toFormValues } from './OrgSignupForm';
 
 export function Onboarding() {
+  const domainBrand = useDomainBrand();
+  useApplyBrand(domainBrand);
   const { t } = useTranslation();
   const { user, profile, platformRole, signOut } = useAuth();
   const uid = user!.uid;
@@ -125,10 +128,7 @@ export function Onboarding() {
     <div className="onboarding">
       <header className="onboarding__header">
         <div className="auth__brand">
-          <span className="shell__logo" aria-hidden>
-            X
-          </span>
-          <strong>{t('product.name')}</strong>
+          <BrandMark brand={domainBrand} variant="auth" />
         </div>
         <div className="onboarding__user">
           {platformRole ? (

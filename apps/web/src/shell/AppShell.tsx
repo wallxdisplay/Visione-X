@@ -1,11 +1,13 @@
 import { Briefcase, HelpCircle, KeyRound, LogOut, Menu, ShieldCheck } from 'lucide-react';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, NavLink, Outlet } from 'react-router';
 import { useAuth } from '../auth/AuthProvider';
 import { SECURITY_PATH } from '../auth/mfa';
 import { useOrg } from '../org/OrgProvider';
 import { openAccounts, usePartner } from '../partner/PartnerProvider';
+import { effectiveBrand, type BrandPublic } from '@wallx-play/shared';
+import { BrandMark, useApplyBrand, useDomainBrand } from '../brand/brand';
 import { BillingBanner } from './BillingBanner';
 import { EmergencyBanner } from './EmergencyBanner';
 import { LanguagePicker } from './LanguagePicker';
@@ -49,7 +51,28 @@ function AccountSwitcher() {
   );
 }
 
-export function AppShell({ nav, variant }: { nav: NavGroup[]; variant: 'customer' | 'admin' | 'partner' }) {
+/** The organization's brand (its own, else its reseller's). */
+function CustomerBrand({ children }: { children: (brand: BrandPublic | null) => ReactNode }) {
+  const { org, entitlements } = useOrg();
+  const domain = useDomainBrand();
+  return <>{children((org ? effectiveBrand(org, entitlements) : null) ?? domain)}</>;
+}
+
+function PartnerBrand({ children }: { children: (brand: BrandPublic | null) => ReactNode }) {
+  const { brand } = usePartner();
+  const domain = useDomainBrand();
+  return <>{children(brand ?? domain)}</>;
+}
+
+export function AppShell(props: { nav: NavGroup[]; variant: 'customer' | 'admin' | 'partner' }) {
+  // White label: customers see their organization's brand, resellers theirs; Super Admin never.
+  if (props.variant === 'customer') return <CustomerBrand>{(brand) => <Shell {...props} brand={brand} />}</CustomerBrand>;
+  if (props.variant === 'partner') return <PartnerBrand>{(brand) => <Shell {...props} brand={brand} />}</PartnerBrand>;
+  return <Shell {...props} brand={null} />;
+}
+
+function Shell({ nav, variant, brand }: { nav: NavGroup[]; variant: 'customer' | 'admin' | 'partner'; brand: BrandPublic | null }) {
+  useApplyBrand(brand);
   const { t } = useTranslation();
   const { user, platformRole, profile, signOut } = useAuth();
   const partnerPortal = openAccounts(profile?.accounts).length > 0;
@@ -60,13 +83,7 @@ export function AppShell({ nav, variant }: { nav: NavGroup[]; variant: 'customer
     <div className={`shell shell--${variant}`} data-nav-open={navOpen}>
       <aside className="shell__sidebar" aria-label={t('shell.navigation')}>
         <div className="shell__brand">
-          <span className="shell__logo" aria-hidden>
-            X
-          </span>
-          <span>
-            <strong>{t('product.name')}</strong>
-            <small>{t('product.byline')}</small>
-          </span>
+          <BrandMark brand={brand} />
         </div>
         {variant === 'admin' ? <div className="shell__admin-badge">{t('shell.adminBadge')}</div> : null}
         {variant === 'partner' ? <div className="shell__admin-badge shell__partner-badge">{t('shell.partnerBadge')}</div> : null}

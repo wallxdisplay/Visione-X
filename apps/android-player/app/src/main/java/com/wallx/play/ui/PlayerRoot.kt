@@ -22,6 +22,7 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,6 +43,7 @@ import com.wallx.play.core.Schedule
 import com.wallx.play.core.TouchState
 import com.wallx.play.core.UiState
 import com.wallx.play.data.Manifest
+import com.wallx.play.data.BrandInfo
 import com.wallx.play.data.Playing
 import com.wallx.play.data.Playlist
 import kotlinx.coroutines.delay
@@ -52,10 +54,19 @@ private val Indigo = Color(0xFF4F46E5)
 private val Orange = Color(0xFFD77836)
 private val Ink = Color(0xFF0B1020)
 
+/** White label: the brand for the player's own screens (null = WallX Play). */
+val LocalBrand = staticCompositionLocalOf<BrandInfo?> { null }
+
 @Composable
 fun PlayerRoot(engine: PlayerEngine) {
     val ui by engine.ui.collectAsState()
     val status by engine.status.collectAsState()
+    val brand by engine.brand.collectAsState()
+    CompositionLocalProvider(LocalBrand provides brand) { PlayerScreens(engine, ui, status) }
+}
+
+@Composable
+private fun PlayerScreens(engine: PlayerEngine, ui: UiState, status: com.wallx.play.core.Status) {
     Box(Modifier.fillMaxSize().background(Color.Black)) {
         when (val s = ui) {
             UiState.Starting -> Message(stringResource(R.string.starting), null)
@@ -171,8 +182,31 @@ private fun SchedulePlayback(playlist: Playlist?, source: String, m: Manifest, c
     }
 }
 
+/** Decodes a data:image/...;base64 logo (null when absent or unreadable). */
+internal fun decodeLogo(dataUrl: String?): android.graphics.Bitmap? {
+    if (dataUrl == null) return null
+    val comma = dataUrl.indexOf(',')
+    if (!dataUrl.startsWith("data:image/") || comma < 0) return null
+    return runCatching {
+        val bytes = android.util.Base64.decode(dataUrl.substring(comma + 1), android.util.Base64.DEFAULT)
+        android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+    }.getOrNull()
+}
+
 @Composable
 private fun Brand() {
+    val brand = LocalBrand.current
+    if (brand != null) {
+        val logo = remember(brand.logo) { decodeLogo(brand.logo) }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (logo != null) {
+                Image(logo.asImageBitmap(), null, Modifier.height(56.dp))
+                Spacer(Modifier.size(16.dp))
+            }
+            Text(brand.name, color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+        }
+        return
+    }
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.size(44.dp).clip(RoundedCornerShape(10.dp)).background(Indigo), contentAlignment = Alignment.Center) {
             Text("X", color = Orange, fontSize = 26.sp, fontWeight = FontWeight.ExtraBold)

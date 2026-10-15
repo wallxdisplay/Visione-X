@@ -264,6 +264,13 @@ The reseller's team (`accounts/{id}/members`, owner or staff, invited by email w
 
 Access to customers uses **partner member records** (`MemberDoc.partner`, role admin, without billing.manage), the same pattern as WallX support access. Functions keep them in sync with the reseller's team, the account's status and portal flag, and the organization's `partnerAccess` (default on), which the customer's owner can switch off on the Team page. The reseller's name is copied to `orgs/{id}.partnerName` for the customer's pages. Partner members are not counted as users and cannot be edited on the customer's side. Changes are audited in the platform chain and in the organization's chain. Staff can also move an existing organization under a reseller, billed wholesale or still directly by WallX.
 
+## 13h. White label (`branding.whiteLabel`; resellers by WallX switch)
+A **brand** is a product name, an inline logo (PNG/JPEG/WebP data URL, at most 100 KB; the web editor resizes it), a main colour and support contacts. Resellers have one when WallX switches `whiteLabel` on for the account (`accounts/{id}.brand`, edited by the reseller's owners on Partner portal → Branding). An organization whose plan includes `branding.whiteLabel` can set its own (`orgs/{id}.brand`, Settings → Branding), which wins over its reseller's. Functions copy the reseller's brand to each customer as `orgs/{id}.partnerBrand` (with the reseller name sync), so members and players resolve the **effective brand** from the organization and its entitlements alone (`effectiveBrand` in packages/shared/src/branding.ts). An organization's own brand stops showing when its plan loses the feature.
+
+Where it shows: the web app (sidebar mark, primary colours derived from the main colour, tab title, favicon, a small "Powered by WallX Play"), the Help page (the brand's contact), the player's own screens (waiting, no content; player 0.19.0 polls `brandAt` in `/devices/me` and fetches `GET /devices/brand` on change, kept on disk), and emails about the organization (sender name, heading, button colour, links). Not branded: Firebase's own emails (verification, password reset), the Android app name and the pairing screen (before pairing the box cannot know its brand).
+
+**Custom web addresses.** WallX staff (Super Admin → White label) attach up to 5 host names to a brand. Each writes a public `brandDomains/{hostname}` lookup, so the sign-in page at that address shows the brand before anyone signs in, and emails link there. Hosting it is manual: the brand owner adds the DNS record, staff add the domain in Firebase Hosting and in Authentication's authorized domains.
+
 ## 14. Internationalization
 `i18next` with JSON resources in `apps/web/src/locales/{en,hi,mr}`; all UI strings externalized. The language is chosen per browser (top bar) and Hindi/Marathi load on demand; missing keys fall back to English, and a unit test keeps every translation's keys and `{{placeholders}}` identical to English. Dates follow the language (`en-IN`, `hi-IN`, `mr-IN` with Latin digits). Screen content (clock, weather, charts) follows the player and stays English. Hindi and Marathi are machine-drafted and need review by native speakers. Fonts: Inter (UI) + Noto Sans Devanagari (content, bundled on player).
 
@@ -291,7 +298,7 @@ Feature catalogue stores `releaseStatus` (what WallX has built) separately from 
 | API keys & webhooks | v1.1 | – | – | – | ✓ |
 | Hindi / Marathi UI | later | — all plans — |
 | Multi-screen sync ✅ (player 0.16.0); interactive/touch ✅ (player 0.17.0); MQTT ✅ (player 0.18.0) | later | – | – | – | ✓ |
-| Self-service reseller portal ✅ (wholesale); white-label | later | – | – | – | ✓ |
+| Self-service reseller portal ✅ (wholesale); white-label ✅ (player 0.19.0) | later | – | – | – | ✓ |
 *Plan columns are a proposal — confirm or edit.*
 
 ## 17. Delivery order (your priority)

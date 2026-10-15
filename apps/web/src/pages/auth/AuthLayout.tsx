@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useTranslation } from 'react-i18next';
+import { BrandMark, useApplyBrand, useDomainBrand } from '../../brand/brand';
 
 export function AuthLayout({
   title,
@@ -12,17 +12,14 @@ export function AuthLayout({
   children: ReactNode;
   footer?: ReactNode;
 }) {
-  const { t } = useTranslation();
+  // A custom web address shows its brand before sign-in.
+  const brand = useDomainBrand();
+  useApplyBrand(brand);
   return (
     <div className="standalone">
       <div className="auth">
         <div className="auth__brand">
-          <span className="shell__logo" aria-hidden>
-            X
-          </span>
-          <span>
-            <strong>{t('product.name')}</strong> <small>{t('product.byline')}</small>
-          </span>
+          <BrandMark brand={brand} variant="auth" />
         </div>
         <section className="standalone__panel">
           <h1 className="auth__title">{title}</h1>

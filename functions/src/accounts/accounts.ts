@@ -53,12 +53,15 @@ export async function saveAccount(deps: Deps, actor: Actor, input: z.infer<typeo
       dealerPricesMinor: input.dealerPricesMinor ?? before?.dealerPricesMinor ?? {},
       paidThrough: before?.paidThrough ?? null,
       lastPaymentAt: before?.lastPaymentAt ?? null,
+      whiteLabel: input.whiteLabel ?? before?.whiteLabel ?? false,
+      brand: before?.brand ?? null,
       createdAt: before?.createdAt ?? at,
       createdBy: before?.createdBy ?? actor.uid,
       updatedAt: at,
       updatedBy: actor.uid,
     };
-    accessChanged = !!before && (before.status !== doc.status || (before.portal === true) !== doc.portal || before.name !== doc.name);
+    accessChanged =
+      !!before && (before.status !== doc.status || (before.portal === true) !== doc.portal || before.name !== doc.name || (before.whiteLabel === true) !== doc.whiteLabel);
     tx.set(ref, doc);
     audit(PLATFORM_AUDIT_CHAIN, {
       at,

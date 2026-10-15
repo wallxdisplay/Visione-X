@@ -34,6 +34,7 @@ type Draft = Pick<
   accountId?: string;
   gstin: string;
   portal: boolean;
+  whiteLabel: boolean;
   /** Dealer discount in percent, and fixed dealer prices in rupees per plan (text inputs). */
   discountPct: string;
   prices: Record<string, string>;
@@ -48,6 +49,7 @@ const EMPTY: Draft = {
   status: 'active',
   notes: '',
   portal: true,
+  whiteLabel: false,
   discountPct: '0',
   prices: {},
 };
@@ -63,6 +65,7 @@ const draftOf = (a: WithId<AccountDoc>): Draft => ({
   notes: a.notes,
   gstin: a.gstin ?? '',
   portal: a.portal === true,
+  whiteLabel: a.whiteLabel === true,
   discountPct: String((a.dealerDiscountBps ?? 0) / 100),
   prices: Object.fromEntries(
     Object.entries(a.dealerPricesMinor ?? {}).map(([k, v]) => [k, rupees(v)]),
@@ -299,6 +302,10 @@ function AccountDialog({ draft: initial, onClose }: { draft: Draft; onClose: () 
           onChange={(e) => setD((p) => ({ ...p, portal: e.target.checked }))}
         />
         {t('adminResellers.portalLabel')}
+      </label>
+      <label className="checkbox-row">
+        <input type="checkbox" checked={d.whiteLabel} onChange={(e) => setD((p) => ({ ...p, whiteLabel: e.target.checked }))} />
+        {t('adminResellers.whiteLabelLabel')}
       </label>
       <fieldset className="dealer-prices">
         <legend className="wxp-field__label">{t('adminResellers.dealerPricing')}</legend>

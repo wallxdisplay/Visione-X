@@ -163,6 +163,8 @@ data class DeviceState(
     val update: PlayerUpdate? = null,
     /** MQTT bridge (0.18.0): when this screen's bridge configuration changed; null = not a bridge. */
     val mqttConfigAt: Long? = null,
+    /** White label (0.19.0): when the screen's brand changed; null = WallX Play. */
+    val brandAt: Long? = null,
     val serverTime: Long = 0,
 )
 
@@ -243,6 +245,23 @@ data class Heartbeat(
     /** MQTT bridge state per broker (only on bridge screens). */
     val mqtt: List<MqttBridgeStatus>? = null,
 )
+
+// ---------------------------------------------------------------- white label (0.19.0)
+
+/** The organization's (or its reseller's) brand, shown instead of WallX Play on the player's own screens. */
+@Serializable
+data class BrandInfo(
+    val name: String,
+    /** data:image/...;base64,... (PNG, JPEG or WebP). */
+    val logo: String? = null,
+    val primaryColor: String = "#4F46E5",
+    val supportEmail: String = "",
+    val supportPhone: String = "",
+    val updatedAt: Long = 0,
+)
+
+@Serializable
+data class DeviceBrandResponse(val brand: BrandInfo? = null)
 
 // ---------------------------------------------------------------- MQTT bridge (0.18.0)
 

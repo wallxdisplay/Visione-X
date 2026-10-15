@@ -55,6 +55,9 @@ import { PartnerGate } from './partner/PartnerProvider';
 import { PartnerBilling } from './pages/partner/PartnerBilling';
 import { PartnerCustomers } from './pages/partner/PartnerCustomers';
 import { PartnerTeam } from './pages/partner/PartnerTeam';
+import { PartnerBranding } from './pages/partner/PartnerBranding';
+import { AdminWhiteLabel } from './pages/admin/AdminWhiteLabel';
+import { DomainBrandProvider } from './brand/brand';
 
 /** Built pages; every other nav entry renders its "coming in phase N" placeholder. */
 const PAGES: Record<string, ReactNode> = {
@@ -92,6 +95,8 @@ const PAGES: Record<string, ReactNode> = {
   '/partner': <PartnerCustomers />,
   '/partner/billing': <PartnerBilling />,
   '/partner/team': <PartnerTeam />,
+  '/partner/branding': <PartnerBranding />,
+  '/admin/white-label': <AdminWhiteLabel />,
 };
 
 function navRoutes(nav: NavGroup[], base: string): RouteObject[] {
@@ -106,7 +111,9 @@ function navRoutes(nav: NavGroup[], base: string): RouteObject[] {
 function Root() {
   return (
     <AuthProvider>
-      <Outlet />
+      <DomainBrandProvider>
+        <Outlet />
+      </DomainBrandProvider>
     </AuthProvider>
   );
 }

@@ -1,0 +1,101 @@
+/* White label: brand editor and preview */
+.shell__logo--image {
+  object-fit: contain;
+  background: transparent;
+}
+.brand-editor__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 320px);
+  gap: 24px;
+  align-items: start;
+}
+@media (max-width: 860px) {
+  .brand-editor__grid {
+    grid-template-columns: 1fr;
+  }
+}
+.brand-editor__logo-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.brand-editor__logo {
+  max-width: 120px;
+  max-height: 48px;
+  object-fit: contain;
+}
+.brand-editor__hex {
+  width: 110px;
+}
+.brand-preview {
+  display: grid;
+  gap: 12px;
+}
+.brand-preview__app {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  background: var(--color-surface);
+}
+.brand-preview__bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--color-border);
+}
+.brand-preview__bar img {
+  max-width: 96px;
+  max-height: 32px;
+  object-fit: contain;
+}
+.brand-preview__mark {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-control);
+  font-weight: 800;
+}
+.brand-preview__body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+}
+.brand-preview__chip {
+  padding: 2px 10px;
+  border-radius: var(--radius-chip);
+  font-size: 12px;
+  font-weight: 600;
+}
+.brand-preview__button {
+  padding: 6px 14px;
+  border-radius: var(--radius-control);
+  font-weight: 600;
+  font-size: 14px;
+}
+.brand-preview__body small {
+  flex-basis: 100%;
+}
+.brand-preview__screen {
+  display: grid;
+  place-items: center;
+  gap: 6px;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-card);
+  background: #0b1020;
+  color: #fff;
+  padding: 12px;
+  text-align: center;
+}
+.brand-preview__screen img {
+  max-width: 50%;
+  max-height: 40%;
+  object-fit: contain;
+}
+.brand-preview__screen small {
+  color: #cbd5e1;
+}

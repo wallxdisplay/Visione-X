@@ -209,6 +209,8 @@ export const CALLABLES = {
   voidAccountPayment: 'voidAccountPayment',
   setAccountPaidThrough: 'setAccountPaidThrough',
   setPartnerAccess: 'setPartnerAccess',
+  saveBrand: 'saveBrand',
+  setBrandDomains: 'setBrandDomains',
   deleteMqttBroker: 'deleteMqttBroker',
   setMemberSites: 'setMemberSites',
   saveRole: 'saveRole',

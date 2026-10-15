@@ -85,6 +85,12 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // White label: custom web address → brand, read before sign-in (names, colours, logo only).
+    match /brandDomains/{hostname} {
+      allow get: if true;
+      allow list, write: if false;
+    }
+
     // Reseller accounts: WallX staff and the reseller's own team (partner portal); written only by Functions.
     function isAccountMember(accountId) {
       return signedIn() && !isDevice() && exists(/databases/$(database)/documents/accounts/$(accountId)/members/$(request.auth.uid));

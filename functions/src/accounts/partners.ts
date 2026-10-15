@@ -19,6 +19,7 @@ import {
   isScreenOnline,
   normalizeSubscription,
   paths,
+  publicBrand,
   type AccountDoc,
   type AccountInviteDoc,
   type AccountInviteRefInput,
@@ -45,7 +46,8 @@ import { notifyStatusChange, trialSubscription, writeSubscription } from '../bil
 import { auditedTransaction, platformAudit } from '../lib/audit';
 import { getOrg, requireOrgPermission, requireVerifiedEmail } from '../lib/authz';
 import type { Actor, Deps } from '../lib/context';
-import { APP_URL, sendMail } from '../lib/email';
+import { mailAppUrl, mailProduct, sendMail } from '../lib/email';
+import { accountMailBrand } from '../branding/branding';
 import { computeEntitlements } from '../lib/entitlements';
 import { readMembers, setMembership } from '../lib/profiles';
 import { hashToken } from '../members/members';
@@ -127,6 +129,9 @@ export async function syncPartnerMembers({ db, now }: Deps, orgId: string): Prom
     const at = now();
     const partnerName = account?.name ?? null;
     if ((org.partnerName ?? null) !== partnerName) tx.update(db.doc(paths.org(orgId)), { partnerName, updatedAt: at });
+    // White label: the reseller's brand reaches its customers (and their screens) through this copy.
+    const partnerBrand = account && account.status === 'active' && account.whiteLabel && account.brand ? publicBrand(account.brand) : null;
+    if (JSON.stringify(org.partnerBrand ?? null) !== JSON.stringify(partnerBrand)) tx.update(db.doc(paths.org(orgId)), { partnerBrand, updatedAt: at });
     const byUid = new Map(members.map((m) => [m.uid, m]));
     const keep = new Set(wanted.map((m) => m.uid));
     let removed = 0;
@@ -171,10 +176,12 @@ export async function inviteAccountMember(
   const ref = db.collection(paths.accountInvites(input.accountId)).doc();
   const expiresAt = at + INVITE_TTL_DAYS * DAY_MS;
   let accountName = '';
+  let brand: ReturnType<typeof accountMailBrand>;
   await auditedTransaction(db, [PLATFORM_AUDIT_CHAIN], async (tx, audit) => {
     const { account } = await requirePartner(tx, db, actor, input.accountId, 'owner');
     if (account.status !== 'active') throw new HttpsError('failed-precondition', `“${account.name}” is inactive.`);
     accountName = account.name;
+    brand = accountMailBrand(account);
     const [existingMember, pending] = await Promise.all([
       tx.get(db.collection(paths.accountMembers(input.accountId)).where('email', '==', input.email).limit(1)),
       tx.get(db.collection(paths.accountInvites(input.accountId)).where('email', '==', input.email).where('status', '==', 'pending')),
@@ -195,11 +202,12 @@ export async function inviteAccountMember(
   });
   const emailed = await sendMail(deps, {
     to: [input.email],
+    brand,
     subject: `You're invited to the ${accountName} partner portal on ${PRODUCT_NAME}`,
     text: `${actor.email ?? 'WallX'} invited you to join ${accountName} as a reseller partner on ${PRODUCT_NAME}, the digital signage platform by WallX. From the partner portal you create and manage your customers' organizations.
 
 Sign in or create an account with this email address (${input.email}) to accept. The invitation expires in ${INVITE_TTL_DAYS} days.`,
-    action: { label: 'Accept invitation', url: `${APP_URL}/invite/${token}` },
+    action: { label: 'Accept invitation', url: `${mailAppUrl(brand)}/invite/${token}` },
     ...(actor.email ? { replyTo: actor.email } : {}),
   });
   return { inviteId: ref.id, token, expiresAt, emailed };
@@ -294,10 +302,12 @@ export async function createPartnerOrg(deps: Deps, actor: Actor, input: z.infer<
   const ownerEmail = input.ownerEmail ?? '';
   const token = ownerEmail ? randomBytes(32).toString('base64url') : null;
   let accountName = '';
+  let brand: ReturnType<typeof accountMailBrand>;
   await auditedTransaction(db, [orgId, PLATFORM_AUDIT_CHAIN], async (tx, audit) => {
     const { account } = await requirePartner(tx, db, actor, input.accountId);
     if (account.status !== 'active') throw new HttpsError('failed-precondition', `“${account.name}” is inactive.`);
     accountName = account.name;
+    brand = accountMailBrand(account);
     const plan = await readActivePlan(tx, db, input.planId);
     if (plan.limits.screens !== null && plan.limits.screens !== undefined && input.quantity > plan.limits.screens) {
       throw new HttpsError('invalid-argument', `${plan.name} allows at most ${plan.limits.screens} screens.`);
@@ -324,6 +334,7 @@ export async function createPartnerOrg(deps: Deps, actor: Actor, input: z.infer<
       updatedAt: at,
       partnerAccess: true,
       partnerName: account.name,
+      partnerBrand: account.whiteLabel && account.brand ? publicBrand(account.brand) : null,
       contact: { name: input.contactName, phone: input.phone, city: input.city, stateCode: input.stateCode },
     };
     tx.create(db.doc(paths.org(orgId)), org);
@@ -356,11 +367,12 @@ export async function createPartnerOrg(deps: Deps, actor: Actor, input: z.infer<
   const emailed = token
     ? await sendMail(deps, {
         to: [ownerEmail],
-        subject: `${input.orgName} is ready on ${PRODUCT_NAME}`,
-        text: `${accountName} set up ${input.orgName} on ${PRODUCT_NAME}, the digital signage platform by WallX, and invited you as its owner.
+        brand,
+        subject: `${input.orgName} is ready on ${mailProduct(brand)}`,
+        text: `${accountName} set up ${input.orgName} on ${mailProduct(brand)}${brand ? '' : ', the digital signage platform by WallX,'} and invited you as its owner.
 
 Sign in or create an account with this email address (${ownerEmail}) to accept. ${accountName} can manage your screens and content for you; you can switch that off under Team. The invitation expires in ${INVITE_TTL_DAYS} days.`,
-        action: { label: 'Accept invitation', url: `${APP_URL}/invite/${token}` },
+        action: { label: 'Accept invitation', url: `${mailAppUrl(brand)}/invite/${token}` },
       })
     : false;
   return { orgId, inviteToken: token, emailed };

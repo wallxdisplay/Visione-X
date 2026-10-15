@@ -3,6 +3,7 @@
  * Times are epoch millis so the same types work in Functions, web and Android.
  */
 import type { UserAccountMembership } from './accounts';
+import type { Brand, BrandPublic } from './branding';
 import type { OrgSignupDetails } from './api';
 import type { OrgBillingSummary } from './billing';
 import type { Entitlements, FeatureOverrides } from './features';
@@ -45,6 +46,10 @@ export interface OrgDoc {
   partnerAccess?: boolean;
   /** The reseller's name (denormalized for the customer's billing and team pages). */
   partnerName?: string | null;
+  /** White label: the organization's own brand (applies while its plan includes branding.whiteLabel). */
+  brand?: Brand | null;
+  /** Its reseller's brand (copied by Functions when the reseller has white label). */
+  partnerBrand?: BrandPublic | null;
   /** Contact details given when a reseller created the organization. */
   contact?: { name: string; phone: string; city: string; stateCode: string };
 }

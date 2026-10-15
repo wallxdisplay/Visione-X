@@ -14,6 +14,7 @@
  * `orgs/{id}.partnerAccess = false`. Organizations a reseller creates are approved at once.
  */
 import { z } from 'zod';
+import type { Brand } from './branding';
 import { PAYMENT_METHODS, type BillingStatus, type PaymentMethod } from './billing';
 import { StateCode, Timezone } from './api';
 import { GSTIN, type Plan } from './schemas';
@@ -51,6 +52,9 @@ export interface AccountDoc {
   /** The reseller has paid WallX through this time (null: nothing paid yet). */
   paidThrough?: number | null;
   lastPaymentAt?: number | null;
+  /** White label for this reseller (switched on by WallX); its brand applies to all its customers. */
+  whiteLabel?: boolean;
+  brand?: Brand | null;
   createdAt: number;
   createdBy: string;
   updatedAt: number;
@@ -191,6 +195,7 @@ export const SaveAccountInput = z.object({
   portal: z.boolean().optional(),
   dealerDiscountBps: z.number().int().min(0).max(9_000).optional(),
   dealerPricesMinor: z.record(id, money).optional(),
+  whiteLabel: z.boolean().optional(),
 });
 
 /**

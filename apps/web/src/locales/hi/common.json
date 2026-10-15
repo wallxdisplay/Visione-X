@@ -175,7 +175,8 @@
     "wholesale": "रीसेलर भुगतान करता है",
     "wholesaleLabel": "इस संगठन का भुगतान रीसेलर करता है (थोक)",
     "billWholesale": "रीसेलर भुगतान करे",
-    "billDirect": "सीधे बिल करें"
+    "billDirect": "सीधे बिल करें",
+    "whiteLabelLabel": "व्हाइट लेबल: रीसेलर अपने ग्राहकों के लिए ऐप को ब्रांड कर सकता है"
   },
   "adminSettings": {
     "description": "वे सेटिंग्स जो पूरे WallX Play पर लागू होती हैं।",
@@ -368,12 +369,14 @@
       "integrations": "इंटीग्रेशन और API",
       "support": "सपोर्ट पहुँच",
       "audit": "ऑडिट लॉग",
-      "settings": "प्लेटफ़ॉर्म सेटिंग्स"
+      "settings": "प्लेटफ़ॉर्म सेटिंग्स",
+      "whiteLabel": "व्हाइट लेबल"
     },
     "partner": {
       "customers": "ग्राहक",
       "billing": "बिलिंग",
-      "team": "टीम"
+      "team": "टीम",
+      "branding": "ब्रांडिंग"
     }
   },
   "shell": {

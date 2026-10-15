@@ -213,6 +213,8 @@ export interface DeviceStateResponse {
    * not a bridge. On a change the player fetches GET /devices/mqtt.
    */
   mqttConfigAt: number | null;
+  /** White label (0.19.0): when the screen's brand last changed (null = WallX Play). Fetch GET /devices/brand on change. */
+  brandAt: number | null;
   serverTime: number;
 }
 

@@ -16,6 +16,8 @@ import com.wallx.play.data.Asset
 import com.wallx.play.data.AssetCache
 import com.wallx.play.data.DeviceHardware
 import com.wallx.play.data.DeviceState
+import com.wallx.play.data.BrandStore
+import com.wallx.play.data.BrandInfo
 import com.wallx.play.data.MqttReadingsBody
 import com.wallx.play.data.DeviceStore
 import com.wallx.play.data.Heartbeat
@@ -100,6 +102,11 @@ class PlayerEngine internal constructor(
     val mqtt = MqttBridge({ mqttTransport() }, ::serverNow) { key, value, ts -> live.applyLocal(key, value, ts) }
     @Volatile private var mqttConfigAt: Long? = null
     @Volatile private var mqttFetchedAt = 0L
+
+    /** White label (0.19.0): the brand shown on the player's own screens; null = WallX Play. */
+    private val brandStore = BrandStore(context)
+    private val _brand = MutableStateFlow(brandStore.load())
+    val brand: StateFlow<BrandInfo?> = _brand.asStateFlow()
 
     /** Set by the renderer so heartbeats can report what is on screen. */
     @Volatile var nowPlaying: Playing? = null
@@ -209,6 +216,7 @@ class PlayerEngine internal constructor(
                 if (state.commandsPending > 0) runCommands(org, screen?.name ?: "")
                 // Downloads run beside playback; the next poll sees the progress.
                 scope?.launch { updater.offer(state.update) }
+                if (state.brandAt != _brand.value?.updatedAt) refreshBrand(state.brandAt)
                 if (state.mqttConfigAt != mqttConfigAt) {
                     mqttConfigAt = state.mqttConfigAt
                     refreshMqtt()
@@ -447,6 +455,25 @@ class PlayerEngine internal constructor(
         }
     }
 
+    /** Fetches the brand after it changed (null brandAt: back to WallX Play). */
+    private suspend fun refreshBrand(brandAt: Long?) {
+        val next = if (brandAt == null) {
+            null
+        } else {
+            val auth = device.auth ?: return
+            try {
+                api.brand(auth).brand
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w(TAG, "Brand failed: ${e.message}")
+                return // keep the current one; retried on the next poll
+            }
+        }
+        brandStore.save(next)
+        _brand.value = next
+    }
+
     /** Fetches the bridge configuration (or stops bridging when this screen is not a bridge). */
     internal suspend fun refreshMqtt() {
         val auth = device.auth ?: return
@@ -532,6 +559,8 @@ class PlayerEngine internal constructor(
         cache.clear()
         mqtt.stop()
         mqttConfigAt = null
+        brandStore.save(null)
+        _brand.value = null
         _ui.value = UiState.Starting
     }
 

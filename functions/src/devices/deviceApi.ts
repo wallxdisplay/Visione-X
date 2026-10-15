@@ -3,11 +3,18 @@
  * Authentication: `Authorization: Device <deviceId>:<secret>`; the secret is issued once at
  * registration and only its SHA-256 is stored. Responses are JSON.
  */
-import { createHash, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
+import {
+  createHash,
+  randomBytes,
+  randomInt,
+  timingSafeEqual } from 'node:crypto';
 import { notify } from '../lib/notify';
-import { completeCommand, takePendingCommands } from '../ops/commands';
+import { completeCommand,
+  takePendingCommands } from '../ops/commands';
 import { updateFor } from '../players/releases';
-import { parsePlayerError, recordScreenEvents, type NewScreenEvent } from '../reports/events';
+import { parsePlayerError,
+  recordScreenEvents,
+  type NewScreenEvent } from '../reports/events';
 import {
   CommandResultBody,
   DEVICE_HEARTBEAT_SEC,
@@ -22,6 +29,8 @@ import {
   type DeviceStateResponse,
   type OrgDoc,
   type ScreenDoc,
+  effectiveBrand,
+  type EntitlementsDoc,
 } from '@wallx-play/shared';
 import type { Deps } from '../lib/context';
 
@@ -146,10 +155,14 @@ export async function deviceState(deps: Deps, req: ApiRequest): Promise<ApiResul
 
   let screen: ScreenDoc | undefined;
   let orgName: string | null = null;
+  let brandAt: number | null = null;
   if (device.orgId && device.screenId) {
-    const [s, o] = await db.getAll(db.doc(paths.screen(device.orgId, device.screenId)), db.doc(paths.org(device.orgId)));
+    const [s, o, e] = await db.getAll(db.doc(paths.screen(device.orgId, device.screenId)), db.doc(paths.org(device.orgId)), db.doc(paths.orgEntitlements(device.orgId)));
     screen = s?.data() as ScreenDoc | undefined;
-    orgName = (o?.data() as OrgDoc | undefined)?.name ?? null;
+    const org = o?.data() as OrgDoc | undefined;
+    orgName = org?.name ?? null;
+    // White label: the player fetches /devices/brand when this changes.
+    if (org && device.status === 'authorized') brandAt = effectiveBrand(org, e?.data() as EntitlementsDoc | undefined)?.updatedAt ?? null;
   }
 
   // Only authorized players update (a box waiting for pairing keeps whatever was installed).
@@ -175,6 +188,7 @@ export async function deviceState(deps: Deps, req: ApiRequest): Promise<ApiResul
     config: { pollSec: DEVICE_POLL_SEC, heartbeatSec: DEVICE_HEARTBEAT_SEC },
     update,
     mqttConfigAt: device.status === 'authorized' ? (screen?.mqttConfigAt ?? null) : null,
+    brandAt,
     serverTime: now(),
   };
   return { status: 200, body };

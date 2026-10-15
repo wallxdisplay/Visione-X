@@ -13,6 +13,7 @@ import {
 import { ingest } from '../sensors/ingest';
 import { deviceLive, deviceLiveHistory } from '../sensors/live';
 import { deviceMqtt, deviceMqttReadings } from '../sensors/mqtt';
+import { deviceBrand } from '../branding/branding';
 import { deviceData } from '../integrations/dataSources';
 import { devicePlays } from '../reports/plays';
 import { handlePublicApi, isPublicApiPath } from '../publicApi/router';
@@ -42,6 +43,7 @@ const ROUTES: Record<string, Handler> = {
   'GET /v1/devices/data': deviceData,
   'POST /v1/devices/plays': devicePlays,
   'GET /v1/devices/mqtt': deviceMqtt,
+  'GET /v1/devices/brand': deviceBrand,
   'POST /v1/devices/mqtt/readings': deviceMqttReadings,
   'POST /v1/ingest': ingest,
 };

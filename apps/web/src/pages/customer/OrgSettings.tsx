@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { call, errorMessage } from '../../lib/api';
 import { timezoneOptions } from '../../lib/format';
 import { useOrg } from '../../org/OrgProvider';
+import { BrandEditor } from '../../brand/BrandEditor';
 
 export function OrgSettings() {
   const { t } = useTranslation();
@@ -101,6 +102,14 @@ export function OrgSettings() {
           </form>
         </Card>
       </div>
+      {editable && (entitlements?.features.includes('branding.whiteLabel') || org?.brand) ? (
+        <Card title={t('brand.orgTitle')}>
+          <p className="wxp-muted">{org?.partnerBrand ? t('brand.orgOverPartner', { name: org.partnerBrand.name }) : t('brand.orgDescription')}</p>
+          {entitlements?.features.includes('branding.whiteLabel') ? null : <Alert tone="warning">{t('brand.notInPlan')}</Alert>}
+          <BrandEditor key={org?.brand?.updatedAt ?? 0} target={{ kind: 'org', orgId }} current={org?.brand ?? null} />
+          {org?.brand?.domains.length ? <p className="wxp-muted">{t('brand.domains', { list: org.brand.domains.join(', ') })}</p> : <p className="wxp-muted">{t('brand.domainHint')}</p>}
+        </Card>
+      ) : null}
     </>
   );
 }

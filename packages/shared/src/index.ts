@@ -20,3 +20,4 @@ export * from './reports';
 export * from './publicApi';
 export * from './sync';
 export * from './mqtt';
+export * from './branding';

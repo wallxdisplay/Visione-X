@@ -54,6 +54,9 @@ class Api(private val base: String, val http: OkHttpClient = defaultClient()) {
         )
     }
 
+    /** White label: the screen's brand (null brand = WallX Play). */
+    suspend fun brand(auth: String): DeviceBrandResponse = get("/devices/brand", auth)
+
     /** MQTT bridge configuration of this screen (brokers, credentials, topics). */
     suspend fun mqtt(auth: String): DeviceMqttResponse = get("/devices/mqtt", auth)
 

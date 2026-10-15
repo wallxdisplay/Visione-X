@@ -4,7 +4,6 @@ import { HttpsError } from 'firebase-functions/v2/https';
 import type { z } from 'zod';
 import {
   INVITE_TTL_DAYS,
-  PRODUCT_NAME,
   paths,
   withinLimit,
   type AcceptInviteInput,
@@ -25,7 +24,8 @@ import {
   requireVerifiedEmail,
 } from '../lib/authz';
 import type { Actor, Deps } from '../lib/context';
-import { APP_URL, sendMail } from '../lib/email';
+import { mailAppUrl, mailProduct, sendMail } from '../lib/email';
+import { orgMailBrand } from '../branding/branding';
 import { readEntitlements } from '../lib/entitlements';
 import { setMembership } from '../lib/profiles';
 import { acceptAccountInvite, PARTNER_MANAGED } from '../accounts/partners';
@@ -132,13 +132,15 @@ export async function inviteMember(
   });
 
   // The link still works when email is not set up; the inviter can copy it from Team.
+  const brand = await orgMailBrand(db, input.orgId);
   const emailed = await sendMail(deps, {
     to: [input.email],
-    subject: `You're invited to ${orgName} on ${PRODUCT_NAME}`,
-    text: `${actor.email ?? 'A colleague'} invited you to join ${orgName} on ${PRODUCT_NAME}, the digital signage platform by WallX.
+    brand,
+    subject: `You're invited to ${orgName} on ${mailProduct(brand)}`,
+    text: `${actor.email ?? 'A colleague'} invited you to join ${orgName} on ${mailProduct(brand)}${brand ? '' : ', the digital signage platform by WallX'}.
 
 Sign in or create an account with this email address (${input.email}) to accept. The invitation expires in ${INVITE_TTL_DAYS} days.`,
-    action: { label: 'Accept invitation', url: `${APP_URL}/invite/${token}` },
+    action: { label: 'Accept invitation', url: `${mailAppUrl(brand)}/invite/${token}` },
     ...(actor.email ? { replyTo: actor.email } : {}),
   });
   return { inviteId: inviteRef.id, token, expiresAt, emailed };

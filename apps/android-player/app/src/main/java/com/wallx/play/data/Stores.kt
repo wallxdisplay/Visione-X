@@ -25,6 +25,17 @@ class DeviceStore(context: Context) {
     }
 }
 
+/** White label: the screen's brand, kept across restarts (shown before the network is up). */
+class BrandStore(context: Context) {
+    private val file = File(context.filesDir, "brand.json")
+
+    fun load(): BrandInfo? = runCatching { if (file.exists()) json.decodeFromString<BrandInfo>(file.readText()) else null }.getOrNull()
+
+    fun save(brand: BrandInfo?) {
+        if (brand == null) file.delete() else file.writeText(json.encodeToString(BrandInfo.serializer(), brand))
+    }
+}
+
 /**
  * The last manifest whose assets were all downloaded and verified ("active") — what the screen
  * plays, including after a reboot without network. Written atomically.

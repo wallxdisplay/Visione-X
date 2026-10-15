@@ -21,7 +21,21 @@ export interface Mail {
   /** Optional call-to-action button. */
   action?: { label: string; url: string };
   replyTo?: string;
+  /** White label: sent in the brand's name and colour (with a small "Powered by" credit). */
+  brand?: MailBrand;
 }
+
+export interface MailBrand {
+  name: string;
+  color: string;
+  /** The brand's own web address, if it has one. */
+  appUrl: string | null;
+}
+
+/** Web address for links in an email (the brand's own address when it has one). */
+export const mailAppUrl = (brand?: MailBrand) => brand?.appUrl ?? APP_URL;
+/** Product name for subjects and text. */
+export const mailProduct = (brand?: MailBrand) => brand?.name ?? PRODUCT_NAME;
 
 export type Mailer = (mail: Mail) => Promise<boolean>;
 
@@ -44,14 +58,15 @@ export function renderHtml(mail: Mail): string {
     .split(/\n{2,}/)
     .map((p) => `<p style="margin:0 0 14px">${escape(p).replace(/\n/g, '<br>')}</p>`)
     .join('');
+  const color = mail.brand?.color ?? '#4F46E5';
   const button = mail.action
-    ? `<p style="margin:20px 0"><a href="${escape(mail.action.url)}" style="background:#4F46E5;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block">${escape(mail.action.label)}</a></p>`
+    ? `<p style="margin:20px 0"><a href="${escape(mail.action.url)}" style="background:${escape(color)};color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block">${escape(mail.action.label)}</a></p>`
     : '';
   return `<!doctype html><html><body style="margin:0;background:#F5F6FA;font-family:Segoe UI,Roboto,Arial,sans-serif;color:#1F2433">
 <div style="max-width:560px;margin:0 auto;padding:24px">
-<div style="font-weight:700;font-size:18px;margin-bottom:16px">${escape(PRODUCT_NAME)}</div>
+<div style="font-weight:700;font-size:18px;margin-bottom:16px">${escape(mailProduct(mail.brand))}</div>
 <div style="background:#fff;border-radius:12px;padding:24px;font-size:15px;line-height:1.5">${paragraphs}${button}</div>
-<p style="font-size:12px;color:#6B7180;margin-top:16px">${escape(PRODUCT_NAME)} by WallX · ${escape(APP_URL)}</p>
+<p style="font-size:12px;color:#6B7180;margin-top:16px">${mail.brand ? `${escape(mail.brand.name)} · Powered by ${escape(PRODUCT_NAME)}` : `${escape(PRODUCT_NAME)} by WallX`} · ${escape(mailAppUrl(mail.brand))}</p>
 </div></body></html>`;
 }
 
@@ -68,7 +83,7 @@ export async function sendMail(deps: Pick<Deps, 'mailer'>, mail: Mail): Promise<
   const sender = process.env.SMTP_USER!.trim();
   try {
     await t.sendMail({
-      from: { name: PRODUCT_NAME, address: sender },
+      from: { name: mailProduct(mail.brand), address: sender },
       // One person (invitations, signup decisions): addressed to them. Several (alert emails):
       // one message with everyone in Bcc, so members do not see each other's addresses.
       ...(mail.to.length === 1 ? { to: mail.to[0] } : { to: sender, bcc: mail.to }),

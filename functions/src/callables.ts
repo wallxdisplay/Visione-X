@@ -38,6 +38,8 @@ import {
   VoidAccountPaymentInput,
   SetAccountPaidThroughInput,
   SetPartnerAccessInput,
+  SaveBrandInput,
+  SetBrandDomainsInput,
   DeleteRoleInput,
   SetMemberSitesInput,
   SetFeatureReleaseInput,
@@ -109,6 +111,7 @@ import * as platformSettings from './platform/settings';
 import * as support from './support/access';
 import * as accounts from './accounts/accounts';
 import * as partners from './accounts/partners';
+import * as branding from './branding/branding';
 import { reviewOrgSignup as reviewSvc, setOrgStatus as setOrgStatusSvc } from './orgs/review';
 import * as settings from './orgs/settings';
 import * as signup from './orgs/signup';
@@ -221,6 +224,10 @@ export const setPartnerSubscription = callable(SetPartnerSubscriptionInput, part
 export const startPartnerBilling = callable(PartnerOrgRefInput, partners.startPartnerBilling);
 export const partnerOverview = callable(PartnerOverviewInput, partners.partnerOverview, { timeoutSeconds: 120 });
 export const setPartnerAccess = callable(SetPartnerAccessInput, partners.setPartnerAccess);
+
+// White label
+export const saveBrand = callable(SaveBrandInput, branding.saveBrand, { timeoutSeconds: 300 });
+export const setBrandDomains = callable(SetBrandDomainsInput, branding.setBrandDomains);
 export const setPlatformRole = callable(SetPlatformRoleInput, setPlatformRoleSvc);
 
 // Content (phase 2)

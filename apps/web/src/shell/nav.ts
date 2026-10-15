@@ -10,6 +10,7 @@ import {
   Gauge,
   Handshake,
   Briefcase,
+  Palette,
   HelpCircle,
   Images,
   KeyRound,
@@ -98,6 +99,7 @@ export const partnerNav: NavGroup[] = [
       { labelKey: 'nav.partner.customers', path: '/partner', icon: Briefcase, phase: 'v1.1' },
       { labelKey: 'nav.partner.billing', path: '/partner/billing', icon: CreditCard, phase: 'v1.1' },
       { labelKey: 'nav.partner.team', path: '/partner/team', icon: Users, phase: 'v1.1' },
+      { labelKey: 'nav.partner.branding', path: '/partner/branding', icon: Palette, phase: 'v1.1' },
     ],
   },
 ];
@@ -113,6 +115,7 @@ export const adminNav: NavGroup[] = [
       { labelKey: 'nav.admin.approvals', path: '/admin/approvals', icon: ClipboardCheck, phase: 1 },
       { labelKey: 'nav.admin.orgs', path: '/admin/orgs', icon: Building2, phase: 1 },
       { labelKey: 'nav.admin.resellers', path: '/admin/resellers', icon: Handshake, phase: 6 },
+      { labelKey: 'nav.admin.whiteLabel', path: '/admin/white-label', icon: Palette, phase: 'v1.1' },
       { labelKey: 'nav.admin.users', path: '/admin/users', icon: Users, phase: 1 },
     ],
   },

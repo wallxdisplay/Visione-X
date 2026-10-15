@@ -106,6 +106,13 @@
       "pending": "Pending invitations",
       "expires": "expires {{date}}",
       "revoke": "Revoke"
+    },
+    "branding": {
+      "title": "Branding",
+      "description": "Your brand replaces WallX Play for all your customers: in the app, on their screens and in emails.",
+      "offTitle": "White label is not switched on",
+      "offBody": "Ask WallX to switch on white label for your account.",
+      "ownersOnly": "Only owners can change the brand."
     }
   }
 }

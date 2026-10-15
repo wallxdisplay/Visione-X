@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Navigate, Outlet } from 'react-router';
-import type { AccountRole, PartnerOverview, UserAccountMembership } from '@wallx-play/shared';
+import { paths, publicBrand, type AccountDoc, type AccountRole, type BrandPublic, type PartnerOverview, type UserAccountMembership } from '@wallx-play/shared';
+import { useDoc } from '../lib/hooks';
 import { useAuth } from '../auth/AuthProvider';
 import { call, errorMessage } from '../lib/api';
 import { FullPageSpinner } from '../auth/guards';
@@ -18,6 +19,8 @@ interface PartnerState {
   overview: PartnerOverview | null;
   overviewError: string | null;
   refresh: () => Promise<void>;
+  /** White label: the reseller's brand for the portal (null: WallX Play). */
+  brand: BrandPublic | null;
 }
 
 const PartnerContext = createContext<PartnerState | null>(null);
@@ -56,6 +59,8 @@ function PartnerProvider({ initialId, accounts, children }: { initialId: string;
   const [overview, setOverview] = useState<PartnerOverview | null>(null);
   const [overviewError, setOverviewError] = useState<string | null>(null);
   const entry = accounts.find(([id]) => id === accountId)?.[1] ?? accounts[0]![1];
+  const account = useDoc<AccountDoc>(paths.account(accountId));
+  const brand = account.data?.whiteLabel && account.data.brand ? publicBrand(account.data.brand) : null;
 
   const refresh = useCallback(async () => {
     try {
@@ -81,8 +86,8 @@ function PartnerProvider({ initialId, accounts, children }: { initialId: string;
   }, []);
 
   const value = useMemo<PartnerState>(
-    () => ({ accountId, name: entry.name, role: entry.role, accounts, switchAccount, overview, overviewError, refresh }),
-    [accountId, entry, accounts, switchAccount, overview, overviewError, refresh],
+    () => ({ accountId, name: entry.name, role: entry.role, accounts, switchAccount, overview, overviewError, refresh, brand }),
+    [accountId, entry, accounts, switchAccount, overview, overviewError, refresh, brand],
   );
   return <PartnerContext.Provider value={value}>{children}</PartnerContext.Provider>;
 }

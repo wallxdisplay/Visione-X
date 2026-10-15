@@ -46,3 +46,20 @@
   display: grid;
   gap: 8px;
 }
+
+.brand-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.brand-cell img {
+  max-width: 64px;
+  max-height: 24px;
+  object-fit: contain;
+}
+.brand-cell__swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1px solid var(--color-border);
+}

@@ -175,7 +175,8 @@
     "wholesale": "Paid by the reseller",
     "wholesaleLabel": "The reseller pays for this organization (wholesale)",
     "billWholesale": "Reseller pays",
-    "billDirect": "Bill directly"
+    "billDirect": "Bill directly",
+    "whiteLabelLabel": "White label: the reseller can brand the app for its customers"
   },
   "adminSettings": {
     "description": "Settings that apply to all of WallX Play.",
@@ -368,12 +369,14 @@
       "integrations": "Integrations & API",
       "support": "Support Access",
       "audit": "Audit Logs",
-      "settings": "Platform Settings"
+      "settings": "Platform Settings",
+      "whiteLabel": "White label"
     },
     "partner": {
       "customers": "Customers",
       "billing": "Billing",
-      "team": "Team"
+      "team": "Team",
+      "branding": "Branding"
     }
   },
   "shell": {
