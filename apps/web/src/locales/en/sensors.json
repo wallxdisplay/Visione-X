@@ -44,7 +44,16 @@
     "rotateTitle": "Rotate the API key?",
     "rotateBody": "A new key is issued and the current key stops working immediately. The device sends no readings until its firmware has the new key.",
     "deleteTitle": "Delete this sensor device?",
-    "deleteBody": "“{{name}}”, its channels and all stored readings will be deleted. Alert history is kept. This cannot be undone."
+    "deleteBody": "“{{name}}”, its channels and all stored readings will be deleted. Alert history is kept. This cannot be undone.",
+    "createMqtt": "Create",
+    "transport": "Connection",
+    "transports": {
+      "http": "ESP32 / HTTPS (API key)",
+      "mqtt": "MQTT broker"
+    },
+    "broker": "MQTT broker",
+    "brokerHint": "Its channels are read from this broker by its bridge screen.",
+    "noBrokers": "Add an MQTT broker below first."
   },
   "channels": {
     "title": "Channels",
@@ -55,7 +64,10 @@
     "keyHint": "What the device sends, e.g. temp or door_1. Cannot be changed later.",
     "name": "Name",
     "type": "Value type",
-    "types": { "number": "Number", "boolean": "On / off" },
+    "types": {
+      "number": "Number",
+      "boolean": "On / off"
+    },
     "unit": "Unit",
     "min": "Valid minimum",
     "max": "Valid maximum",
@@ -94,7 +106,12 @@
     "time": "Time",
     "value": "Value",
     "deleteTitle": "Delete this channel?",
-    "deleteBody": "“{{name}}” and its stored readings will be deleted. The device's readings for it will be rejected."
+    "deleteBody": "“{{name}}” and its stored readings will be deleted. The device's readings for it will be rejected.",
+    "topic": "MQTT topic",
+    "topicHint": "The exact topic, e.g. factory/line1/temp (no + or #).",
+    "jsonField": "JSON field",
+    "jsonFieldHint": "For JSON messages: the value’s field, e.g. data.temp. Leave empty when the message is just the value (23.5, ON).",
+    "keyHintMqtt": "A short id for this channel (1–32 lowercase letters, digits or _)."
   },
   "alerts": {
     "description": "Threshold, stale-data and offline alerts from your sensors.",
@@ -103,8 +120,13 @@
     "noneOpenBody": "All sensors are reporting normally.",
     "historyTitle": "Recently resolved",
     "severityLabel": "Severity",
-    "severity": { "warning": "Warning", "critical": "Critical" },
-    "status": { "resolved": "Resolved" },
+    "severity": {
+      "warning": "Warning",
+      "critical": "Critical"
+    },
+    "status": {
+      "resolved": "Resolved"
+    },
     "what": "Alert",
     "sensor": "Sensor",
     "opened": "Opened",
@@ -144,12 +166,48 @@
     "stateLabel": "Label",
     "addState": "Add state",
     "chartKind": "Chart type",
-    "kinds": { "line": "Line", "bar": "Bars" },
+    "kinds": {
+      "line": "Line",
+      "bar": "Bars"
+    },
     "window": "Time window",
     "windowOption_minutes_one": "{{count}} minute",
     "windowOption_minutes_other": "{{count}} minutes",
     "windowOption_hours_one": "{{count}} hour",
     "windowOption_hours_other": "{{count}} hours",
     "remove": "Remove"
+  },
+  "mqtt": {
+    "title": "MQTT brokers",
+    "description": "Read sensors from an MQTT broker on your network. One of your screens at the site connects to the broker and forwards the values, so nothing has to be opened to the internet.",
+    "add": "Add MQTT broker",
+    "edit": "Edit MQTT broker",
+    "empty": "No MQTT brokers yet.",
+    "name": "Name",
+    "address": "Address",
+    "host": "Broker address",
+    "hostHint": "Host name or IP address as the screen sees it on the network, e.g. 192.168.1.20.",
+    "port": "Port",
+    "tls": "Use TLS (encrypted, usually port 8883)",
+    "username": "User name",
+    "password": "Password",
+    "passwordHint": "Leave empty if the broker needs none.",
+    "passwordKeep": "Leave empty to keep the saved password.",
+    "removePassword": "Remove the saved password",
+    "bridge": "Bridge screen",
+    "bridgeHint": "A screen on the same network as the broker. Its player (0.18.0 or later) connects to the broker.",
+    "noScreens": "No authorized screens",
+    "howItWorks": "The password is stored securely and is only sent to the bridge screen. The bridge sends each channel’s latest value every 15 seconds; screens showing it update at once on the bridge and on their next live update elsewhere.",
+    "status": "Status",
+    "lastMessage": "Last message",
+    "states": {
+      "connected": "Connected",
+      "connecting": "Connecting",
+      "error": "Cannot connect",
+      "waiting": "Waiting for the bridge",
+      "noBridge": "Bridge screen missing"
+    },
+    "deleteTitle": "Delete MQTT broker?",
+    "deleteBody": "“{{name}}” and its saved password will be deleted. Sensor devices reading from it must be deleted or moved first."
   }
 }

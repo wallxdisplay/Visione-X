@@ -183,7 +183,7 @@ Rules: deny-by-default; anything money-, limit-, status- or audit-related is Fun
 - Writes: `channels/{id}.latest` + hourly bucket doc; alert rule evaluation; stale/offline computed from `staleAfterSec`.
 - Player receives live values via a compact per-screen `liveData` feed (only bound channels), polled/pushed at plan-defined frequency; shows **No data / Stale / Device offline** states.
 - ESP32 reference firmware (Arduino) with HTTPS + key provisioning provided later.
-- MQTT bridge later reuses the same validation/ingestion core.
+- MQTT sensors reuse the same validation/ingestion core (see §13f).
 
 **As built (phase 5):**
 - **Devices and keys.** A sensor device lives in `orgs/{org}/sensorDevices/{id}`. Its API key (`wxp_…`, 192 bits) is shown once. Only the key's SHA-256 is stored, in the server-only `sensorKeys/{hash}` lookup. The key can be rotated, and the old key stops working at once. Creating a device needs `sensor.manage`, the `sensor.esp32` feature and room under the plan's `sensorDevices` limit.
@@ -250,6 +250,9 @@ A sync group (`orgs/{orgId}/syncGroups`) plays one playlist on up to 16 screens,
 ## 13e. Interactive / touch (Enterprise, `interactive.touch`)
 Layouts become pages: a zone may carry a tap `action` (`page` → open another layout, `back`, `home`) and the `button` widget draws a labelled button (both need the feature to save; page targets must exist; a layout keeps `layoutIds` of the pages it opens, so a linked page or a screen's home page cannot be deleted). A screen's `touch {homeLayoutId, idleSec 10–3600, attract}` makes it a kiosk; its manifest gets the same `touch` block plus the home page and every page reachable from it (≤ 6 links deep, ≤ 60 pages). Touch screens cannot join a sync group. Players (0.17.0+): with `attract` the schedule plays until a touch opens the home page; otherwise the home page stays up. Taps move through pages with a back history; idle for `idleSec` ends the visit. Emergencies still take the screen. Taps are counted in proof-of-play as `tap` per page.
 
+## 13f. MQTT sensors (Enterprise, `sensor.mqtt` + `sensor.esp32`)
+Customer brokers usually sit on the site network, out of the cloud's reach, so a screen at the site is the **bridge**. A broker (`orgs/{org}/mqttBrokers`: host, port, TLS, user name, bridge screen; at most 10 per org) keeps its password in the server-only `mqttBrokerSecrets/{id}`; it only reaches the bridge screen's player. A sensor device has `transport` http (API key, `POST /ingest`) or mqtt (no key, `mqttBrokerId`); an MQTT channel carries `mqtt {topic, path}` (exact topic, optional dot path into a JSON payload). Saving a broker, MQTT device or channel stamps the bridge screen's `mqttConfigAt`; `GET /devices/me` returns it and the player (0.18.0+, Eclipse Paho client, TCP or TLS, auto-reconnect) then fetches `GET /devices/mqtt` (credentials and subscriptions). The player keeps the latest value per channel, shows it at once on its own widgets and posts it every 15 s to `POST /devices/mqtt/readings`, which runs the ingest core (history, alerts, offline/stale, token bucket) after checking that the screen is the device's broker bridge. Bridge state per broker (connected / connecting / error, message count) comes with the heartbeat and is shown on the Sensors page. A bridge screen cannot be removed while a broker uses it, and a broker cannot be deleted while devices read from it.
+
 ## 14. Internationalization
 `i18next` with JSON resources in `apps/web/src/locales/{en,hi,mr}`; all UI strings externalized. The language is chosen per browser (top bar) and Hindi/Marathi load on demand; missing keys fall back to English, and a unit test keeps every translation's keys and `{{placeholders}}` identical to English. Dates follow the language (`en-IN`, `hi-IN`, `mr-IN` with Latin digits). Screen content (clock, weather, charts) follows the player and stays English. Hindi and Marathi are machine-drafted and need review by native speakers. Fonts: Inter (UI) + Noto Sans Devanagari (content, bundled on player).
 
@@ -276,7 +279,7 @@ Feature catalogue stores `releaseStatus` (what WallX has built) separately from 
 | Proof-of-play reports, diagnostics | v1.1 | – | – | ✓ | ✓ |
 | API keys & webhooks | v1.1 | – | – | – | ✓ |
 | Hindi / Marathi UI | later | — all plans — |
-| Multi-screen sync ✅ (player 0.16.0); interactive/touch ✅ (player 0.17.0); MQTT | later | – | – | – | ✓ |
+| Multi-screen sync ✅ (player 0.16.0); interactive/touch ✅ (player 0.17.0); MQTT ✅ (player 0.18.0) | later | – | – | – | ✓ |
 | Self-service reseller portal, white-label | later | – | – | – | ✓ |
 *Plan columns are a proposal — confirm or edit.*
 

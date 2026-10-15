@@ -31,6 +31,7 @@ import { requireActiveOrgPermission, requireOrgPermission, requireSiteInScope } 
 import type { Actor, Deps } from '../lib/context';
 import { readEntitlements, requireFeature } from '../lib/entitlements';
 import { resolveAlert } from './alerts';
+import { touchBridges } from './mqtt';
 
 export const sha256 = (s: string) => createHash('sha256').update(s).digest('hex');
 
@@ -56,11 +57,14 @@ const openAlertsOf = (db: Firestore, orgId: string, sensorDeviceId: string) =>
 
 /** Creates (returns the API key, shown once) or updates a sensor device. */
 export async function saveSensorDevice(
-  { db, now }: Deps,
+  deps: Deps,
   actor: Actor,
   input: z.infer<typeof SaveSensorDeviceInput>,
 ): Promise<{ sensorDeviceId: string; apiKey?: string }> {
+  const { db, now } = deps;
   const at = now();
+  /** Brokers whose bridge must refresh its subscriptions after this save. */
+  const brokers: Array<string | null | undefined> = [];
   const ref = input.sensorDeviceId
     ? db.doc(paths.sensorDevice(input.orgId, input.sensorDeviceId))
     : db.collection(paths.sensorDevices(input.orgId)).doc();
@@ -75,19 +79,32 @@ export async function saveSensorDevice(
       throw new HttpsError('invalid-argument', 'The selected site no longer exists.');
     }
     const status = input.enabled ? 'active' : 'disabled';
+    const existingSnap = input.sensorDeviceId ? await tx.get(ref) : null;
+    const transport = (existingSnap?.data() as SensorDeviceDoc | undefined)?.transport ?? (input.sensorDeviceId ? 'http' : (input.transport ?? 'http'));
+    if (transport === 'mqtt') {
+      requireFeature(entitlements, 'sensor.mqtt', 'MQTT sensors');
+      if (!input.mqttBrokerId) throw new HttpsError('invalid-argument', 'Choose the MQTT broker this sensor reads from.');
+      if (!(await tx.get(db.doc(paths.mqttBroker(input.orgId, input.mqttBrokerId)))).exists) {
+        throw new HttpsError('invalid-argument', 'The selected MQTT broker no longer exists.');
+      }
+    }
 
     if (!input.sensorDeviceId) {
       const count = await tx.get(db.collection(paths.sensorDevices(input.orgId)).count());
       if (!withinLimit(entitlements.limits, 'sensorDevices', count.data().count + 1)) {
         throw new HttpsError('resource-exhausted', 'Your plan’s sensor device limit has been reached.');
       }
-      apiKey = issueKey(tx, db, input.orgId, ref.id, at);
+      // MQTT devices are read by a bridge screen: no API key.
+      if (transport === 'http') apiKey = issueKey(tx, db, input.orgId, ref.id, at);
+      brokers.push(input.mqttBrokerId);
       const doc: SensorDeviceDoc = {
         id: ref.id,
         name: input.name,
         siteId: input.siteId,
         status,
-        keyPrefix: keyPrefixOf(apiKey),
+        transport,
+        mqttBrokerId: transport === 'mqtt' ? input.mqttBrokerId : null,
+        keyPrefix: apiKey ? keyPrefixOf(apiKey) : '',
         keyCreatedAt: at,
         offlineAfterMin: input.offlineAfterMin,
         lastSeen: null,
@@ -112,9 +129,9 @@ export async function saveSensorDevice(
       return;
     }
 
-    const snap = await tx.get(ref);
-    const existing = snap.data() as SensorDeviceDoc | undefined;
+    const existing = existingSnap!.data() as SensorDeviceDoc | undefined;
     if (!existing) throw new HttpsError('not-found', 'Sensor device not found.');
+    if (transport === 'mqtt') brokers.push(existing.mqttBrokerId, input.mqttBrokerId);
     requireSiteInScope(member, existing.siteId, 'this sensor device');
     const disabling = existing.status === 'active' && status === 'disabled';
     const open = disabling ? await tx.get(openAlertsOf(db, input.orgId, ref.id)) : null;
@@ -130,6 +147,7 @@ export async function saveSensorDevice(
       siteId: input.siteId,
       status,
       offlineAfterMin: input.offlineAfterMin,
+      ...(transport === 'mqtt' ? { mqttBrokerId: input.mqttBrokerId } : {}),
       offlineAt: existing.lastSeen ? existing.lastSeen + input.offlineAfterMin * 60_000 : null,
       ...(disabling ? { offlineAlertId: null } : {}),
       updatedAt: at,
@@ -149,6 +167,7 @@ export async function saveSensorDevice(
       });
     }
   });
+  await touchBridges(deps, input.orgId, brokers);
   return apiKey ? { sensorDeviceId: ref.id, apiKey } : { sensorDeviceId: ref.id };
 }
 
@@ -165,6 +184,7 @@ export async function rotateSensorKey(
     const device = (await tx.get(ref)).data() as SensorDeviceDoc | undefined;
     if (!device) throw new HttpsError('not-found', 'Sensor device not found.');
     requireSiteInScope(member, device.siteId, 'this sensor device');
+    if (device.transport === 'mqtt') throw new HttpsError('failed-precondition', 'MQTT sensor devices have no API key.');
     const old = await tx.get(keysOf(db, input.orgId, input.sensorDeviceId));
     old.docs.forEach((d) => tx.delete(d.ref));
     const key = issueKey(tx, db, input.orgId, input.sensorDeviceId, at);
@@ -205,13 +225,14 @@ async function usage(tx: Transaction, db: Firestore, orgId: string, sensorDevice
 
 /** Deletes a device with its channels, readings and keys. Alerts stay as history (resolved). */
 export async function deleteSensorDevice(
-  { db, now }: Deps,
+  deps: Deps,
   actor: Actor,
   input: z.infer<typeof SensorDeviceRefInput>,
 ): Promise<void> {
+  const { db, now } = deps;
   const at = now();
   const ref = db.doc(paths.sensorDevice(input.orgId, input.sensorDeviceId));
-  await auditedTransaction(db, [input.orgId], async (tx, audit) => {
+  const brokerId = await auditedTransaction(db, [input.orgId], async (tx, audit) => {
     const member = await requireOrgPermission(tx, db, actor, input.orgId, 'sensor.manage');
     const device = (await tx.get(ref)).data() as SensorDeviceDoc | undefined;
     if (!device) throw new HttpsError('not-found', 'Sensor device not found.');
@@ -233,19 +254,22 @@ export async function deleteSensorDevice(
       target: { type: 'sensorDevice', id: input.sensorDeviceId },
       data: { name: device.name },
     });
+    return device.mqttBrokerId ?? null;
   });
   await db.recursiveDelete(ref);
+  await touchBridges(deps, input.orgId, [brokerId]);
 }
 
 export async function saveSensorChannel(
-  { db, now }: Deps,
+  deps: Deps,
   actor: Actor,
   input: z.infer<typeof SaveSensorChannelInput>,
 ): Promise<void> {
+  const { db, now } = deps;
   const at = now();
   const deviceRef = db.doc(paths.sensorDevice(input.orgId, input.sensorDeviceId));
   const ref = db.doc(paths.sensorChannel(input.orgId, input.sensorDeviceId, input.channelId));
-  await auditedTransaction(db, [input.orgId], async (tx, audit) => {
+  const brokerId = await auditedTransaction(db, [input.orgId], async (tx, audit) => {
     const { member } = await requireActiveOrgPermission(tx, db, actor, input.orgId, 'sensor.manage');
     const [deviceSnap, snap] = await Promise.all([tx.get(deviceRef), tx.get(ref)]);
     const device = deviceSnap.data() as SensorDeviceDoc | undefined;
@@ -254,6 +278,8 @@ export async function saveSensorChannel(
     const existing = snap.data() as SensorChannelDoc | undefined;
     if (input.isNew && existing) throw new HttpsError('already-exists', `Channel “${input.channelId}” already exists on this device.`);
     if (!input.isNew && !existing) throw new HttpsError('not-found', 'Channel not found.');
+    const mqtt = device.transport === 'mqtt';
+    if (mqtt && !input.mqtt) throw new HttpsError('invalid-argument', 'Enter the MQTT topic this channel reads.');
 
     const fields = {
       name: input.name,
@@ -263,6 +289,7 @@ export async function saveSensorChannel(
       max: input.max,
       staleAfterSec: input.staleAfterSec,
       alertRules: input.alertRules,
+      mqtt: mqtt ? input.mqtt : null,
       updatedAt: at,
     };
     if (!existing) {
@@ -288,7 +315,7 @@ export async function saveSensorChannel(
         target: { type: 'sensorChannel', id: `${input.sensorDeviceId}/${input.channelId}` },
         data: { name: input.name },
       });
-      return;
+      return device.mqttBrokerId ?? null;
     }
 
     // Alerts of removed rules close quietly; changed rules are re-evaluated on the next reading.
@@ -304,18 +331,21 @@ export async function saveSensorChannel(
       openAlerts,
       staleAt: existing.latest ? existing.latest.ts + input.staleAfterSec * 1000 : null,
     });
+    return device.mqttBrokerId ?? null;
   });
+  await touchBridges(deps, input.orgId, [brokerId]);
 }
 
 export async function deleteSensorChannel(
-  { db, now }: Deps,
+  deps: Deps,
   actor: Actor,
   input: z.infer<typeof DeleteSensorChannelInput>,
 ): Promise<void> {
+  const { db, now } = deps;
   const at = now();
   const deviceRef = db.doc(paths.sensorDevice(input.orgId, input.sensorDeviceId));
   const ref = db.doc(paths.sensorChannel(input.orgId, input.sensorDeviceId, input.channelId));
-  await auditedTransaction(db, [input.orgId], async (tx, audit) => {
+  const brokerId = await auditedTransaction(db, [input.orgId], async (tx, audit) => {
     const member = await requireOrgPermission(tx, db, actor, input.orgId, 'sensor.manage');
     const [deviceSnap, snap] = await Promise.all([tx.get(deviceRef), tx.get(ref)]);
     const device = deviceSnap.data() as SensorDeviceDoc | undefined;
@@ -340,8 +370,10 @@ export async function deleteSensorChannel(
       target: { type: 'sensorChannel', id: `${input.sensorDeviceId}/${input.channelId}` },
       data: { name: channel.name },
     });
+    return device.mqttBrokerId ?? null;
   });
   await db.recursiveDelete(ref);
+  await touchBridges(deps, input.orgId, [brokerId]);
 }
 
 export async function acknowledgeAlert(

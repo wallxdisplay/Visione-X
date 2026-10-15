@@ -5,6 +5,7 @@
  * with `Authorization: Bearer <key>`.
  */
 import { z } from 'zod';
+import { ChannelMqtt } from './mqtt';
 
 const id = z.string().min(1).max(128).regex(/^[A-Za-z0-9_-]+$/);
 
@@ -17,6 +18,9 @@ export const ChannelKey = z
 export const SENSOR_KEY_PREFIX = 'wxp_';
 export const SENSOR_VALUE_TYPES = ['number', 'boolean'] as const;
 export type SensorValueType = (typeof SENSOR_VALUE_TYPES)[number];
+/** How readings arrive: HTTPS ingest with an API key, or an MQTT broker bridged by a screen. */
+export const SENSOR_TRANSPORTS = ['http', 'mqtt'] as const;
+export type SensorTransport = (typeof SENSOR_TRANSPORTS)[number];
 
 export const MAX_CHANNELS_PER_DEVICE = 16;
 export const DEFAULT_STALE_AFTER_SEC = 10 * 60;
@@ -98,6 +102,10 @@ export interface SensorDeviceDoc {
   name: string;
   siteId: string | null;
   status: 'active' | 'disabled';
+  /** Absent on devices created before MQTT sensors: "http". MQTT devices have no API key. */
+  transport?: SensorTransport;
+  /** MQTT devices: the broker their channels are read from. */
+  mqttBrokerId?: string | null;
   /** First characters of the API key, to tell keys apart (the key itself is never stored). */
   keyPrefix: string;
   keyCreatedAt: number;
@@ -135,6 +143,8 @@ export interface SensorChannelDoc {
   max: number | null;
   staleAfterSec: number;
   alertRules: AlertRule[];
+  /** MQTT devices: the topic (and JSON field) this channel's value comes from. */
+  mqtt?: ChannelMqtt | null;
   /** Booleans are stored as 1 / 0. */
   latest: { value: number; ts: number } | null;
   /** latest.ts + staleAfterSec; the monitor raises a stale alert after it. */
@@ -229,6 +239,10 @@ export const SaveSensorDeviceInput = z.object({
   siteId: id.nullable(),
   offlineAfterMin: z.number().int().min(2).max(24 * 60),
   enabled: z.boolean(),
+  /** Fixed when the device is created. */
+  transport: z.enum(SENSOR_TRANSPORTS).default('http'),
+  /** Required for MQTT devices. */
+  mqttBrokerId: id.nullable().default(null),
 });
 export const SensorDeviceRefInput = z.object({ orgId: id, sensorDeviceId: id });
 
@@ -246,6 +260,8 @@ export const SaveSensorChannelInput = z
     max: z.number().nullable(),
     staleAfterSec: z.number().int().min(30).max(7 * 86_400),
     alertRules: z.array(AlertRule).max(5),
+    /** Required on MQTT devices, ignored on others. */
+    mqtt: ChannelMqtt.nullable().default(null),
   })
   .refine((c) => c.min === null || c.max === null || c.max > c.min, {
     message: 'Maximum must be above minimum',

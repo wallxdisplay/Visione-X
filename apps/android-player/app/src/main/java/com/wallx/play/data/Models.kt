@@ -3,6 +3,7 @@ package com.wallx.play.data
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonPrimitive
 
 /**
@@ -160,6 +161,8 @@ data class DeviceState(
     val config: DeviceConfig = DeviceConfig(),
     /** A newer player release rolled out to this screen's organization. */
     val update: PlayerUpdate? = null,
+    /** MQTT bridge (0.18.0): when this screen's bridge configuration changed; null = not a bridge. */
+    val mqttConfigAt: Long? = null,
     val serverTime: Long = 0,
 )
 
@@ -237,6 +240,58 @@ data class Heartbeat(
     val errors: List<String>,
     val update: UpdateStatus? = null,
     val vitals: Vitals? = null,
+    /** MQTT bridge state per broker (only on bridge screens). */
+    val mqtt: List<MqttBridgeStatus>? = null,
+)
+
+// ---------------------------------------------------------------- MQTT bridge (0.18.0)
+
+@Serializable
+data class MqttSubscription(
+    val topic: String,
+    val path: String? = null,
+    val sensorDeviceId: String,
+    val channel: String,
+    val valueType: String = "number",
+)
+
+@Serializable
+data class MqttBrokerConfig(
+    val id: String,
+    val host: String,
+    val port: Int,
+    val tls: Boolean = false,
+    val username: String? = null,
+    val password: String? = null,
+    val clientId: String,
+    val subscriptions: List<MqttSubscription> = emptyList(),
+)
+
+@Serializable
+data class DeviceMqttResponse(val brokers: List<MqttBrokerConfig> = emptyList(), val serverTime: Long = 0)
+
+@Serializable
+data class MqttReading(val channel: String, val value: JsonPrimitive)
+
+@Serializable
+data class MqttBatch(val sensorDeviceId: String, val ts: Long, val readings: List<MqttReading>)
+
+@Serializable
+data class MqttReadingsBody(val batches: List<MqttBatch>)
+
+@Serializable
+data class MqttReadingResult(val sensorDeviceId: String, val status: Int, val accepted: Int = 0, val error: String? = null)
+
+@Serializable
+data class MqttReadingsResponse(val results: List<MqttReadingResult> = emptyList())
+
+@Serializable
+data class MqttBridgeStatus(
+    val brokerId: String,
+    val state: String,
+    val error: String? = null,
+    val messages: Int = 0,
+    val lastMessageAt: Long? = null,
 )
 
 // ---------------------------------------------------------------- live sensor data (phase 5)

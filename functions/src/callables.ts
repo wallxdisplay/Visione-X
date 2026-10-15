@@ -80,6 +80,8 @@ import {
   ApiOverviewInput,
   SaveSyncGroupInput,
   SyncGroupRefInput,
+  SaveMqttBrokerInput,
+  MqttBrokerRefInput,
   type PlatformRole,
 } from '@wallx-play/shared';
 import { setPlatformRole as setPlatformRoleSvc } from './admin/platformUsers';
@@ -102,6 +104,7 @@ import * as screens from './screens/screens';
 import * as commands from './ops/commands';
 import * as emergency from './ops/emergency';
 import * as sensors from './sensors/sensors';
+import * as mqtt from './sensors/mqtt';
 import * as billing from './billing/billing';
 import * as plans from './billing/plans';
 import * as integrations from './integrations/dataSources';
@@ -270,3 +273,7 @@ export const apiOverview = callable(ApiOverviewInput, apiOverviewSvc);
 // Multi-screen sync
 export const saveSyncGroup = callable(SaveSyncGroupInput, syncGroups.saveSyncGroup, { memory: '512MiB', timeoutSeconds: 120 });
 export const deleteSyncGroup = callable(SyncGroupRefInput, syncGroups.deleteSyncGroup, { memory: '512MiB', timeoutSeconds: 120 });
+
+// MQTT sensors (bridged by a screen's player)
+export const saveMqttBroker = callable(SaveMqttBrokerInput, mqtt.saveMqttBroker);
+export const deleteMqttBroker = callable(MqttBrokerRefInput, mqtt.deleteMqttBroker);

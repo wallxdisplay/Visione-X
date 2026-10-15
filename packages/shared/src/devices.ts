@@ -3,6 +3,7 @@
  * Devices never use Firebase Auth: they hold a random secret issued at registration and call
  * /api/v1/devices/* with `Authorization: Device <deviceId>:<secret>`. Only its hash is stored.
  */
+import { MqttBridgeStatus } from './mqtt';
 import { PlayerUpdateStatus, type PlayerUpdate } from './players';
 import { z } from 'zod';
 import { RESOLUTION_PRESETS } from '@wallx-play/layout-spec';
@@ -55,6 +56,8 @@ export interface ScreenHealth {
   update?: PlayerUpdateStatus | null;
   /** Memory, uptime and network (players 0.14.0 and later). */
   vitals?: DeviceVitals | null;
+  /** MQTT bridge state per broker (bridge screens, players 0.18.0 and later). */
+  mqtt?: MqttBridgeStatus[] | null;
   reportedAt: number;
 }
 
@@ -95,6 +98,8 @@ export interface ScreenDoc {
   syncGroupId?: string | null;
   /** Touch kiosk settings (interactive.touch), if the screen is a touch screen. */
   touch?: ScreenTouch | null;
+  /** MQTT bridge: when its configuration last changed (absent / null = not a bridge). */
+  mqttConfigAt?: number | null;
   createdBy: string;
   createdAt: number;
   updatedAt: number;
@@ -179,6 +184,8 @@ export const HeartbeatBody = z.object({
     })
     .nullable()
     .optional(),
+  /** Absent from players before 0.18.0 and on screens that are not MQTT bridges. */
+  mqtt: z.array(MqttBridgeStatus).max(10).nullable().optional(),
 });
 
 export interface DeviceStateResponse {
@@ -201,6 +208,11 @@ export interface DeviceStateResponse {
   config: { pollSec: number; heartbeatSec: number };
   /** A newer player release rolled out to this screen's organization, if any. */
   update: PlayerUpdate | null;
+  /**
+   * MQTT bridge (0.18.0+): when this screen's bridge configuration last changed, null when it is
+   * not a bridge. On a change the player fetches GET /devices/mqtt.
+   */
+  mqttConfigAt: number | null;
   serverTime: number;
 }
 

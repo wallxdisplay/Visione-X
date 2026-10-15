@@ -174,6 +174,7 @@ export async function deviceState(deps: Deps, req: ApiRequest): Promise<ApiResul
     commandsPending: device.status === 'authorized' ? (screen?.pendingCommands ?? 0) : 0,
     config: { pollSec: DEVICE_POLL_SEC, heartbeatSec: DEVICE_HEARTBEAT_SEC },
     update,
+    mqttConfigAt: device.status === 'authorized' ? (screen?.mqttConfigAt ?? null) : null,
     serverTime: now(),
   };
   return { status: 200, body };

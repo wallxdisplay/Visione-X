@@ -5,6 +5,7 @@ import {
   isSensorOnline,
   paths,
   type AlertDoc,
+  type MqttBrokerDoc,
   type ReadingBucketDoc,
   type SensorChannelDoc,
   type SensorDeviceDoc,
@@ -19,6 +20,16 @@ export function useSensorDevices(orgId: string, enabled = true) {
   const { siteScope } = useOrg();
   const live = useQueryData<SensorDeviceDoc>(enabled ? `sensorDevices:${orgId}${scopeKey(siteScope)}` : null, () =>
     query(collection(db, paths.sensorDevices(orgId)), ...bySite(siteScope, orderBy('name'))),
+  );
+  const data = useMemo(() => [...live.data].sort((a, b) => a.name.localeCompare(b.name)), [live.data]);
+  return { ...live, data };
+}
+
+/** MQTT brokers the member may see (their sites when scoped), sorted by name. */
+export function useMqttBrokers(orgId: string, enabled = true) {
+  const { siteScope } = useOrg();
+  const live = useQueryData<MqttBrokerDoc>(enabled ? `mqttBrokers:${orgId}${scopeKey(siteScope)}` : null, () =>
+    query(collection(db, paths.mqttBrokers(orgId)), ...bySite(siteScope, orderBy('name'))),
   );
   const data = useMemo(() => [...live.data].sort((a, b) => a.name.localeCompare(b.name)), [live.data]);
   return { ...live, data };

@@ -404,3 +404,21 @@ describe('public API keys and webhooks', () => {
     await assertFails(setDoc(doc(alice, 'orgs/org1/apiKeys/k2'), { name: 'x' }));
   });
 });
+
+describe('MQTT brokers', () => {
+  it('members with sensor.view read brokers; nobody reads the broker password', async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await setDoc(doc(db, 'orgs/org1/members/alice'), { role: 'owner', status: 'active', permissions: ['sensor.view', 'sensor.manage'], siteScope: [] });
+      await setDoc(doc(db, 'orgs/org1/members/vic'), { role: 'viewer', status: 'active', permissions: ['screen.view'], siteScope: [] });
+      await setDoc(doc(db, 'orgs/org1/mqttBrokers/b1'), { name: 'Plant', siteId: null, hasPassword: true });
+      await setDoc(doc(db, 'orgs/org1/mqttBrokerSecrets/b1'), { password: 'p' });
+    });
+    const alice = env.authenticatedContext('alice').firestore();
+    const vic = env.authenticatedContext('vic').firestore();
+    await assertSucceeds(getDoc(doc(alice, 'orgs/org1/mqttBrokers/b1')));
+    await assertFails(getDoc(doc(vic, 'orgs/org1/mqttBrokers/b1')));
+    await assertFails(getDoc(doc(alice, 'orgs/org1/mqttBrokerSecrets/b1')));
+    await assertFails(setDoc(doc(alice, 'orgs/org1/mqttBrokers/b2'), { name: 'x' }));
+  });
+});

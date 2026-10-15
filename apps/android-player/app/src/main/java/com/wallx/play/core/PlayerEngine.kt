@@ -16,6 +16,7 @@ import com.wallx.play.data.Asset
 import com.wallx.play.data.AssetCache
 import com.wallx.play.data.DeviceHardware
 import com.wallx.play.data.DeviceState
+import com.wallx.play.data.MqttReadingsBody
 import com.wallx.play.data.DeviceStore
 import com.wallx.play.data.Heartbeat
 import com.wallx.play.data.Manifest
@@ -94,6 +95,12 @@ class PlayerEngine internal constructor(
     /** Proof-of-play counts (the renderer reports what it shows; uploaded hourly). */
     val plays = PlayLog(File(context.filesDir, "plays.json"), playClock ?: ::serverNow)
 
+    /** MQTT bridge (0.18.0): connects to the brokers this screen bridges and forwards readings. */
+    internal var mqttTransport: () -> MqttTransport = { PahoTransport() }
+    val mqtt = MqttBridge({ mqttTransport() }, ::serverNow) { key, value, ts -> live.applyLocal(key, value, ts) }
+    @Volatile private var mqttConfigAt: Long? = null
+    @Volatile private var mqttFetchedAt = 0L
+
     /** Set by the renderer so heartbeats can report what is on screen. */
     @Volatile var nowPlaying: Playing? = null
 
@@ -134,6 +141,7 @@ class PlayerEngine internal constructor(
         scope.launch { playsLoop() }
         scope.launch { uptimeLoop() }
         scope.launch { clockLoop() }
+        scope.launch { mqttLoop() }
     }
 
     private suspend fun pollLoop() {
@@ -201,6 +209,10 @@ class PlayerEngine internal constructor(
                 if (state.commandsPending > 0) runCommands(org, screen?.name ?: "")
                 // Downloads run beside playback; the next poll sees the progress.
                 scope?.launch { updater.offer(state.update) }
+                if (state.mqttConfigAt != mqttConfigAt) {
+                    mqttConfigAt = state.mqttConfigAt
+                    refreshMqtt()
+                }
             }
             "revoked" -> resetIdentity("screen removed")
         }
@@ -435,6 +447,54 @@ class PlayerEngine internal constructor(
         }
     }
 
+    /** Fetches the bridge configuration (or stops bridging when this screen is not a bridge). */
+    internal suspend fun refreshMqtt() {
+        val auth = device.auth ?: return
+        if (mqttConfigAt == null) {
+            mqtt.stop()
+            return
+        }
+        try {
+            mqtt.apply(api.mqtt(auth).brokers)
+            mqttFetchedAt = System.currentTimeMillis()
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w(TAG, "MQTT configuration failed: ${e.message}")
+            mqttConfigAt = null // try again on the next poll
+        }
+    }
+
+    /** Uploads the latest MQTT values every MQTT_FLUSH_SEC and keeps the connections up. */
+    private suspend fun mqttLoop() {
+        while (currentCoroutineContextActive()) {
+            delay(MQTT_FLUSH_SEC * 1000)
+            if (!mqtt.active) continue
+            mqtt.maintain()
+            if (System.currentTimeMillis() - mqttFetchedAt > MQTT_CONFIG_REFRESH_SEC * 1000) refreshMqtt()
+            flushMqtt()
+        }
+    }
+
+    internal suspend fun flushMqtt() {
+        val auth = device.auth ?: return
+        val batches = mqtt.buffer.drain()
+        if (batches.isEmpty()) return
+        try {
+            val res = api.mqttReadings(auth, MqttReadingsBody(batches))
+            // Rate-limited devices try again with their (then newer) values next time.
+            val retry = res.results.filter { it.status == 429 }.map { it.sensorDeviceId }.toSet()
+            if (retry.isNotEmpty()) mqtt.buffer.restore(batches.filter { it.sensorDeviceId in retry })
+            res.results.filter { it.error != null && it.status != 429 }.forEach { Log.w(TAG, "MQTT readings for ${it.sensorDeviceId}: ${it.error}") }
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            mqtt.buffer.restore(batches)
+            throw e
+        } catch (e: Exception) {
+            mqtt.buffer.restore(batches)
+            Log.w(TAG, "MQTT upload failed: ${e.message}")
+        }
+    }
+
     private suspend fun heartbeatLoop() {
         delay(5_000)
         while (currentCoroutineContextActive()) {
@@ -451,6 +511,7 @@ class PlayerEngine internal constructor(
                             errors = ErrorLog.recent(context),
                             update = updater.status.value,
                             vitals = runCatching { Diagnostics.vitals(context) }.getOrNull(),
+                            mqtt = mqtt.status().takeIf { it.isNotEmpty() },
                         ),
                     )
                     ErrorLog.clear(context)
@@ -469,6 +530,8 @@ class PlayerEngine internal constructor(
         plays.clear()
         manifests.clear()
         cache.clear()
+        mqtt.stop()
+        mqttConfigAt = null
         _ui.value = UiState.Starting
     }
 
@@ -497,6 +560,8 @@ class PlayerEngine internal constructor(
     }
 
     companion object {
+        const val MQTT_FLUSH_SEC = 15L
+        const val MQTT_CONFIG_REFRESH_SEC = 15 * 60L
         /** Proof-of-play: save counts and upload finished hours this often. */
         const val PLAYS_SEC = 300
 

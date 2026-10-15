@@ -13,6 +13,7 @@ import { Check, Copy, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSites } from '../../content/data';
+import { useMqttBrokers } from '../../content/sensors';
 import { newId } from '../../content/data';
 import { call, errorMessage } from '../../lib/api';
 import { fieldErrors } from '../../lib/format';
@@ -33,9 +34,12 @@ export function SensorDeviceDialog({
   onSaved: (result: { sensorDeviceId: string; apiKey?: string }, name: string) => void;
 }) {
   const { t } = useTranslation();
-  const { orgId } = useOrg();
+  const { orgId, entitlements } = useOrg();
   const sites = useSites(orgId);
-  const [form, setForm] = useState({ name: '', siteId: '', offlineAfterMin: String(DEFAULT_SENSOR_OFFLINE_MIN), enabled: true });
+  const mqttOn = !!entitlements?.features.includes('sensor.mqtt');
+  const brokers = useMqttBrokers(orgId, mqttOn);
+  const blank = { name: '', siteId: '', offlineAfterMin: String(DEFAULT_SENSOR_OFFLINE_MIN), enabled: true, transport: 'http' as 'http' | 'mqtt', mqttBrokerId: '' };
+  const [form, setForm] = useState(blank);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -44,10 +48,19 @@ export function SensorDeviceDialog({
     setError(null);
     setForm(
       device
-        ? { name: device.name, siteId: device.siteId ?? '', offlineAfterMin: String(device.offlineAfterMin), enabled: device.status === 'active' }
-        : { name: '', siteId: '', offlineAfterMin: String(DEFAULT_SENSOR_OFFLINE_MIN), enabled: true },
+        ? {
+            name: device.name,
+            siteId: device.siteId ?? '',
+            offlineAfterMin: String(device.offlineAfterMin),
+            enabled: device.status === 'active',
+            transport: device.transport ?? 'http',
+            mqttBrokerId: device.mqttBrokerId ?? '',
+          }
+        : blank,
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reset only when the dialog opens
   }, [open, device]);
+  const mqtt = form.transport === 'mqtt';
 
   async function save() {
     setBusy(true);
@@ -60,6 +73,8 @@ export function SensorDeviceDialog({
         siteId: form.siteId || null,
         offlineAfterMin: Number(form.offlineAfterMin),
         enabled: form.enabled,
+        transport: form.transport,
+        mqttBrokerId: mqtt ? form.mqttBrokerId || null : null,
       });
       onSaved(result, form.name);
     } catch (err) {
@@ -79,14 +94,34 @@ export function SensorDeviceDialog({
       footer={
         <>
           <Button onClick={onClose}>{t('common.cancel')}</Button>
-          <Button variant="primary" disabled={busy || !form.name.trim() || !minutesOk} onClick={() => void save()}>
-            {device ? t('common.save') : t('sensors.create')}
+          <Button variant="primary" disabled={busy || !form.name.trim() || !minutesOk || (mqtt && !form.mqttBrokerId)} onClick={() => void save()}>
+            {device ? t('common.save') : mqtt ? t('sensors.createMqtt') : t('sensors.create')}
           </Button>
         </>
       }
     >
       {error ? <Alert tone="danger">{error}</Alert> : null}
       <TextField label={t('sensors.name')} required maxLength={80} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+      {mqttOn && !device ? (
+        <SelectField
+          label={t('sensors.transport')}
+          options={[
+            { value: 'http', label: t('sensors.transports.http') },
+            { value: 'mqtt', label: t('sensors.transports.mqtt') },
+          ]}
+          value={form.transport}
+          onChange={(e) => setForm({ ...form, transport: e.target.value as 'http' | 'mqtt', mqttBrokerId: form.mqttBrokerId || brokers.data[0]?.id || '' })}
+        />
+      ) : null}
+      {mqtt ? (
+        <SelectField
+          label={t('sensors.broker')}
+          hint={brokers.data.length ? t('sensors.brokerHint') : t('sensors.noBrokers')}
+          options={brokers.data.length ? brokers.data.map((b) => ({ value: b.id, label: b.name })) : [{ value: '', label: '—' }]}
+          value={form.mqttBrokerId}
+          onChange={(e) => setForm({ ...form, mqttBrokerId: e.target.value })}
+        />
+      ) : null}
       <SelectField
         label={t('sensors.site')}
         options={[{ value: '', label: t('sensors.noSite') }, ...sites.data.map((s) => ({ value: s.id, label: s.name }))]}
@@ -170,6 +205,8 @@ export function ApiKeyDialog({ value, onClose }: { value: { name: string; apiKey
 }
 
 interface ChannelForm {
+  topic: string;
+  path: string;
   channelId: string;
   name: string;
   unit: string;
@@ -186,11 +223,14 @@ export function ChannelDialog({
   open,
   sensorDeviceId,
   channel,
+  mqtt = false,
   onClose,
 }: {
   open: boolean;
   sensorDeviceId: string;
   channel: SensorChannelDoc | null;
+  /** The device reads from an MQTT broker: ask for the topic (and JSON field). */
+  mqtt?: boolean;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
@@ -215,8 +255,10 @@ export function ChannelDialog({
             max: channel.max === null ? '' : String(channel.max),
             staleAfterMin: String(Math.round(channel.staleAfterSec / 60)),
             alertRules: channel.alertRules,
+            topic: channel.mqtt?.topic ?? '',
+            path: channel.mqtt?.path ?? '',
           }
-        : { channelId: '', name: '', unit: '', valueType: 'number', min: '', max: '', staleAfterMin: String(DEFAULT_STALE_AFTER_SEC / 60), alertRules: [] },
+        : { topic: '', path: '', channelId: '', name: '', unit: '', valueType: 'number', min: '', max: '', staleAfterMin: String(DEFAULT_STALE_AFTER_SEC / 60), alertRules: [] },
     );
   }, [open, channel]);
 
@@ -238,6 +280,7 @@ export function ChannelDialog({
       max: form.valueType === 'number' ? num(form.max) : null,
       staleAfterSec: Math.round(Number(form.staleAfterMin) * 60),
       alertRules: form.alertRules,
+      mqtt: mqtt ? { topic: form.topic, path: form.path.trim() || null } : null,
     };
     const parsed = SaveSensorChannelInput.safeParse(input);
     if (!parsed.success) {
@@ -272,10 +315,31 @@ export function ChannelDialog({
       }
     >
       {error ? <Alert tone="danger">{error}</Alert> : null}
+      {mqtt ? (
+        <div className="wxp-form__row">
+          <TextField
+            label={t('channels.topic')}
+            hint={t('channels.topicHint')}
+            required
+            maxLength={200}
+            value={form.topic}
+            error={errors['mqtt.topic'] ?? errors.mqtt}
+            onChange={(e) => setForm({ ...form, topic: e.target.value })}
+          />
+          <TextField
+            label={t('channels.jsonField')}
+            hint={t('channels.jsonFieldHint')}
+            maxLength={100}
+            value={form.path}
+            error={errors['mqtt.path']}
+            onChange={(e) => setForm({ ...form, path: e.target.value })}
+          />
+        </div>
+      ) : null}
       <div className="wxp-form__row">
         <TextField
           label={t('channels.key')}
-          hint={t('channels.keyHint')}
+          hint={mqtt ? t('channels.keyHintMqtt') : t('channels.keyHint')}
           required
           disabled={!!channel}
           maxLength={32}

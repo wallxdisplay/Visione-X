@@ -54,6 +54,13 @@ class Api(private val base: String, val http: OkHttpClient = defaultClient()) {
         )
     }
 
+    /** MQTT bridge configuration of this screen (brokers, credentials, topics). */
+    suspend fun mqtt(auth: String): DeviceMqttResponse = get("/devices/mqtt", auth)
+
+    /** Latest values the bridge received, per sensor device. */
+    suspend fun mqttReadings(auth: String, body: MqttReadingsBody): MqttReadingsResponse =
+        post("/devices/mqtt/readings", json.encodeToString(body), auth)
+
     suspend fun heartbeat(auth: String, body: Heartbeat) {
         request(
             Request.Builder().url("$base/devices/heartbeat").post(json.encodeToString(body).toRequestBody(jsonType)),

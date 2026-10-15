@@ -13,3 +13,8 @@
 -dontwarn org.conscrypt.**
 -dontwarn org.bouncycastle.**
 -dontwarn org.openjsse.**
+# Eclipse Paho MQTT (bridge, 0.18.0): loads its network modules (ServiceLoader), logger and
+# message catalog by name, so keep the library as it is.
+-keep class org.eclipse.paho.client.mqttv3.** { *; }
+-keepnames class org.eclipse.paho.client.mqttv3.** { *; }
+-dontwarn org.eclipse.paho.client.mqttv3.**

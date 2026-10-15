@@ -87,9 +87,17 @@ class LiveStore {
     @Volatile var pollSec: Long = LIVE_POLL_SEC
         private set
 
+    /** Values this screen received itself as an MQTT bridge, newer than the server's until it catches up. */
+    private val local = java.util.concurrent.ConcurrentHashMap<String, Pair<Double, Long>>()
+
     fun applyLive(res: LiveResponse, channels: List<LiveChannel>) {
         val next = res.values.associate {
-            "${it.sourceId}/${it.field}" to LiveValue(it.value, it.ts, it.staleAfterSec, it.deviceOnline, it.valueType, it.unit)
+            val key = "${it.sourceId}/${it.field}"
+            val mine = local[key]
+            val useLocal = mine != null && (it.ts == null || mine.second > it.ts)
+            if (mine != null && !useLocal) local.remove(key)
+            if (useLocal) key to LiveValue(mine!!.first, mine.second, it.staleAfterSec, true, it.valueType, it.unit)
+            else key to LiveValue(it.value, it.ts, it.staleAfterSec, it.deviceOnline, it.valueType, it.unit)
         }
         names = res.values.associate { "${it.sourceId}/${it.field}" to it.name.ifEmpty { it.field } }
         pollSec = res.refreshSec.toLong().coerceIn(MIN_POLL_SEC, MAX_POLL_SEC)
@@ -108,6 +116,14 @@ class LiveStore {
             hist[key] = (series + (ts to value)).filter { it.first >= from }
         }
         _history.value = hist
+    }
+
+    /** A value received over MQTT on this screen: shown at once on widgets that bind it. */
+    fun applyLocal(key: String, value: Double, ts: Long) {
+        local[key] = value to ts
+        val cur = _values.value[key] ?: return
+        if (cur.ts != null && cur.ts >= ts) return
+        _values.value = _values.value + (key to cur.copy(value = value, ts = ts, deviceOnline = true))
     }
 
     fun applyHistory(res: HistoryResponse) {

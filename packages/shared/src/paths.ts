@@ -85,6 +85,9 @@ export const paths = {
     `orgs/${orgId}/sensorDevices/${deviceId}/channels/${channelId}/readings/${bucketId}`,
   /** Global lookup from API key hash → sensor device (server-only). */
   sensorKey: (keyHash: string) => `sensorKeys/${keyHash}`,
+  mqttBrokers: (orgId: string) => `orgs/${orgId}/mqttBrokers`,
+  mqttBroker: (orgId: string, id: string) => `orgs/${orgId}/mqttBrokers/${id}`,
+  mqttBrokerSecret: (orgId: string, id: string) => `orgs/${orgId}/mqttBrokerSecrets/${id}`,
   sensorKeys: () => 'sensorKeys',
   dataSources: (orgId: string) => `orgs/${orgId}/dataSources`,
   dataSource: (orgId: string, id: string) => `orgs/${orgId}/dataSources/${id}`,

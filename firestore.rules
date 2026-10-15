@@ -203,6 +203,12 @@ service cloud.firestore {
         }
       }
 
+      // MQTT brokers (never the password: mqttBrokerSecrets is server-only).
+      match /mqttBrokers/{brokerId} {
+        allow read: if hasPerm(orgId, 'sensor.view') && inSiteScope(orgId, resource.data.get('siteId', null));
+        allow write: if false;
+      }
+
       // Public API keys (never the key itself) and webhooks (never the signing secret).
       match /apiKeys/{keyId} {
         allow read: if hasPerm(orgId, 'apikey.manage');

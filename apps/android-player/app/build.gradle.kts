@@ -26,8 +26,8 @@ android {
         applicationId = "com.wallx.play"
         minSdk = 24
         targetSdk = 35
-        versionCode = 17
-        versionName = "0.17.0"
+        versionCode = 18
+        versionName = "0.18.0"
         buildConfigField("String", "API_BASE", "\"$apiBase\"")
     }
 
@@ -97,6 +97,8 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
     implementation("com.google.zxing:core:3.5.3")
+    // MQTT bridge (0.18.0): pure-Java client, no Android service.
+    implementation("org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.5")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
@@ -104,5 +106,7 @@ dependencies {
     testImplementation("androidx.test:core:1.6.1")
     testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
     testImplementation("androidx.compose.ui:ui-test-junit4")
+    // In-process MQTT broker for the Paho bridge test.
+    testImplementation("io.moquette:moquette-broker:0.17")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 }

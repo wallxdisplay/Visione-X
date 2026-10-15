@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router';
 import { useSites } from '../../content/data';
-import { useReadings, useSensorChannels } from '../../content/sensors';
+import { useReadings, useMqttBrokers, useSensorChannels } from '../../content/sensors';
 import { call, errorMessage } from '../../lib/api';
 import { formatDateTime } from '../../lib/format';
 import { useDoc } from '../../lib/hooks';
@@ -91,9 +91,10 @@ export function SensorDetail() {
   const { t } = useTranslation();
   const { sensorDeviceId = '' } = useParams();
   const navigate = useNavigate();
-  const { orgId, can } = useOrg();
+  const { orgId, can, entitlements } = useOrg();
   const device = useDoc<SensorDeviceDoc>(paths.sensorDevice(orgId, sensorDeviceId));
   const channels = useSensorChannels(orgId, sensorDeviceId);
+  const brokers = useMqttBrokers(orgId, !!entitlements?.features.includes('sensor.mqtt'));
   const sites = useSites(orgId);
   const manage = can('sensor.manage');
   const [editing, setEditing] = useState(false);
@@ -155,9 +156,11 @@ export function SensorDetail() {
               <Button onClick={() => setEditing(true)}>
                 <Pencil size={14} aria-hidden /> {t('common.edit')}
               </Button>
-              <Button onClick={() => setConfirm('rotate')}>
-                <KeyRound size={14} aria-hidden /> {t('sensors.rotateKey')}
-              </Button>
+              {d.transport !== 'mqtt' ? (
+                <Button onClick={() => setConfirm('rotate')}>
+                  <KeyRound size={14} aria-hidden /> {t('sensors.rotateKey')}
+                </Button>
+              ) : null}
               <Button variant="tertiary" onClick={() => setConfirm('delete')}>
                 <Trash2 size={14} aria-hidden /> {t('common.delete')}
               </Button>
@@ -175,20 +178,29 @@ export function SensorDetail() {
           <dd>{sites.data.find((s) => s.id === d.siteId)?.name ?? '—'}</dd>
           <dt>{t('sensors.offlineAfter')}</dt>
           <dd>{t('sensors.minutes', { count: d.offlineAfterMin })}</dd>
-          <dt>{t('sensors.firmware')}</dt>
-          <dd>{d.firmware ?? '—'}</dd>
-          <dt>{t('sensors.apiKey')}</dt>
-          <dd>
-            <code>{d.keyPrefix}…</code> <span className="wxp-muted">({formatDateTime(d.keyCreatedAt)})</span>
-          </dd>
-          <dt>{t('sensors.deviceId')}</dt>
-          <dd>
-            <code>{d.id}</code>
-          </dd>
-          <dt>{t('sensors.endpoint')}</dt>
-          <dd>
-            <code>{ingestUrl()}</code>
-          </dd>
+          {d.transport === 'mqtt' ? (
+            <>
+              <dt>{t('sensors.broker')}</dt>
+              <dd>{brokers.data.find((b) => b.id === d.mqttBrokerId)?.name ?? '—'}</dd>
+            </>
+          ) : (
+            <>
+              <dt>{t('sensors.firmware')}</dt>
+              <dd>{d.firmware ?? '—'}</dd>
+              <dt>{t('sensors.apiKey')}</dt>
+              <dd>
+                <code>{d.keyPrefix}…</code> <span className="wxp-muted">({formatDateTime(d.keyCreatedAt)})</span>
+              </dd>
+              <dt>{t('sensors.deviceId')}</dt>
+              <dd>
+                <code>{d.id}</code>
+              </dd>
+              <dt>{t('sensors.endpoint')}</dt>
+              <dd>
+                <code>{ingestUrl()}</code>
+              </dd>
+            </>
+          )}
         </dl>
       </div>
 
@@ -223,6 +235,12 @@ export function SensorDetail() {
                     <td>{c.name}</td>
                     <td>
                       <code>{c.id}</code>
+                      {c.mqtt ? (
+                        <div className="wxp-muted channel-topic">
+                          {c.mqtt.topic}
+                          {c.mqtt.path ? ` → ${c.mqtt.path}` : ''}
+                        </div>
+                      ) : null}
                     </td>
                     <td className="wxp-tabular">{c.latest ? display(c, c.latest.value, t) : '—'}</td>
                     <td>
@@ -270,7 +288,7 @@ export function SensorDetail() {
       ) : null}
 
       <SensorDeviceDialog open={editing} device={d} onClose={() => setEditing(false)} onSaved={() => setEditing(false)} />
-      <ChannelDialog open={!!channelDialog} sensorDeviceId={sensorDeviceId} channel={channelDialog?.channel ?? null} onClose={() => setChannelDialog(null)} />
+      <ChannelDialog open={!!channelDialog} sensorDeviceId={sensorDeviceId} channel={channelDialog?.channel ?? null} mqtt={d.transport === 'mqtt'} onClose={() => setChannelDialog(null)} />
       <ApiKeyDialog value={newKey} onClose={() => setNewKey(null)} />
       <Dialog
         open={!!confirm}

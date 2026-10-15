@@ -8,6 +8,7 @@ import { useSites } from '../../content/data';
 import { useSensorDevices } from '../../content/sensors';
 import { formatDateTime } from '../../lib/format';
 import { useOrg } from '../../org/OrgProvider';
+import { MqttBrokersSection } from './MqttBrokers';
 import { ApiKeyDialog, SensorDeviceDialog } from './SensorDialogs';
 import './sensors.css';
 
@@ -24,6 +25,7 @@ export function Sensors() {
   const { t } = useTranslation();
   const { orgId, can, entitlements } = useOrg();
   const entitled = !!entitlements?.features.includes('sensor.esp32');
+  const mqttOn = entitled && !!entitlements?.features.includes('sensor.mqtt') && can('sensor.view');
   const devices = useSensorDevices(orgId, entitled && can('sensor.view'));
   const sites = useSites(orgId);
   const [adding, setAdding] = useState(false);
@@ -87,6 +89,7 @@ export function Sensors() {
                   <tr key={d.id}>
                     <td>
                       <Link to={`/sensors/${d.id}`}>{d.name}</Link>
+                      {d.transport === 'mqtt' ? <span className="transport-tag">MQTT</span> : null}
                     </td>
                     <td>
                       <StatusChip tone={s.tone}>{t(`sensors.states.${s.key}`)}</StatusChip>
@@ -101,6 +104,8 @@ export function Sensors() {
           </table>
         </div>
       )}
+
+      {mqttOn ? <MqttBrokersSection /> : null}
 
       <SensorDeviceDialog
         open={adding}

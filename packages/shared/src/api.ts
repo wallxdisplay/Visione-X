@@ -197,6 +197,8 @@ export const CALLABLES = {
   apiOverview: 'apiOverview',
   saveSyncGroup: 'saveSyncGroup',
   deleteSyncGroup: 'deleteSyncGroup',
+  saveMqttBroker: 'saveMqttBroker',
+  deleteMqttBroker: 'deleteMqttBroker',
   setMemberSites: 'setMemberSites',
   saveRole: 'saveRole',
   deleteRole: 'deleteRole',

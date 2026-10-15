@@ -22,6 +22,7 @@ import { readEntitlements, requireFeature } from '../lib/entitlements';
 import { userAudit } from '../content/media';
 import { notify } from '../lib/notify';
 import { compileManifest } from './manifest';
+import { bridgedBrokerNames } from '../sensors/mqtt';
 
 async function checkTargets(
   tx: Transaction,
@@ -206,6 +207,10 @@ export async function removeScreen(
     const screen = (await tx.get(ref)).data() as ScreenDoc | undefined;
     if (!screen) throw new HttpsError('not-found', 'Screen not found.');
     requireSiteInScope(member, screen.siteId, 'this screen');
+    const bridged = await bridgedBrokerNames(tx, db, input.orgId, input.screenId);
+    if (bridged.length) {
+      throw new HttpsError('failed-precondition', `This screen is the MQTT bridge for ${bridged.map((n) => `“${n}”`).join(', ')}. Choose another bridge screen first.`);
+    }
     tx.delete(ref);
     tx.delete(db.doc(paths.screenManifest(input.orgId, input.screenId)));
     if (screen.deviceId) tx.update(db.doc(paths.device(screen.deviceId)), { status: 'revoked', updatedAt: at });
