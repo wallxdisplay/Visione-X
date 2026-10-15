@@ -20,6 +20,8 @@ import {
   type ScheduleDoc,
   type ScheduleTarget,
   type ScreenDoc,
+  type SyncGroupDoc,
+  type SyncMember,
 } from '@wallx-play/shared';
 import type { Deps } from '../lib/context';
 import { downloadUrl } from '../lib/storageUrl';
@@ -58,6 +60,8 @@ export interface ManifestSources {
   assetUrls: Map<string, string>;
   /** Active emergency override for this screen, if any. */
   emergency?: EmergencyDoc | null;
+  /** The sync group the screen plays in (enabled, with this screen as a member), if any. */
+  sync?: { group: SyncGroupDoc; member: SyncMember } | null;
 }
 
 /**
@@ -82,8 +86,13 @@ export function assembleManifest(src: ManifestSources): Manifest {
       playlistId: s.playlistId,
     }));
 
-  const defaultPlaylistId =
-    src.screen.defaultPlaylistId && src.playlists.has(src.screen.defaultPlaylistId) ? src.screen.defaultPlaylistId : null;
+  // In a sync group the group's playlist replaces the screen's schedules (emergencies still win).
+  const group = src.sync && src.playlists.has(src.sync.group.playlistId) ? src.sync : null;
+  const defaultPlaylistId = group
+    ? group.group.playlistId
+    : src.screen.defaultPlaylistId && src.playlists.has(src.screen.defaultPlaylistId)
+      ? src.screen.defaultPlaylistId
+      : null;
 
   const cleanItems = (items: PlaylistItem[]) =>
     items.filter((i) =>
@@ -149,7 +158,7 @@ export function assembleManifest(src: ManifestSources): Manifest {
     generatedAt: src.now,
     layouts,
     playlists,
-    schedules: rules,
+    schedules: group ? [] : rules,
     defaultPlaylistId,
     fallbackMediaId: null,
     emergency,
@@ -157,6 +166,14 @@ export function assembleManifest(src: ManifestSources): Manifest {
     liveChannels: liveChannelsOf(layouts, playlists),
     dataSources: dataSourcesOf(layouts, playlists),
     rotation: src.screen.rotation ?? 0,
+    sync: group
+      ? {
+          groupId: group.group.id,
+          mode: group.group.mode,
+          anchor: group.group.anchor,
+          tile: group.group.mode === 'wall' ? { rows: group.group.rows, cols: group.group.cols, row: group.member.row, col: group.member.col } : null,
+        }
+      : null,
   });
 }
 
@@ -184,8 +201,13 @@ export async function compileManifest(
   const emergency = activeEmergencyFor(emergencies, screen, now());
 
   // Playlists from schedules + default + emergency, then layouts they contain, then zone playlists.
+  const groupDoc = screen.syncGroupId ? ((await db.doc(paths.syncGroup(orgId, screen.syncGroupId)).get()).data() as SyncGroupDoc | undefined) : undefined;
+  const member = groupDoc?.enabled ? groupDoc.members.find((m) => m.screenId === screen.id) : undefined;
+  const sync = groupDoc && member ? { group: groupDoc, member } : null;
+
   const playlistIds = new Set(schedules.map((s) => s.playlistId));
   if (screen.defaultPlaylistId) playlistIds.add(screen.defaultPlaylistId);
+  if (sync) playlistIds.add(sync.group.playlistId);
   if (emergency?.content.kind === 'playlist') playlistIds.add(emergency.content.playlistId);
   const playlists = await getMany<PlaylistDoc>(db, (id) => paths.playlist(orgId, id), playlistIds);
   const layouts = await getMany<LayoutDoc>(db, (id) => paths.layout(orgId, id), [...playlists.values()].flatMap((p) => p.layoutIds));
@@ -201,5 +223,5 @@ export async function compileManifest(
       .map(async (m) => assetUrls.set(m.id, await downloadUrl(bucket, m.display!.path))),
   );
 
-  return assembleManifest({ orgId, screen, version, now: now(), schedules, playlists, layouts, media, assetUrls, emergency });
+  return assembleManifest({ orgId, screen, version, now: now(), schedules, playlists, layouts, media, assetUrls, emergency, sync });
 }

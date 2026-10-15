@@ -196,7 +196,7 @@ function ReleaseDialog({ change, onClose, onSaved }: { change: { key: FeatureKey
     >
       {error ? <Alert tone="danger">{error}</Alert> : null}
       <p>{t(`adminFeatures.releaseEffect.${change.to}`)}</p>
-      <TextAreaField label={t('adminBilling.reason')} required maxLength={500} value={reason} onChange={(e) => setReason(e.target.value)} />
+      <TextAreaField label={t('adminBilling.reason')} hint={t('adminBilling.reasonHint')} required maxLength={500} value={reason} onChange={(e) => setReason(e.target.value)} />
     </Dialog>
   );
 }

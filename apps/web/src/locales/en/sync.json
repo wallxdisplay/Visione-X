@@ -1,0 +1,45 @@
+{
+  "sync": {
+    "description": "Play one playlist on several screens in perfect step: the same content side by side, or one picture spread over a video wall.",
+    "notInPlanTitle": "Multi-screen sync is not included in your plan",
+    "notInPlanBody": "Multi-screen sync and video walls are part of the Enterprise plan. Contact WallX to set them up.",
+    "new": "New sync group",
+    "edit": "Edit sync group",
+    "name": "Name",
+    "mode": "Mode",
+    "playlist": "Playlist",
+    "screens": "Screens",
+    "on": "On",
+    "off": "Paused",
+    "wallSize": "Video wall {{cols}} × {{rows}}",
+    "unknownScreen": "Removed screen",
+    "modes": {
+      "mirror": "Mirror",
+      "wall": "Video wall"
+    },
+    "modeHints": {
+      "mirror": "every screen shows the same content and changes at the same moment",
+      "wall": "one picture spread over a grid of screens"
+    },
+    "playlistHint": "While the group is on, its screens play this playlist instead of their schedules. Emergencies still take over.",
+    "noPlaylists": "Create a playlist first",
+    "chooseScreen": "Choose a screen",
+    "noScreens": "No authorized screens yet.",
+    "inGroup": "in “{{name}}”",
+    "cols": "Screens across",
+    "rows": "Screens down",
+    "wallHint": "Pick the screen in each position, as seen from the front. Use screens of the same size and orientation.",
+    "cell": "Row {{row}}, column {{col}}",
+    "fillWall": "Put one screen in every position of the wall.",
+    "enabled": "Play in sync now",
+    "saveAndPublish": "Save and publish",
+    "saved_one": "“{{name}}” saved and published to {{count}} screen.",
+    "saved_other": "“{{name}}” saved and published to {{count}} screens.",
+    "deleted": "“{{name}}” deleted; its screens are back on their own schedules.",
+    "deleteTitle": "Delete “{{name}}”?",
+    "deleteBody": "Its screens go back to their own schedules and are republished now.",
+    "emptyTitle": "No sync groups yet",
+    "emptyBody": "Group screens that stand together (shop windows, menu boards, video walls) so they play in step.",
+    "note": "Synced screens need player 0.16.0 or newer and a stable network. They agree on the time with WallX Play to within a few hundredths of a second; videos are kept in step continuously."
+  }
+}

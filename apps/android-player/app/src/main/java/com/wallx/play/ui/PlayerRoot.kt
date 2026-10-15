@@ -101,11 +101,17 @@ private fun Playback(state: UiState.Playing, engine: PlayerEngine) {
         Box(Modifier.fillMaxSize().background(Color.Black))
         return
     }
+    // Sync group: every playlist follows the group's timeline on the measured server clock.
+    val syncClock = remember(m.sync?.anchor) { m.sync?.let { SyncClock(it.anchor, engine::serverNow) } }
     Rotated(m.rotation) {
-        CompositionLocalProvider(LocalPlayLog provides engine.plays) {
-            PlaylistPlayer(playlist.items, ctx) { item ->
-                engine.nowPlaying = Playing(playlist.id, item?.id, resolution.source)
+        CompositionLocalProvider(LocalPlayLog provides engine.plays, LocalSyncClock provides syncClock) {
+            val player: @Composable () -> Unit = {
+                PlaylistPlayer(playlist.items, ctx) { item ->
+                    engine.nowPlaying = Playing(playlist.id, item?.id, resolution.source)
+                }
             }
+            val tile = m.sync?.tile
+            if (tile != null) WallTileView(tile) { player() } else player()
         }
     }
 }

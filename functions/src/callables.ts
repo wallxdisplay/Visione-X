@@ -78,6 +78,8 @@ import {
   SaveWebhookInput,
   WebhookRefInput,
   ApiOverviewInput,
+  SaveSyncGroupInput,
+  SyncGroupRefInput,
   type PlatformRole,
 } from '@wallx-play/shared';
 import { setPlatformRole as setPlatformRoleSvc } from './admin/platformUsers';
@@ -108,6 +110,7 @@ import * as analytics from './reports/analytics';
 import * as apiKeys from './publicApi/keys';
 import * as webhooks from './publicApi/webhooks';
 import { apiOverview as apiOverviewSvc } from './publicApi/overview';
+import * as syncGroups from './screens/syncGroups';
 import { BASE_OPTIONS, MAIL_SECRETS, WEATHER_SECRETS, enforceAppCheck } from './options';
 
 export function actorFrom(request: CallableRequest): Actor {
@@ -263,3 +266,7 @@ export const deleteWebhook = callable(WebhookRefInput, webhooks.deleteWebhook);
 export const rotateWebhookSecret = callable(WebhookRefInput, webhooks.rotateWebhookSecret);
 export const testWebhook = callable(WebhookRefInput, webhooks.testWebhook, { timeoutSeconds: 60 });
 export const apiOverview = callable(ApiOverviewInput, apiOverviewSvc);
+
+// Multi-screen sync
+export const saveSyncGroup = callable(SaveSyncGroupInput, syncGroups.saveSyncGroup, { memory: '512MiB', timeoutSeconds: 120 });
+export const deleteSyncGroup = callable(SyncGroupRefInput, syncGroups.deleteSyncGroup, { memory: '512MiB', timeoutSeconds: 120 });

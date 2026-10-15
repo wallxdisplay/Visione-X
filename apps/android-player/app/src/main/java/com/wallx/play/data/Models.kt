@@ -38,7 +38,19 @@ data class Manifest(
     val dataSources: List<ManifestDataSource> = emptyList(),
     /** Clockwise degrees to rotate the whole output (0, 90, 180, 270): portrait walls on landscape HDMI. */
     val rotation: Int = 0,
+    /** Multi-screen sync (0.16.0): play on the group's shared timeline, as a wall tile when set. */
+    val sync: SyncInfo? = null,
 )
+
+@Serializable
+data class SyncInfo(val groupId: String, val mode: String, val anchor: Long, val tile: WallTile? = null)
+
+/** This screen's cell in a video wall of cols × rows screens. */
+@Serializable
+data class WallTile(val rows: Int, val cols: Int, val row: Int, val col: Int)
+
+@Serializable
+data class TimeResponse(val serverTime: Long)
 
 @Serializable
 data class Layout(val specVersion: Int, val id: String, val name: String, val canvas: Canvas, val zones: List<Zone>)

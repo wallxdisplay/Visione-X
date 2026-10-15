@@ -12,6 +12,7 @@ import {
   HelpCircle,
   Images,
   KeyRound,
+  Grid2x2,
   LayoutDashboard,
   LayoutTemplate,
   ListVideo,
@@ -58,6 +59,7 @@ export const customerNav: NavGroup[] = [
       { labelKey: 'nav.studio', path: '/studio', icon: LayoutTemplate, phase: 2 },
       { labelKey: 'nav.playlists', path: '/playlists', icon: ListVideo, phase: 2 },
       { labelKey: 'nav.schedules', path: '/schedules', icon: CalendarClock, phase: 2 },
+      { labelKey: 'nav.sync', path: '/sync', icon: Grid2x2, phase: 'v1.1' },
     ],
   },
   {

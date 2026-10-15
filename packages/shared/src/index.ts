@@ -18,3 +18,4 @@ export * from './support';
 export * from './accounts';
 export * from './reports';
 export * from './publicApi';
+export * from './sync';

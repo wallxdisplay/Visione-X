@@ -133,6 +133,7 @@ class PlayerEngine internal constructor(
         scope.launch { dataLoop() }
         scope.launch { playsLoop() }
         scope.launch { uptimeLoop() }
+        scope.launch { clockLoop() }
     }
 
     private suspend fun pollLoop() {
@@ -290,8 +291,15 @@ class PlayerEngine internal constructor(
         _ui.value = UiState.Playing(manifest, MediaLibrary(files))
     }
 
-    /** Server time as best known (device clock corrected by the skew seen on /me). */
-    fun serverNow(): Long = System.currentTimeMillis() - (serverSkewMs ?: 0L)
+    /** Precise server clock, measured while the content plays in a sync group. */
+    val clockSync = ClockSync()
+
+    /**
+     * Server time as best known: from the sync clock when measured (monotonic, tens of ms), else the
+     * device clock corrected by the skew seen on /me.
+     */
+    fun serverNow(): Long =
+        clockSync.offsetMs?.let { android.os.SystemClock.elapsedRealtime() + it } ?: (System.currentTimeMillis() - (serverSkewMs ?: 0L))
 
     /**
      * Polls live sensor values while the playing manifest binds sensor channels; chart
@@ -394,7 +402,32 @@ class PlayerEngine internal constructor(
         }
     }
 
-/** Every minute: the player is running, and online if its last server contact worked. */
+/** While the content plays in a sync group: measure the server clock now and every 10 minutes. */
+    private suspend fun clockLoop() {
+        while (currentCoroutineContextActive()) {
+            val synced = (_ui.value as? UiState.Playing)?.manifest?.sync != null
+            if (synced) measureClock()
+            delay(if (synced && clockSync.offsetMs != null) CLOCK_RESYNC_MS else 15_000L)
+        }
+    }
+
+    /** A few quick round trips; ClockSync keeps the most accurate. */
+    internal suspend fun measureClock(samples: Int = 5) {
+        repeat(samples) {
+            try {
+                val sentAt = android.os.SystemClock.elapsedRealtime()
+                val serverTime = api.time().serverTime
+                clockSync.add(sentAt, android.os.SystemClock.elapsedRealtime(), serverTime)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w(TAG, "Clock sample failed: ${e.message}")
+            }
+            delay(200)
+        }
+    }
+
+    /** Every minute: the player is running, and online if its last server contact worked. */
     private suspend fun uptimeLoop() {
         while (currentCoroutineContextActive()) {
             delay(60_000)
@@ -466,6 +499,9 @@ class PlayerEngine internal constructor(
     companion object {
         /** Proof-of-play: save counts and upload finished hours this often. */
         const val PLAYS_SEC = 300
+
+        /** Re-measure the sync clock this often (box clocks drift a few ms per minute). */
+        const val CLOCK_RESYNC_MS = 10 * 60_000L
 
         /** How often the data loop looks for new data sources in the playing content. */
         const val DATA_CHECK_MS = 15_000L

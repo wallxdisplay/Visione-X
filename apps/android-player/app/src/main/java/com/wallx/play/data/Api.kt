@@ -22,6 +22,9 @@ class Api(private val base: String, val http: OkHttpClient = defaultClient()) {
 
     suspend fun me(auth: String): DeviceState = get("/devices/me", auth)
 
+    /** Server clock for multi-screen sync (no credentials, no database: a quick, even round trip). */
+    suspend fun time(): TimeResponse = get("/devices/time", auth = null)
+
     /** Raw manifest JSON (stored as-is so the exact published version can be reloaded offline). */
     suspend fun manifestJson(auth: String): String = request(Request.Builder().url("$base/devices/manifest").get(), auth)
 

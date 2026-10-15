@@ -244,6 +244,9 @@ Players 0.14.0+ add per-hour uptime to the same hourly upload: seconds the playe
 ## 13c. Public API & webhooks (v1.1, Enterprise)
 **API keys** (`api.keys`): members with `apikey.manage` create keys with scopes (screens:read, screens:command, content:publish, emergency:write, reports:read); the key `wxp_<keyId>_<secret>` is shown once and only its SHA-256 is stored (`apiKeyHashes`, server-only). Calls go to the `api` function under `/api/v1/{me,screens,publish,emergencies,reports}` with `Authorization: Bearer`; each counts against the plan's `apiCallsPerDay` (`apiUsage/{orgId}_{day}`). A key acts as a synthetic member of its own organization holding exactly its scopes' permissions (`apiKeyMember` in authz), so every call runs through the existing services, plan checks, approval workflow and audit log (actorType `api_key`). **Webhooks** (`api.webhooks`): the `webhookNotification` trigger maps in-app notifications to events (screen.offline/online, emergency.started/ended, approval.requested/decided, sensor.*), sends a signed JSON POST (`X-WallX-Signature: t=…,v1=HMAC-SHA256(secret, "t.body")`) once per notification (`webhookLog`), with up to 3 tries, SSRF checks, a 14-day delivery log, and an automatic switch-off after 20 failures in a row. Secrets live in `webhookSecrets` (server-only). Web: API & webhooks page (`/developers`, with the API reference) and Super Admin → Integrations & API (counts only).
 
+## 13d. Multi-screen sync (Enterprise, `screen.multiSync`)
+A sync group (`orgs/{orgId}/syncGroups`) plays one playlist on up to 16 screens, mirrored or as a video wall (cols × rows ≤ 4 × 4); a screen belongs to at most one group (`screen.syncGroupId`). The manifest of a member carries `sync {groupId, mode, anchor, tile}` and the group's playlist replaces its schedules (emergencies still win). Players (0.16.0+) derive the current item from the shared timeline (anchor + durations), so no player-to-player link is needed and a restarted player rejoins in place; every playlist on screen (also zone playlists) follows it. The server clock comes from NTP-style samples of `GET /api/v1/devices/time` (best of 5, every 10 min, monotonic clock). Videos are checked every second: drift > 40 ms is corrected by playing 5 % faster/slower, > 500 ms by a seek. A wall tile lays the content out at full wall size, shifted and clipped. Publishing any member republishes the whole group, so a group never runs two versions.
+
 ## 14. Internationalization
 `i18next` with JSON resources in `apps/web/src/locales/{en,hi,mr}`; all UI strings externalized. The language is chosen per browser (top bar) and Hindi/Marathi load on demand; missing keys fall back to English, and a unit test keeps every translation's keys and `{{placeholders}}` identical to English. Dates follow the language (`en-IN`, `hi-IN`, `mr-IN` with Latin digits). Screen content (clock, weather, charts) follows the player and stays English. Hindi and Marathi are machine-drafted and need review by native speakers. Fonts: Inter (UI) + Noto Sans Devanagari (content, bundled on player).
 
@@ -270,7 +273,7 @@ Feature catalogue stores `releaseStatus` (what WallX has built) separately from 
 | Proof-of-play reports, diagnostics | v1.1 | – | – | ✓ | ✓ |
 | API keys & webhooks | v1.1 | – | – | – | ✓ |
 | Hindi / Marathi UI | later | — all plans — |
-| Multi-screen sync, interactive/touch, MQTT | later | – | – | – | ✓ |
+| Multi-screen sync ✅ (player 0.16.0); interactive/touch, MQTT | later | – | – | – | ✓ |
 | Self-service reseller portal, white-label | later | – | – | – | ✓ |
 *Plan columns are a proposal — confirm or edit.*
 
@@ -284,7 +287,7 @@ Feature catalogue stores `releaseStatus` (what WallX has built) separately from 
 | 4 ✅ | Publish & monitor | Manifest compiler, sync, bulk publish, emergency override, heartbeats, remote commands, diagnostics |
 | 5 ✅ (real ESP32 test pending) | Sensors | Ingest API, ESP32 firmware sample, channels, thresholds, data widgets, alerts |
 | 6 ✅ | Billing & beyond | Manual billing ✅; weather + RSS integrations ✅; player auto-updates ✅; Help & Support, support access, platform settings ✅; Hindi/Marathi (draft, review pending) ✅; reseller groundwork ✅; retention + audit export ✅. Google Weather (needs the API key secret) and Gmail emails (need the App Password secret) ✅. Air quality (AQI) widget with India NAQI, Google Air Quality API on the weather key ✅. Later: Razorpay. Invoices: external app |
-| v1.1 🚧 | Reports, analytics, API | Proof-of-play: player counting (0.13.0), upload API, daily summaries, Playback Reports page with CSV ✅. Analytics & diagnostics: uptime (player 0.14.0), vitals, event history, Analytics page, Diagnostics panel ✅. Public API keys & signed webhooks, API page and admin overview ✅ |
+| v1.1 ✅ | Reports, analytics, API | Proof-of-play: player counting (0.13.0), upload API, daily summaries, Playback Reports page with CSV ✅. Analytics & diagnostics: uptime (player 0.14.0), vitals, event history, Analytics page, Diagnostics panel ✅. Public API keys & signed webhooks, API page and admin overview ✅ |
 
 ## 18. Still to confirm
 1. Real Firebase **project ID** and **Hosting site ID** (display name "WallX Play" is not the ID), and whether Firestore already exists (region).

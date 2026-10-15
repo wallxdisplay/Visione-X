@@ -195,6 +195,8 @@ export const CALLABLES = {
   rotateWebhookSecret: 'rotateWebhookSecret',
   testWebhook: 'testWebhook',
   apiOverview: 'apiOverview',
+  saveSyncGroup: 'saveSyncGroup',
+  deleteSyncGroup: 'deleteSyncGroup',
   setMemberSites: 'setMemberSites',
   saveRole: 'saveRole',
   deleteRole: 'deleteRole',

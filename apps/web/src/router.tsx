@@ -19,6 +19,7 @@ import { PlaybackReports } from './pages/reports/PlaybackReports';
 import { Analytics } from './pages/analytics/Analytics';
 import { ApiAccess } from './pages/api/ApiAccess';
 import { AdminApi } from './pages/admin/AdminApi';
+import { SyncGroups } from './pages/content/SyncGroups';
 import { ApprovalReview } from './pages/admin/ApprovalReview';
 import { Approvals } from './pages/admin/Approvals';
 import { AuditLogs } from './pages/admin/AuditLogs';
@@ -66,6 +67,7 @@ const PAGES: Record<string, ReactNode> = {
   '/reports': <PlaybackReports />,
   '/analytics': <Analytics />,
   '/developers': <ApiAccess />,
+  '/sync': <SyncGroups />,
   '/team': <Team />,
   '/help': <Help />,
   '/sites': <Sites />,

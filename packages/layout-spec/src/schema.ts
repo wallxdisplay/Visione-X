@@ -308,6 +308,21 @@ export type LiveChannel = z.infer<typeof LiveChannel>;
 export const ManifestDataSource = z.object({ id: z.string(), type: z.enum(['weather', 'rss', 'air_quality']) });
 export type ManifestDataSource = z.infer<typeof ManifestDataSource>;
 
+/**
+ * Multi-screen sync: players in a group derive what to show from a shared timeline (the group's
+ * anchor time and the playlist's durations), so they change items at the same instant. In a video
+ * wall each screen shows its tile of one large canvas (cols × rows screens).
+ */
+export const ManifestSync = z.object({
+  groupId: z.string(),
+  mode: z.enum(['mirror', 'wall']),
+  /** Server time (ms) when the timeline starts; every player counts from it. */
+  anchor: z.number().int(),
+  /** Video wall position; null in mirror mode. */
+  tile: z.object({ rows: z.number().int().min(1).max(8), cols: z.number().int().min(1).max(8), row: z.number().int().min(0), col: z.number().int().min(0) }).nullable(),
+});
+export type ManifestSync = z.infer<typeof ManifestSync>;
+
 export const Manifest = z.object({
   specVersion: z.literal(SPEC_VERSION),
   orgId: z.string(),
@@ -329,5 +344,7 @@ export const Manifest = z.object({
   dataSources: z.array(ManifestDataSource).default([]),
   /** Clockwise degrees the player rotates its whole output (portrait walls on landscape HDMI). */
   rotation: z.union([z.literal(0), z.literal(90), z.literal(180), z.literal(270)]).default(0),
+  /** Set when the screen plays in a sync group (players before 0.16.0 ignore it). */
+  sync: ManifestSync.nullable().default(null),
 });
 export type Manifest = z.infer<typeof Manifest>;

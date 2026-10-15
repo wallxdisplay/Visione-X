@@ -91,6 +91,8 @@ export interface ScreenDoc {
   pendingCommands: number;
   /** Set when the monitor raised an offline alert; cleared by the next heartbeat. */
   offlineAlertedAt: number | null;
+  /** The sync group the screen plays in (multi-screen sync), if any. */
+  syncGroupId?: string | null;
   createdBy: string;
   createdAt: number;
   updatedAt: number;

@@ -33,6 +33,8 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
@@ -40,6 +42,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
@@ -62,6 +66,11 @@ import com.wallx.play.core.DataStore
 import com.wallx.play.core.LiveStore
 import com.wallx.play.core.MediaLibrary
 import com.wallx.play.core.PlayLog
+import com.wallx.play.core.DriftFix
+import com.wallx.play.core.SyncTimeline
+import com.wallx.play.core.TimelinePosition
+import com.wallx.play.core.VideoDrift
+import com.wallx.play.data.WallTile
 import com.wallx.play.data.Layout
 import com.wallx.play.data.Manifest
 import com.wallx.play.data.PlaylistItem
@@ -104,7 +113,21 @@ fun rememberImageLoader(): ImageLoader {
     return remember { ImageLoader.Builder(context).components { add(GifDecoder.Factory()) }.build() }
 }
 
-/** Plays a playlist full-area, advancing by each item's duration; loops. */
+/** Inside a sync group: the shared timeline every playlist on screen follows. */
+class SyncClock(val anchor: Long, val now: () -> Long)
+
+val LocalSyncClock = staticCompositionLocalOf<SyncClock?> { null }
+
+/** Synced playback: server time the current playlist item started (videos keep in step with it). */
+val LocalItemStart = staticCompositionLocalOf<Long?> { null }
+
+private data class Shown(val key: Long, val item: PlaylistItem, val startedAt: Long?)
+
+/**
+ * Plays a playlist full-area, advancing by each item's duration; loops. In a sync group
+ * ([LocalSyncClock]) the item comes from the shared timeline instead, so every screen of the group
+ * changes at the same instant and a restarted player rejoins in place.
+ */
 @Composable
 fun PlaylistPlayer(
     items: List<PlaylistItem>,
@@ -117,19 +140,34 @@ fun PlaylistPlayer(
         Box(modifier.fillMaxSize().background(Color.Black))
         return
     }
-    var index by remember(items) { mutableIntStateOf(0) }
-    val item = items[index % items.size]
-    LaunchedEffect(item.id, index, items) {
+    val sync = LocalSyncClock.current
+    val durations = remember(items) { items.map { it.durationSec * 1000L } }
+    var pos by remember(items, sync?.anchor) {
+        mutableStateOf(if (sync != null) SyncTimeline.position(durations, sync.anchor, sync.now()) else TimelinePosition(0, 0, 0))
+    }
+    val item = items[pos.index % items.size]
+    LaunchedEffect(pos, items) {
         onItem(item)
-        if (items.size > 1) {
+        if (sync != null) {
+            delay((pos.endsAt - sync.now()).coerceIn(0L, 86_400_000L))
+            pos = SyncTimeline.position(durations, sync.anchor, maxOf(sync.now(), pos.endsAt))
+        } else if (items.size > 1) {
             delay(item.durationSec * 1000L)
-            index = (index + 1) % items.size
+            pos = pos.copy(index = (pos.index + 1) % items.size)
         }
     }
+    // A single item stays put (no reload each cycle); otherwise each change is a new state.
+    val key = when {
+        items.size == 1 -> 0L
+        sync != null -> pos.startedAt
+        else -> pos.index.toLong()
+    }
+    val shown = Shown(key, item, if (sync != null) pos.startedAt else null)
     AnimatedContent(
-        targetState = index to item,
+        targetState = shown,
+        contentKey = { it.key },
         transitionSpec = {
-            when (targetState.second.transition) {
+            when (targetState.item.transition) {
                 "fade" -> fadeIn() togetherWith fadeOut()
                 "slide" -> (slideInHorizontally { it / 12 } + fadeIn()) togetherWith fadeOut()
                 else -> fadeIn(initialAlpha = 1f) togetherWith fadeOut(targetAlpha = 1f)
@@ -137,16 +175,37 @@ fun PlaylistPlayer(
         },
         modifier = modifier.fillMaxSize(),
         label = "playlist",
-    ) { (_, current) ->
-        val c = current.content
-        Box(Modifier.fillMaxSize().background(Color.Black)) {
-            when (c.kind()) {
-                "media" -> MediaView(c.str("mediaId") ?: "", "contain", ctx.library)
-                "layout" -> ctx.layouts[c.str("layoutId")]?.let { LayoutView(it, ctx) }
-                "widget" -> c["widget"]?.jsonObject?.let { WidgetView(it, ctx) }
+    ) { current ->
+        val c = current.item.content
+        CompositionLocalProvider(LocalItemStart provides current.startedAt) {
+            Box(Modifier.fillMaxSize().background(Color.Black)) {
+                when (c.kind()) {
+                    "media" -> MediaView(c.str("mediaId") ?: "", "contain", ctx.library)
+                    "layout" -> ctx.layouts[c.str("layoutId")]?.let { LayoutView(it, ctx) }
+                    "widget" -> c["widget"]?.jsonObject?.let { WidgetView(it, ctx) }
+                }
             }
         }
     }
+}
+
+/**
+ * Video wall: this screen shows its cell of a canvas cols × rows screens large (the content is laid
+ * out at the full wall size, shifted, and clipped to the screen).
+ */
+@Composable
+fun WallTileView(tile: WallTile, content: @Composable () -> Unit) {
+    Box(
+        Modifier
+            .fillMaxSize()
+            .clipToBounds()
+            .layout { measurable, constraints ->
+                val w = constraints.maxWidth
+                val h = constraints.maxHeight
+                val placeable = measurable.measure(Constraints.fixed(w * tile.cols, h * tile.rows))
+                layout(w, h) { placeable.place(-tile.col * w, -tile.row * h) }
+            },
+    ) { content() }
 }
 
 /** Draws a layout letterboxed to its canvas aspect ratio. */
@@ -219,6 +278,9 @@ fun MediaView(mediaId: String, fit: String, library: MediaLibrary) {
     }
 }
 
+/** How often a synced video's position is checked against the timeline. */
+private const val VIDEO_SYNC_CHECK_MS = 1_000L
+
 /** Hardware-decoded looping video (Media3 ExoPlayer). */
 @OptIn(UnstableApi::class)
 @Composable
@@ -233,6 +295,28 @@ private fun VideoView(uri: Uri, fit: String) {
         }
     }
     DisposableEffect(player) { onDispose { player.release() } }
+    // Sync group: keep the video where the shared timeline says it should be.
+    val sync = LocalSyncClock.current
+    val itemStart = LocalItemStart.current
+    if (sync != null && itemStart != null) {
+        LaunchedEffect(player, itemStart) {
+            while (true) {
+                val length = player.duration
+                if (player.playbackState == Player.STATE_READY && length > 0) {
+                    val expected = Math.floorMod(sync.now() - itemStart, length)
+                    when (val fix = VideoDrift.fix(VideoDrift.drift(player.currentPosition, expected, length))) {
+                        DriftFix.Seek -> {
+                            player.seekTo(expected)
+                            player.setPlaybackSpeed(1f)
+                        }
+                        is DriftFix.Speed -> player.setPlaybackSpeed(fix.speed)
+                        DriftFix.None -> if (player.playbackParameters.speed != 1f) player.setPlaybackSpeed(1f)
+                    }
+                }
+                delay(VIDEO_SYNC_CHECK_MS)
+            }
+        }
+    }
     AndroidView(
         modifier = Modifier.fillMaxSize(),
         factory = {

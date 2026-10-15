@@ -11,6 +11,7 @@ import {
   type PublishScreensInput,
   type ReviewPublishInput,
   type ScreenDoc,
+  type SyncGroupDoc,
   type ScreenRefInput,
   type UpdateScreenInput,
 } from '@wallx-play/shared';
@@ -225,6 +226,7 @@ export async function authorizedScreens(db: Deps['db'], orgId: string, screenIds
  */
 export async function publishToScreens(deps: Deps, orgId: string, screens: ScreenDoc[]): Promise<number> {
   const { db, now } = deps;
+  screens = await withSyncGroupMembers(db, orgId, screens);
   for (const screen of screens) {
     // Re-read so concurrent publishes never reuse a version number.
     const fresh = ((await db.doc(paths.screen(orgId, screen.id)).get()).data() as ScreenDoc | undefined) ?? screen;
@@ -237,6 +239,21 @@ export async function publishToScreens(deps: Deps, orgId: string, screens: Scree
     await batch.commit();
   }
   return screens.length;
+}
+
+/**
+ * A sync group must always run one version of its content, so publishing any member publishes
+ * all of them (authorized members only).
+ */
+async function withSyncGroupMembers(db: Deps['db'], orgId: string, screens: ScreenDoc[]): Promise<ScreenDoc[]> {
+  const groupIds = [...new Set(screens.map((s) => s.syncGroupId).filter((g): g is string => !!g))];
+  if (!groupIds.length) return screens;
+  const have = new Set(screens.map((s) => s.id));
+  const groups = await db.getAll(...groupIds.map((g) => db.doc(paths.syncGroup(orgId, g))));
+  const extra = [...new Set(groups.flatMap((g) => (g.data() as SyncGroupDoc | undefined)?.members.map((m) => m.screenId) ?? []))].filter((id) => !have.has(id));
+  if (!extra.length) return screens;
+  const more = (await db.getAll(...extra.map((id) => db.doc(paths.screen(orgId, id))))).map((s) => s.data() as ScreenDoc | undefined);
+  return [...screens, ...more.filter((s): s is ScreenDoc => !!s && s.status === 'authorized')];
 }
 
 /**

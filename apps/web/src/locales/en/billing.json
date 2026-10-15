@@ -133,7 +133,7 @@
     "voidTitle": "Void this payment?",
     "voidBody": "{{amount}} received on {{date}} will be marked void (e.g. a bounced cheque). The paid-through date is not changed; adjust it separately if needed.",
     "reason": "Reason",
-    "reasonHint": "Saved in the audit log.",
+    "reasonHint": "At least 5 characters. Saved in the audit log.",
     "extraDiscount": "Extra discount (%)",
     "customPrice": "Custom price per screen / month (₹)",
     "customPriceHint": "Leave empty to use the plan price.",

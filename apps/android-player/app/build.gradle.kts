@@ -26,8 +26,8 @@ android {
         applicationId = "com.wallx.play"
         minSdk = 24
         targetSdk = 35
-        versionCode = 15
-        versionName = "0.15.0"
+        versionCode = 16
+        versionName = "0.16.0"
         buildConfigField("String", "API_BASE", "\"$apiBase\"")
     }
 

@@ -164,7 +164,7 @@ service cloud.firestore {
       // Content: readable by active members only, written only by Functions. WallX staff see it
       // only through a support access grant (a temporary member record).
       match /{collection}/{docId} {
-        allow read: if collection in ['media', 'folders', 'layouts', 'playlists', 'screenGroups', 'schedules',
+        allow read: if collection in ['media', 'folders', 'layouts', 'playlists', 'screenGroups', 'syncGroups', 'schedules',
                                       'emergencies', 'notifications', 'approvals', 'dataSources']
           && isActiveMember(orgId);
         allow write: if false;

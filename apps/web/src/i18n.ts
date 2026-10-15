@@ -8,6 +8,7 @@ import enIntegrations from './locales/en/integrations.json';
 import enReports from './locales/en/reports.json';
 import enAnalytics from './locales/en/analytics.json';
 import enApi from './locales/en/api.json';
+import enSync from './locales/en/sync.json';
 
 // All UI strings live in locales/<lng>/*.json (merged into one namespace); components must never
 // contain hard-coded user-facing text. English ships in the main bundle; Hindi and Marathi load
@@ -34,6 +35,7 @@ const loaders: Record<Exclude<LanguageCode, 'en'>, () => Promise<Array<{ default
       import('./locales/hi/reports.json'),
       import('./locales/hi/analytics.json'),
       import('./locales/hi/api.json'),
+      import('./locales/hi/sync.json'),
     ]),
   mr: () =>
     Promise.all([
@@ -45,6 +47,7 @@ const loaders: Record<Exclude<LanguageCode, 'en'>, () => Promise<Array<{ default
       import('./locales/mr/reports.json'),
       import('./locales/mr/analytics.json'),
       import('./locales/mr/api.json'),
+      import('./locales/mr/sync.json'),
     ]),
 };
 
@@ -79,7 +82,7 @@ export async function setLanguage(code: LanguageCode): Promise<void> {
 }
 
 void i18n.use(initReactI18next).init({
-  resources: { en: { common: { ...en, ...enContent, ...enSensors, ...enBilling, ...enIntegrations, ...enReports, ...enAnalytics, ...enApi } } },
+  resources: { en: { common: { ...en, ...enContent, ...enSensors, ...enBilling, ...enIntegrations, ...enReports, ...enAnalytics, ...enApi, ...enSync } } },
   lng: 'en',
   fallbackLng: 'en',
   defaultNS: 'common',

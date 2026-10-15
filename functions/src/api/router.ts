@@ -28,6 +28,8 @@ type Handler = (deps: Deps, req: ApiRequest) => Promise<ApiResult>;
 
 const ROUTES: Record<string, Handler> = {
   'GET /v1/health': async () => ({ status: 200, body: { ok: true, service: PRODUCT_NAME, region: REGION } }),
+  // Clock for multi-screen sync: players sample it several times and keep the fastest answer.
+  'GET /v1/devices/time': async (deps) => ({ status: 200, body: { serverTime: deps.now() } }),
   'POST /v1/devices/register': registerDevice,
   'GET /v1/devices/me': deviceState,
   'GET /v1/devices/manifest': deviceManifest,

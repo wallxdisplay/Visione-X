@@ -1,0 +1,50 @@
+.sync__names {
+  max-width: 360px;
+  overflow-wrap: anywhere;
+}
+.sync__note {
+  margin-top: var(--space-4);
+}
+.sync__modes,
+.sync__screens {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+.sync__modes legend,
+.sync__screens legend {
+  font-weight: 600;
+  margin-bottom: var(--space-2);
+}
+.sync__screens {
+  max-height: 240px;
+  overflow-y: auto;
+}
+.sync__size {
+  display: flex;
+  gap: var(--space-3);
+}
+.sync__size > * {
+  flex: 1;
+}
+.sync__grid {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-subtle);
+}
+.sync__cell {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: var(--space-2);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+}
+.sync__cellLabel {
+  font-size: 12px;
+}
