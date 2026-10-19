@@ -90,7 +90,7 @@ function gstFor(taxableMinor: number, settings: OnlinePaymentSettings, org: OrgD
 
 /**
  * The subscription a renewal pays for: reductions due by the new period's start applied, and an
- * app-priced organization still on the trial plan moved to the configured paid plan.
+ * organization still on the trial plan moved to the configured paid plan.
  */
 function renewalSubscription(sub: SubscriptionDoc, settings: OnlinePaymentSettings, trialPlan: boolean, periodStart: number): SubscriptionDoc {
   const due = sub.scheduledChange && sub.scheduledChange.effectiveAt <= periodStart;
@@ -125,7 +125,7 @@ async function quote(
   if (kind === 'renewal') {
     const current = await readPlan(tx, db, sub.planId);
     const trialPlan = current.tier === 'trial';
-    if (trialPlan && (sub.pricing !== 'apps' || !settings.trialPlanTo)) {
+    if (trialPlan && !settings.trialPlanTo) {
       throw new HttpsError('failed-precondition', 'WallX sets your plan before the first payment. Send a billing request or contact WallX.');
     }
     period = paymentPeriod(sub, periods, at);
@@ -256,7 +256,7 @@ export async function settleOrder(deps: Deps, orgId: string, orderId: string, ga
       period = paymentPeriod(sub, order.periods, at);
       const trialPlan = (await readPlan(tx, db, sub.planId)).tier === 'trial';
       const base = (await dueScheduledChange(tx, db, sub, at)) ?? sub;
-      const moved: SubscriptionDoc = trialPlan && settings.trialPlanTo && base.pricing === 'apps' ? { ...base, planId: settings.trialPlanTo } : base;
+      const moved: SubscriptionDoc = trialPlan && settings.trialPlanTo ? { ...base, planId: settings.trialPlanTo } : base;
       const plan = await readPlan(tx, db, moved.planId);
       const catalog = moved.pricing === 'apps' ? await readAppCatalog(tx, db) : [];
       next = {

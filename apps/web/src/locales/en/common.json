@@ -214,7 +214,7 @@
       "state": "WallX GST state",
       "gst": "GST rate (%)",
       "trialPlan": "Plan after paying at the end of a trial",
-      "trialPlanHint": "App-priced organizations on the trial plan move to this plan when they pay online. Without one, WallX sets the plan first.",
+      "trialPlanHint": "Organizations still on the trial plan move to this plan when they pay online (plan pricing pays its price per screen; app pricing pays its screens and apps). Without one, WallX sets the plan first.",
       "trialPlanNone": "None (WallX sets the plan)",
       "webhook": "Razorpay webhook (events payment.captured and order.paid): {{url}}",
       "save": "Save payment settings"

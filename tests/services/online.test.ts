@@ -119,6 +119,17 @@ describe('online payments', () => {
     await expectCode(createPaymentOrder(deps, alice, { orgId, kind: 'charges', periods: 1, create: false }), 'failed-precondition'); // nothing left
   });
 
+  it('a plan-priced organization in its trial pays the paid plan price and moves to it', async () => {
+    await enable();
+    // Like organizations approved before app pricing: trial plan, plan pricing, 2 screens.
+    await db.doc(paths.orgSubscription(orgId)).update({ pricing: 'plan', apps: [], quantity: 2 });
+    const q = await createPaymentOrder(deps, alice, { orgId, kind: 'renewal', periods: 1, create: true });
+    expect(q).toMatchObject({ periodMinor: 2 * 29_900, taxableMinor: 59_800, amountMinor: 70_564 });
+    payments.set('pay_T4abcdef', { id: 'pay_T4abcdef', order_id: q.order!.id, amount: q.amountMinor, currency: 'INR', status: 'captured' });
+    await confirmPayment(deps, alice, { orgId, orderId: q.order!.id, paymentId: 'pay_T4abcdef', signature: sign(q.order!.id, 'pay_T4abcdef') });
+    expect(await sub()).toMatchObject({ planId: 'starter', pricing: 'plan', status: 'active', amountPerPeriodMinor: 59_800 });
+  });
+
   it('staff cannot switch it on without the secrets', async () => {
     const saved = process.env.RAZORPAY_WEBHOOK_SECRET;
     delete process.env.RAZORPAY_WEBHOOK_SECRET;
