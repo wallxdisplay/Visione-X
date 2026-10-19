@@ -522,7 +522,7 @@ function PaymentDialog({ orgId, sub, onClose }: { orgId: string; sub: Subscripti
           error={amount && !amountMinor ? t('adminBilling.amountInvalid') : undefined}
           onChange={(e) => setAmount(e.target.value)}
         />
-        <SelectField label={t('billing.method')} options={PAYMENT_METHODS.map((m) => ({ value: m, label: t(`billing.methods.${m}`) }))} value={method} onChange={(e) => setMethod(e.target.value as PaymentMethod)} />
+        <SelectField label={t('billing.method')} options={PAYMENT_METHODS.filter((m) => m !== 'razorpay').map((m) => ({ value: m, label: t(`billing.methods.${m}`) }))} value={method} onChange={(e) => setMethod(e.target.value as PaymentMethod)} />
       </div>
       <div className="wxp-form__row">
         <TextField label={t('billing.reference')} hint={t('adminBilling.referenceHint')} required maxLength={100} value={reference} onChange={(e) => setReference(e.target.value)} />

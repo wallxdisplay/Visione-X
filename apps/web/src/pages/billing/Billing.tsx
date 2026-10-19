@@ -9,7 +9,9 @@ import {
   type BillingRequestKind,
   type BillingStatus,
 } from '@wallx-play/shared';
-import { CreditCard, Send } from 'lucide-react';
+import { CreditCard, Send, Wallet } from 'lucide-react';
+import { PayOnlineDialog } from './PayOnline';
+import { usePlatformSettings } from '../../lib/platformSettings';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
@@ -45,6 +47,9 @@ export function Billing() {
   const screens = { ...allScreens, data: allScreens.data.filter((s) => s.status === 'authorized') };
   const [requesting, setRequesting] = useState(false);
   const [sent, setSent] = useState(false);
+  const platform = usePlatformSettings();
+  const [paying, setPaying] = useState(false);
+  const [paidText, setPaidText] = useState<string | null>(null);
 
   if (!view) {
     return (
@@ -89,13 +94,21 @@ export function Billing() {
         description={s.billedTo ? t('billing.descriptionReseller') : t('billing.description')}
         actions={
           can('billing.manage') && !s?.billedTo ? (
-            <Button variant="primary" onClick={() => setRequesting(true)}>
-              <Send size={15} aria-hidden /> {t('billing.requestChange')}
-            </Button>
+            <div className="wxp-toolbar" style={{ margin: 0 }}>
+              {platform.data?.payments?.enabled ? (
+                <Button variant="primary" onClick={() => setPaying(true)}>
+                  <Wallet size={15} aria-hidden /> {t('payOnline.button')}
+                </Button>
+              ) : null}
+              <Button variant={platform.data?.payments?.enabled ? 'secondary' : 'primary'} onClick={() => setRequesting(true)}>
+                <Send size={15} aria-hidden /> {t('billing.requestChange')}
+              </Button>
+            </div>
           ) : null
         }
       />
       {sent ? <Alert tone="success">{t('billing.requestSent')}</Alert> : null}
+      {paidText ? <Alert tone="success">{paidText}</Alert> : null}
       {reseller ? <Alert tone="info">{t('billing.viaReseller', { name: reseller })}</Alert> : null}
 
       <div className="billing-summary wxp-card">
@@ -216,6 +229,17 @@ export function Billing() {
         </>
       ) : null}
 
+      {paying ? (
+        <PayOnlineDialog
+          orgId={orgId}
+          sub={s}
+          onClose={() => setPaying(false)}
+          onPaid={(text) => {
+            setPaying(false);
+            setPaidText(text);
+          }}
+        />
+      ) : null}
       <RequestDialog
         open={requesting}
         currentPlanId={s.planId}

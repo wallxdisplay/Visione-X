@@ -51,7 +51,8 @@
       "cheque": "चेक",
       "cash": "नकद",
       "card": "कार्ड",
-      "other": "अन्य"
+      "other": "अन्य",
+      "razorpay": "ऑनलाइन (Razorpay)"
     },
     "reference": "संदर्भ",
     "invoiceNo": "इनवॉइस नं.",
@@ -443,5 +444,37 @@
       "fixed": "स्थिर"
     },
     "driversList": "लागत के कारण: {{list}}।"
+  },
+  "payOnline": {
+    "button": "अभी भुगतान करें",
+    "title": "ऑनलाइन भुगतान",
+    "what": "किसका भुगतान",
+    "kinds": {
+      "renewal": "सब्सक्रिप्शन (और ऐप स्टोर शुल्क)",
+      "charges": "केवल ऐप स्टोर शुल्क"
+    },
+    "periods": "अवधि",
+    "periodsN": {
+      "monthly_one": "{{count}} माह",
+      "monthly_other": "{{count}} माह",
+      "annual_one": "{{count}} वर्ष",
+      "annual_other": "{{count}} वर्ष"
+    },
+    "subscription": "सब्सक्रिप्शन",
+    "charges": "ऐप स्टोर शुल्क",
+    "taxable": "GST से पहले",
+    "cgst": "CGST {{pct}}%",
+    "sgst": "SGST {{pct}}%",
+    "igst": "IGST {{pct}}%",
+    "total": "कुल",
+    "paidThrough": "इसके बाद भुगतान तक",
+    "note": "Razorpay से UPI, कार्ड या नेटबैंकिंग द्वारा सुरक्षित भुगतान करें। WallX टैक्स इनवॉइस अलग से भेजता है।",
+    "pay": "{{amount}} का भुगतान करें",
+    "payShort": "भुगतान",
+    "paid": "{{amount}} का भुगतान मिला। धन्यवाद!",
+    "paidUntil": "{{amount}} का भुगतान मिला। {{date}} तक भुगतान हो गया। धन्यवाद!",
+    "failed": "भुगतान नहीं हुआ। आप फिर से कोशिश कर सकते हैं।",
+    "recordedLater": "अगर पैसे कटे हैं, तो कुछ मिनटों में अपने-आप दर्ज हो जाएँगे।",
+    "checkoutBlocked": "भुगतान विंडो लोड नहीं हुई। कनेक्शन या ऐड ब्लॉकर जाँचें और फिर कोशिश करें।"
   }
 }

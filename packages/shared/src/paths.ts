@@ -29,6 +29,10 @@ export const paths = {
   orgSubscription: (orgId: string) => `orgs/${orgId}/billing/subscription`,
   payments: (orgId: string) => `orgs/${orgId}/payments`,
   payment: (orgId: string, id: string) => `orgs/${orgId}/payments/${id}`,
+  /** Razorpay order id → organization (for the webhook). Functions only. */
+  onlineOrder: (orderId: string) => `onlineOrders/${orderId}`,
+  paymentOrders: (orgId: string) => `orgs/${orgId}/paymentOrders`,
+  paymentOrder: (orgId: string, id: string) => `orgs/${orgId}/paymentOrders/${id}`,
   billingRequests: (orgId: string) => `orgs/${orgId}/billingRequests`,
   billingRequest: (orgId: string, id: string) => `orgs/${orgId}/billingRequests/${id}`,
   orgUsage: (orgId: string) => `orgs/${orgId}/usage/current`,

@@ -15,6 +15,7 @@
 import { z } from 'zod';
 import { FEATURE_KEYS, LIMIT_KEYS, RELEASE_STATUSES } from './features';
 import type { OrgPermission } from './permissions';
+import type { GstSplit } from './payments';
 import { PRICING_MODES, type AppLine, type PendingCharge, type PricingMode, type ScheduledAppChange } from './apps';
 
 const id = z.string().min(1).max(128).regex(/^[A-Za-z0-9_-]+$/);
@@ -24,7 +25,7 @@ export const BILLING_STATUSES = ['trialing', 'active', 'past_due', 'restricted',
 export type BillingStatus = (typeof BILLING_STATUSES)[number];
 export const BILLING_INTERVALS = ['monthly', 'annual'] as const;
 export type BillingInterval = (typeof BILLING_INTERVALS)[number];
-export const PAYMENT_METHODS = ['bank_transfer', 'upi', 'cheque', 'cash', 'card', 'other'] as const;
+export const PAYMENT_METHODS = ['bank_transfer', 'upi', 'cheque', 'cash', 'card', 'other', 'razorpay'] as const;
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 
 const DAY_MS = 86_400_000;
@@ -120,6 +121,11 @@ export interface PaymentDoc {
   voided: { by: string; at: number; reason: string } | null;
   /** App store charges this payment collected. */
   charges?: PendingCharge[];
+  /** Online payments: price before GST and the GST split (amountMinor is what was paid). */
+  taxableMinor?: number;
+  gst?: GstSplit;
+  /** Online payments: the Razorpay order and payment. */
+  gateway?: { name: 'razorpay'; orderId: string; paymentId: string };
 }
 
 export const BILLING_REQUEST_KINDS = ['add_screens', 'change_plan', 'renew', 'cancel', 'other'] as const;

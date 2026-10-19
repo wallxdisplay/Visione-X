@@ -279,6 +279,12 @@ service cloud.firestore {
         allow write: if false;
       }
 
+      // Online payment orders (Razorpay), written by Functions.
+      match /paymentOrders/{orderId} {
+        allow read: if hasPerm(orgId, 'billing.view') || isBillingStaff();
+        allow write: if false;
+      }
+
       match /billingRequests/{requestId} {
         allow read: if hasPerm(orgId, 'billing.view') || isBillingStaff();
         allow write: if false;

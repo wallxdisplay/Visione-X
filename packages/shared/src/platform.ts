@@ -5,6 +5,7 @@
  * The player signing-key fingerprint is kept here too (set by the first player release).
  */
 import { z } from 'zod';
+import type { OnlinePaymentSettings } from './payments';
 
 export const SupportContacts = z.object({
   email: z.union([z.string().trim().toLowerCase().email().max(200), z.literal('')]),
@@ -28,6 +29,8 @@ export interface PlatformSettingsDoc {
   banner?: PlatformBanner | null;
   /** New organization signups (default: open). */
   signupsOpen?: boolean;
+  /** Online payments (Razorpay): off until WallX switches them on. */
+  payments?: OnlinePaymentSettings;
   playerSignerSha256?: string;
   updatedAt?: number;
   updatedBy?: string;

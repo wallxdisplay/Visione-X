@@ -51,7 +51,8 @@
       "cheque": "चेक",
       "cash": "रोख",
       "card": "कार्ड",
-      "other": "इतर"
+      "other": "इतर",
+      "razorpay": "ऑनलाइन (Razorpay)"
     },
     "reference": "संदर्भ",
     "invoiceNo": "इनव्हॉइस क्र.",
@@ -443,5 +444,37 @@
       "fixed": "स्थिर"
     },
     "driversList": "खर्चाची कारणे: {{list}}."
+  },
+  "payOnline": {
+    "button": "आता पैसे भरा",
+    "title": "ऑनलाइन पेमेंट",
+    "what": "कशासाठी",
+    "kinds": {
+      "renewal": "सबस्क्रिप्शन (आणि ॲप स्टोअर शुल्क)",
+      "charges": "फक्त ॲप स्टोअर शुल्क"
+    },
+    "periods": "कालावधी",
+    "periodsN": {
+      "monthly_one": "{{count}} महिना",
+      "monthly_other": "{{count}} महिने",
+      "annual_one": "{{count}} वर्ष",
+      "annual_other": "{{count}} वर्षे"
+    },
+    "subscription": "सबस्क्रिप्शन",
+    "charges": "ॲप स्टोअर शुल्क",
+    "taxable": "GST पूर्वी",
+    "cgst": "CGST {{pct}}%",
+    "sgst": "SGST {{pct}}%",
+    "igst": "IGST {{pct}}%",
+    "total": "एकूण",
+    "paidThrough": "यानंतर पेमेंट केलेले",
+    "note": "Razorpay द्वारे UPI, कार्ड किंवा नेटबँकिंगने सुरक्षित पेमेंट करा. WallX कर बीजक वेगळे पाठवते.",
+    "pay": "{{amount}} भरा",
+    "payShort": "भरा",
+    "paid": "{{amount}} चे पेमेंट मिळाले. धन्यवाद!",
+    "paidUntil": "{{amount}} चे पेमेंट मिळाले. {{date}} पर्यंत पेमेंट झाले. धन्यवाद!",
+    "failed": "पेमेंट झाले नाही. पुन्हा प्रयत्न करू शकता.",
+    "recordedLater": "पैसे कापले असल्यास काही मिनिटांत आपोआप नोंदवले जातील.",
+    "checkoutBlocked": "पेमेंट विंडो लोड झाली नाही. कनेक्शन किंवा ॲड ब्लॉकर तपासा आणि पुन्हा प्रयत्न करा."
   }
 }

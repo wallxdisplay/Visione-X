@@ -23,3 +23,4 @@ export * from './mqtt';
 export * from './branding';
 export * from './apps';
 export * from './costs';
+export * from './payments';

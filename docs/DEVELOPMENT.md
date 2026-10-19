@@ -204,6 +204,21 @@ offline → screen.manage, sensor alerts → sensor.manage, billing → billing.
 and site-scoped members are skipped. Organizations can turn alert emails off in Settings. A
 `mailLog` doc per notification (30-day TTL) makes sure a retried trigger never sends twice.
 
+**Online payments (Razorpay).** Customers billed by WallX pay with a Pay now button (`functions/src/billing/online.ts`). Start with test mode:
+
+1. Razorpay Dashboard (Test mode) → Account & Settings → API keys: generate a key pair.
+2. Dashboard → Webhooks → Add: URL `https://asia-south1-wallx-play.cloudfunctions.net/razorpayWebhook`,
+   events `payment.captured` and `order.paid`, and a webhook secret you choose.
+3. Set the three secrets and paste each value when asked:
+   `npx firebase functions:secrets:set RAZORPAY_KEY_ID --project wallx-play`,
+   `npx firebase functions:secrets:set RAZORPAY_KEY_SECRET --project wallx-play`,
+   `npx firebase functions:secrets:set RAZORPAY_WEBHOOK_SECRET --project wallx-play`.
+   Like the mail and weather secrets they must exist before any functions deploy (`PAYMENT_SECRETS`).
+4. Deploy, then Super Admin → Platform settings → Online payments: set WallX's GST state, the rate
+   and the plan for trial conversions, and switch it on (refused while a secret is missing).
+5. Pay with Razorpay's test UPI / cards. For live payments repeat 1–3 with live keys (and a live
+   webhook) and deploy again.
+
 Secrets (Razorpay key secret, webhook secret, provider keys) go into Secret Manager via
 `npx firebase functions:secrets:set NAME` — never into `.env` files that the web app reads.
 

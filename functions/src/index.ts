@@ -10,3 +10,4 @@ export { auditExportDaily } from './ops/auditExport';
 export { emailNotification } from './notifications/emails';
 export { webhookNotification } from './publicApi/webhooks';
 export { costRollupDaily } from './costs/report';
+export { razorpayWebhook } from './billing/online';
