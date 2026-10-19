@@ -45,6 +45,7 @@ import { getOrg, requireOrgPermission, requirePlatform } from '../lib/authz';
 import type { Actor, Deps } from '../lib/context';
 import { entitlementsForSub } from '../lib/entitlements';
 import { notify } from '../lib/notify';
+import { syncAndRepublish } from '../screens/screenApps';
 
 /** Price per billing period before GST; null when neither the plan nor the deal has a price. */
 export function periodAmount(plan: Pick<Plan, 'pricePerScreenMonthlyMinor' | 'annualDiscountBps'>, sub: Pick<SubscriptionDoc, 'customPriceMinor' | 'quantity' | 'interval' | 'discountBps'>): number | null {
@@ -175,10 +176,11 @@ export async function checkLines(tx: Transaction, db: Firestore, orgId: string, 
 }
 
 /** Plan, interval, screens purchased and pricing (billing staff), in plan or app pricing. */
-export async function updateSubscription({ db, now }: Deps, actor: Actor, input: z.infer<typeof UpdateSubscriptionInput>): Promise<SubscriptionDoc> {
+export async function updateSubscription(deps: Deps, actor: Actor, input: z.infer<typeof UpdateSubscriptionInput>): Promise<SubscriptionDoc> {
+  const { db, now } = deps;
   requirePlatform(actor, 'billing.override');
   const at = now();
-  return auditedTransaction(db, [input.orgId], async (tx, audit) => {
+  return afterSeats(deps, input.orgId, auditedTransaction(db, [input.orgId], async (tx, audit) => {
     const org = await getOrg(tx, db, input.orgId);
     const sub = await readSubscription(tx, db, input.orgId);
     const plan = await readPlan(tx, db, input.planId);
@@ -220,7 +222,14 @@ export async function updateSubscription({ db, now }: Deps, actor: Actor, input:
       to: { planId: plan.id, interval: input.interval, quantity: input.quantity, customPriceMinor: input.customPriceMinor, discountBps: input.discountBps, pricing, apps: lines, adjustmentMinor: draft.adjustmentMinor },
     }, at);
     return next;
-  });
+  }));
+}
+
+/** After a change to seats or the trial: screens' apps follow (and their content, if it changed). */
+export async function afterSeats<T>(deps: Deps, orgId: string, work: Promise<T>): Promise<T> {
+  const result = await work;
+  await syncAndRepublish(deps, orgId);
+  return result;
 }
 
 /**
@@ -229,13 +238,14 @@ export async function updateSubscription({ db, now }: Deps, actor: Actor, input:
  * (grandfathered). With `apply: false` only returns the preview.
  */
 export async function moveToAppPricing(
-  { db, now }: Deps,
+  deps: Deps,
   actor: Actor,
   input: z.infer<typeof MoveToAppPricingInput>,
 ): Promise<{ lines: BillLine[]; oldMonthlyMinor: number | null; newMonthlyMinor: number; adjustmentMinor: number; applied: boolean }> {
+  const { db, now } = deps;
   requirePlatform(actor, 'billing.override');
   const at = now();
-  return auditedTransaction(db, [input.orgId], async (tx, audit) => {
+  return afterSeats(deps, input.orgId, auditedTransaction(db, [input.orgId], async (tx, audit) => {
     await getOrg(tx, db, input.orgId);
     const sub = await readSubscription(tx, db, input.orgId);
     if (sub.pricing === 'apps') throw new HttpsError('failed-precondition', 'This organization already uses app pricing.');
@@ -263,16 +273,17 @@ export async function moveToAppPricing(
     tx.set(db.doc(paths.orgEntitlements(input.orgId)), entitlements);
     auditBilling(audit, actor, input.orgId, 'billing.pricing.movedToApps', input.reason, { apps: lines, adjustmentMinor, oldMonthlyMinor, newMonthlyMinor }, at);
     return { ...preview, applied: true };
-  });
+  }));
 }
 
 /** Records a payment received outside the app and extends the paid period. */
-export async function recordPayment({ db, now }: Deps, actor: Actor, input: z.infer<typeof RecordPaymentInput>): Promise<{ paymentId: string; periodEnd: number }> {
+export async function recordPayment(deps: Deps, actor: Actor, input: z.infer<typeof RecordPaymentInput>): Promise<{ paymentId: string; periodEnd: number }> {
+  const { db, now } = deps;
   requirePlatform(actor, 'billing.override');
   const at = now();
   if (input.paidAt > at + 86_400_000) throw new HttpsError('invalid-argument', 'The payment date is in the future.');
   const ref = db.collection(paths.payments(input.orgId)).doc();
-  return auditedTransaction(db, [input.orgId], async (tx, audit) => {
+  return afterSeats(deps, input.orgId, auditedTransaction(db, [input.orgId], async (tx, audit) => {
     await getOrg(tx, db, input.orgId);
     const sub = await readSubscription(tx, db, input.orgId);
     if (sub.billedTo) throw new HttpsError('failed-precondition', 'A reseller pays for this organization. Record the payment on the reseller account.');
@@ -319,7 +330,7 @@ export async function recordPayment({ db, now }: Deps, actor: Actor, input: z.in
       status: next.status,
     }, at);
     return { paymentId: ref.id, periodEnd: period.end };
-  });
+  }));
 }
 
 /** Marks a payment as void (e.g. a bounced cheque). Dates are corrected separately. */
@@ -337,10 +348,11 @@ export async function voidPayment({ db, now }: Deps, actor: Actor, input: z.infe
 }
 
 /** Extends or shortens the trial or the paid period (goodwill, corrections, bounced payments). */
-export async function adjustBillingDates({ db, now }: Deps, actor: Actor, input: z.infer<typeof AdjustBillingDatesInput>): Promise<SubscriptionDoc> {
+export async function adjustBillingDates(deps: Deps, actor: Actor, input: z.infer<typeof AdjustBillingDatesInput>): Promise<SubscriptionDoc> {
+  const { db, now } = deps;
   requirePlatform(actor, 'billing.override');
   const at = now();
-  return auditedTransaction(db, [input.orgId], async (tx, audit) => {
+  return afterSeats(deps, input.orgId, auditedTransaction(db, [input.orgId], async (tx, audit) => {
     const sub = await readSubscription(tx, db, input.orgId);
     const adjusted: SubscriptionDoc = {
       ...sub,
@@ -361,7 +373,7 @@ export async function adjustBillingDates({ db, now }: Deps, actor: Actor, input:
       status: next.status,
     }, at);
     return next;
-  });
+  }));
 }
 
 /** Cancel at the end of the paid period, or undo that. */

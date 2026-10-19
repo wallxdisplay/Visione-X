@@ -45,7 +45,7 @@ import {
   type SubscriptionDoc,
   type UserAccountMembership,
 } from '@wallx-play/shared';
-import { checkLines, notifyStatusChange, priceLines, readAppCatalog, subscriptionAmount, subscriptionLines, trialEntitlements, trialSubscription, writeSubscription } from '../billing/billing';
+import { afterSeats, checkLines, notifyStatusChange, priceLines, readAppCatalog, subscriptionAmount, subscriptionLines, trialEntitlements, trialSubscription, writeSubscription } from '../billing/billing';
 import { entitlementsForSub } from '../lib/entitlements';
 import { auditedTransaction, platformAudit } from '../lib/audit';
 import { getOrg, requireOrgPermission, requireVerifiedEmail } from '../lib/authz';
@@ -399,7 +399,7 @@ async function readPartnerCustomer(tx: Transaction, db: Firestore, accountId: st
 /** The reseller sets a customer's plan and number of screens (its screen limit). */
 export async function setPartnerSubscription(deps: Deps, actor: Actor, input: z.infer<typeof SetPartnerSubscriptionInput>): Promise<SubscriptionDoc> {
   const { db, now } = deps;
-  return auditedTransaction(db, [input.orgId], async (tx, audit) => {
+  return afterSeats(deps, input.orgId, auditedTransaction(db, [input.orgId], async (tx, audit) => {
     await requirePartner(tx, db, actor, input.accountId);
     const { org, sub } = await readPartnerCustomer(tx, db, input.accountId, input.orgId);
     const plan = await readActivePlan(tx, db, input.planId);
@@ -429,13 +429,13 @@ export async function setPartnerSubscription(deps: Deps, actor: Actor, input: z.
       data: { accountId: input.accountId, from: { planId: sub.planId, quantity: sub.quantity, apps: sub.apps }, to: { planId: plan.id, quantity: input.quantity, apps: lines } },
     });
     return next;
-  });
+  }));
 }
 
 /** Ends a customer's trial: from now on the reseller pays for it (its paid period applies). */
 export async function startPartnerBilling(deps: Deps, actor: Actor, input: z.infer<typeof PartnerOrgRefInput>): Promise<SubscriptionDoc> {
   const { db, now } = deps;
-  return auditedTransaction(db, [input.orgId], async (tx, audit) => {
+  return afterSeats(deps, input.orgId, auditedTransaction(db, [input.orgId], async (tx, audit) => {
     const { account } = await requirePartner(tx, db, actor, input.accountId);
     const { sub } = await readPartnerCustomer(tx, db, input.accountId, input.orgId);
     if (sub.trialEndsAt === null) throw new HttpsError('failed-precondition', 'Billing has already started for this customer.');
@@ -455,7 +455,7 @@ export async function startPartnerBilling(deps: Deps, actor: Actor, input: z.inf
       data: { accountId: input.accountId, paidThrough: account.paidThrough ?? null, status: next.status },
     });
     return next;
-  });
+  }));
 }
 
 /** Customers, plans with dealer prices and the monthly total, for the portal (and WallX staff). */

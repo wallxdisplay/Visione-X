@@ -261,3 +261,76 @@ export function lineProblems(
   }
   return problems;
 }
+
+// ---------------------------------------------------------------- apps per screen (phase 3)
+
+/** Widgets that only run on screens that have the app selling this feature. */
+export const WIDGET_SCREEN_FEATURES: Readonly<Record<string, FeatureKey>> = {
+  weather: 'widget.weather',
+  aqi: 'widget.weather',
+  rss: 'widget.rss',
+  button: 'interactive.touch',
+};
+
+export interface ScreenSeatInput {
+  id: string;
+  name: string;
+  /** Only authorized screens hold app seats. */
+  authorized: boolean;
+  apps: string[];
+}
+
+/**
+ * Who holds which per-screen app seat, and which features each screen may not use.
+ *
+ * - Plan pricing, or app pricing during the trial: nothing is blocked (seats are left as they are).
+ * - App pricing: each screen app is on as many authorized screens as were bought. Free seats go
+ *   to screens without the app (by name), extra holders lose it (last by name); apps no longer
+ *   bought are removed. A screen may not use the features of screen apps it does not hold,
+ *   unless WallX granted the feature to the organization (an override).
+ */
+export function planScreenApps(input: {
+  appPricing: boolean;
+  trialing: boolean;
+  catalog: Array<Pick<AppDoc, 'id' | 'unit' | 'featureKeys' | 'base'>>;
+  lines: Array<Pick<AppLine, 'appId' | 'quantity'>>;
+  screens: ScreenSeatInput[];
+  grants: readonly FeatureKey[];
+}): Map<string, { apps: string[]; blocked: FeatureKey[] }> {
+  const out = new Map(input.screens.map((s) => [s.id, { apps: [...s.apps], blocked: [] as FeatureKey[] }]));
+  if (!input.appPricing || input.trialing) return out;
+  // The base app (Screen) comes with every screen; it is not placed screen by screen.
+  const screenApps = input.catalog.filter((a) => a.unit === 'screen' && !a.base);
+  const owned = new Map(input.lines.filter((l) => l.quantity > 0 && screenApps.some((a) => a.id === l.appId)).map((l) => [l.appId, l.quantity]));
+  const ordered = [...input.screens].filter((s) => s.authorized).sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
+  // Apps no longer bought, and any app on a screen that is not authorized, are dropped.
+  for (const s of input.screens) out.get(s.id)!.apps = s.authorized ? s.apps.filter((a) => owned.has(a)) : [];
+  for (const [appId, quantity] of owned) {
+    const holders = ordered.filter((s) => out.get(s.id)!.apps.includes(appId));
+    for (const s of holders.slice(quantity)) out.get(s.id)!.apps = out.get(s.id)!.apps.filter((a) => a !== appId);
+    let free = quantity - Math.min(holders.length, quantity);
+    for (const s of ordered) {
+      if (free <= 0) break;
+      const entry = out.get(s.id)!;
+      if (!entry.apps.includes(appId)) {
+        entry.apps = [...entry.apps, appId];
+        free--;
+      }
+    }
+  }
+  const sold = new Set(screenApps.flatMap((a) => a.featureKeys));
+  for (const s of input.screens) {
+    const entry = out.get(s.id)!;
+    const allowed = new Set(screenApps.filter((a) => entry.apps.includes(a.id)).flatMap((a) => a.featureKeys));
+    entry.apps.sort();
+    entry.blocked = [...sold].filter((k) => !allowed.has(k) && !input.grants.includes(k)).sort();
+  }
+  return out;
+}
+
+/** Put a screen app on exactly these screens (free seats are then filled automatically). */
+export const SetAppScreensInput = z.object({
+  orgId: z.string().min(1).max(128).regex(/^[A-Za-z0-9_-]+$/),
+  appId: AppId,
+  screenIds: z.array(z.string().min(1).max(128).regex(/^[A-Za-z0-9_-]+$/)).max(2000),
+});

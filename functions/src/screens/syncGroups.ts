@@ -36,6 +36,7 @@ export async function saveSyncGroup(deps: Deps, actor: Actor, input: z.infer<typ
       requireSiteInScope(member, s.siteId, `“${s.name}”`);
       if (s.syncGroupId && s.syncGroupId !== ref.id) throw new HttpsError('failed-precondition', `“${s.name}” is already in another sync group.`);
       if (s.touch) throw new HttpsError('failed-precondition', `“${s.name}” is a touch screen; turn touch off before adding it to a sync group.`);
+      if (s.blockedFeatures?.includes('screen.multiSync')) throw new HttpsError('failed-precondition', `Put the Sync & video wall app on “${s.name}” first.`);
     });
     const leaving = (before?.members ?? []).map((m) => m.screenId).filter((id) => !members.some((m) => m.screenId === id));
 

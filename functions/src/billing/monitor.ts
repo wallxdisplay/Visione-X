@@ -4,13 +4,15 @@ import { auditedTransaction } from '../lib/audit';
 import type { Deps } from '../lib/context';
 import { notify } from '../lib/notify';
 import { notifyStatusChange, trialEntitlements, writeSubscription } from './billing';
+import { syncAndRepublish } from '../screens/screenApps';
 
 /**
  * Billing part of the periodic monitor: subscriptions whose `nextTransitionAt` has passed get
  * their status re-derived (trial ended, period ended, grace over) and reminders sent
  * (trial ending in 3 days, renewal due in 7 days). Each status change is audited.
  */
-export async function runBillingMonitor({ db, now }: Deps): Promise<{ transitions: number; reminders: number }> {
+export async function runBillingMonitor(deps: Deps): Promise<{ transitions: number; reminders: number }> {
+  const { db, now } = deps;
   const at = now();
   const due = await db.collectionGroup('billing').where('nextTransitionAt', '<=', at).limit(200).get();
   let transitions = 0;
@@ -48,6 +50,8 @@ export async function runBillingMonitor({ db, now }: Deps): Promise<{ transition
           });
         }
       });
+      // App pricing: when the trial ends, screens keep only the apps they hold.
+      await syncAndRepublish(deps, orgId);
     } catch (err) {
       logger.error('Billing transition failed', { orgId, err: String(err) });
     }

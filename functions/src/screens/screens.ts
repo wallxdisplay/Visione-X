@@ -1,4 +1,6 @@
-import { FieldValue, type Transaction } from 'firebase-admin/firestore';
+import {
+  FieldValue,
+  type Transaction } from 'firebase-admin/firestore';
 import { HttpsError } from 'firebase-functions/v2/https';
 import type { z } from 'zod';
 import {
@@ -14,6 +16,7 @@ import {
   type SyncGroupDoc,
   type ScreenRefInput,
   type UpdateScreenInput,
+  type FeatureKey,
 } from '@wallx-play/shared';
 import { auditedTransaction } from '../lib/audit';
 import { requireActiveOrgPermission, requireOrgPermission, requireSiteInScope } from '../lib/authz';
@@ -21,6 +24,7 @@ import type { Actor, Deps } from '../lib/context';
 import { readEntitlements, requireFeature } from '../lib/entitlements';
 import { userAudit } from '../content/media';
 import { notify } from '../lib/notify';
+import { syncAndRepublish, syncScreenApps } from './screenApps';
 import { compileManifest } from './manifest';
 import { bridgedBrokerNames } from '../sensors/mqtt';
 
@@ -48,13 +52,14 @@ async function checkTargets(
  * device.authorize activate it immediately; otherwise it waits for an admin to authorize it.
  */
 export async function claimDevice(
-  { db, now }: Deps,
+  deps: Deps,
   actor: Actor,
   input: z.infer<typeof ClaimDeviceInput>,
 ): Promise<{ screenId: string; status: ScreenDoc['status'] }> {
+  const { db, now } = deps;
   const at = now();
   const screenRef = db.collection(paths.screens(input.orgId)).doc();
-  return auditedTransaction(db, [input.orgId], async (tx, audit) => {
+  const result = await auditedTransaction(db, [input.orgId], async (tx, audit) => {
     const { member } = await requireActiveOrgPermission(tx, db, actor, input.orgId, 'screen.manage');
     requireSiteInScope(member, input.siteId, 'a screen without one of your sites');
     const entitlements = await readEntitlements(tx, db, input.orgId);
@@ -121,13 +126,17 @@ export async function claimDevice(
     });
     return { screenId: screenRef.id, status };
   });
+  // App store: a new screen takes any free app seats.
+  await syncScreenApps(deps, input.orgId);
+  return result;
 }
 
 export async function authorizeScreen(
-  { db, now }: Deps,
+  deps: Deps,
   actor: Actor,
   input: z.infer<typeof ScreenRefInput>,
 ): Promise<void> {
+  const { db, now } = deps;
   const at = now();
   await auditedTransaction(db, [input.orgId], async (tx, audit) => {
     const { member } = await requireActiveOrgPermission(tx, db, actor, input.orgId, 'device.authorize');
@@ -149,6 +158,7 @@ export async function authorizeScreen(
       data: { name: screen.name },
     });
   });
+  await syncScreenApps(deps, input.orgId);
 }
 
 export async function updateScreen(
@@ -168,6 +178,7 @@ export async function updateScreen(
     if (input.touch) {
       requireFeature(await readEntitlements(tx, db, input.orgId), 'interactive.touch', 'Touch screens');
       if (before.syncGroupId) throw new HttpsError('failed-precondition', 'A screen in a sync group cannot be a touch screen. Remove it from the group first.');
+      if (before.blockedFeatures?.includes('interactive.touch')) throw new HttpsError('failed-precondition', 'Put the Touch kiosk app on this screen first.');
       if (!(await tx.get(db.doc(paths.layout(input.orgId, input.touch.homeLayoutId)))).exists) {
         throw new HttpsError('invalid-argument', 'The touch home page no longer exists.');
       }
@@ -196,10 +207,11 @@ export async function updateScreen(
 
 /** Removes the screen and permanently revokes its player (it must be registered again). */
 export async function removeScreen(
-  { db, now }: Deps,
+  deps: Deps,
   actor: Actor,
   input: z.infer<typeof ScreenRefInput>,
 ): Promise<void> {
+  const { db, now } = deps;
   const at = now();
   await auditedTransaction(db, [input.orgId], async (tx, audit) => {
     const member = await requireOrgPermission(tx, db, actor, input.orgId, 'screen.manage');
@@ -224,6 +236,8 @@ export async function removeScreen(
       data: { name: screen.name, deviceId: screen.deviceId },
     });
   });
+  // Its app seats pass to other screens (whose content then follows).
+  await syncAndRepublish(deps, input.orgId);
 }
 
 /** Authorized screens of an org, optionally limited to ids (empty = all). */
@@ -237,14 +251,22 @@ export async function authorizedScreens(db: Deps['db'], orgId: string, screenIds
  * the new version on their next poll (≤ 30 s) and download it. Used by publish, approvals and
  * emergency overrides.
  */
-export async function publishToScreens(deps: Deps, orgId: string, screens: ScreenDoc[]): Promise<number> {
+export async function publishToScreens(
+  deps: Deps,
+  orgId: string,
+  screens: ScreenDoc[],
+  /** Filled with screens whose content uses apps they do not hold (shown a notice instead). */
+  report?: Array<{ screenId: string; name: string; features: FeatureKey[] }>,
+): Promise<number> {
   const { db, now } = deps;
   screens = await withSyncGroupMembers(db, orgId, screens);
   for (const screen of screens) {
     // Re-read so concurrent publishes never reuse a version number.
     const fresh = ((await db.doc(paths.screen(orgId, screen.id)).get()).data() as ScreenDoc | undefined) ?? screen;
     const version = fresh.manifestVersion + 1;
-    const manifest = await compileManifest(deps, orgId, fresh, version);
+    const missing = new Set<FeatureKey>();
+    const manifest = await compileManifest(deps, orgId, fresh, version, missing);
+    if (report && missing.size) report.push({ screenId: fresh.id, name: fresh.name, features: [...missing].sort() });
     const at = now();
     const batch = db.batch();
     batch.set(db.doc(paths.screenManifest(orgId, screen.id)), manifest);
@@ -277,7 +299,7 @@ export async function publishScreens(
   deps: Deps,
   actor: Actor,
   input: z.infer<typeof PublishScreensInput> & { note?: string },
-): Promise<{ published: number; approvalId?: string }> {
+): Promise<{ published: number; approvalId?: string; missingApps?: Array<{ screenId: string; name: string; features: FeatureKey[] }> }> {
   const { db, now } = deps;
   const { member, org } = await db.runTransaction((tx) =>
     requireActiveOrgPermission(tx, db, actor, input.orgId, 'content.publish'),
@@ -321,7 +343,10 @@ export async function publishScreens(
     return { published: 0, approvalId: ref.id };
   }
 
-  const published = await publishToScreens(deps, input.orgId, screens);
+  const missingApps: Array<{ screenId: string; name: string; features: FeatureKey[] }> = [];
+  // Seats are brought up to date first (organizations moved before per-screen apps existed).
+  await syncScreenApps(deps, input.orgId);
+  const published = await publishToScreens(deps, input.orgId, screens, missingApps);
   await auditedTransaction(db, [input.orgId], async (_tx, audit) => {
     audit(input.orgId, {
       at: now(),
@@ -332,7 +357,7 @@ export async function publishScreens(
       data: { screens: published },
     });
   });
-  return { published };
+  return { published, ...(missingApps.length ? { missingApps } : {}) };
 }
 
 /** An approver approves (publishes now) or rejects a pending publish request. */

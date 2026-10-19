@@ -8,7 +8,9 @@ import {
   type ScreenDoc,
   type ScreenRotation,
 } from '@wallx-play/shared';
-import { Monitor, Plus, Send, Siren } from 'lucide-react';
+import { AppWindow, Monitor, Plus, Send, Siren } from 'lucide-react';
+import { AppScreensDialog, screenAppNames } from './AppScreens';
+import { useAppCatalog } from '../../content/apps';
 import { ApprovalsPanel } from './ApprovalsPanel';
 import { EmergencyDialog } from './EmergencyDialog';
 import { ScreenDiagnostics } from '../analytics/ScreenDiagnostics';
@@ -59,8 +61,12 @@ export function Screens() {
   const [adding, setAdding] = useState<string | null>(null);
   const [editing, setEditing] = useState<ScreenDoc | null>(null);
   const [emergencyOpen, setEmergencyOpen] = useState(false);
-  const [message, setMessage] = useState<{ tone: 'success' | 'danger'; text: string } | null>(null);
+  const [message, setMessage] = useState<{ tone: 'success' | 'warning' | 'danger'; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
+  // App store: after the trial, organizations billed by apps place screen apps screen by screen.
+  const seats = entitlements?.screenApps;
+  const catalog = useAppCatalog(!!seats);
+  const [placingApps, setPlacingApps] = useState(false);
 
   // QR on the player opens /screens?pair=CODE → start pairing with the code filled in.
   useEffect(() => {
@@ -75,11 +81,18 @@ export function Screens() {
     setBusy(true);
     setMessage(null);
     try {
-      const { published, approvalId } = await call<{ published: number; approvalId?: string }>('publishScreens', { orgId, screenIds });
-      setMessage({
-        tone: 'success',
-        text: approvalId ? t('screens.sentForApproval') : t('screens.published', { count: published }),
-      });
+      const { published, approvalId, missingApps } = await call<{
+        published: number;
+        approvalId?: string;
+        missingApps?: Array<{ screenId: string; name: string; features: string[] }>;
+      }>('publishScreens', { orgId, screenIds });
+      const done = approvalId ? t('screens.sentForApproval') : t('screens.published', { count: published });
+      // Content using an app a screen does not hold shows a notice there instead.
+      setMessage(
+        missingApps?.length
+          ? { tone: 'warning', text: `${done} ${t('screenApps.missing', { screens: missingApps.map((m) => m.name).join(', ') })}` }
+          : { tone: 'success', text: done },
+      );
     } catch (err) {
       setMessage({ tone: 'danger', text: errorMessage(err) });
     } finally {
@@ -109,6 +122,11 @@ export function Screens() {
             {can('emergency.trigger') && screens.data.some((s) => s.status === 'authorized') ? (
               <Button variant="danger" onClick={() => setEmergencyOpen(true)}>
                 <Siren size={15} aria-hidden /> {t('emergency.button')}
+              </Button>
+            ) : null}
+            {seats && can('screen.manage') && !siteScope?.length ? (
+              <Button onClick={() => setPlacingApps(true)}>
+                <AppWindow size={15} aria-hidden /> {t('screenApps.button')}
               </Button>
             ) : null}
             {can('content.publish') && screens.data.some((s) => s.status === 'authorized') ? (
@@ -161,6 +179,9 @@ export function Screens() {
                       <div className="wxp-muted">
                         {sites.data.find((x) => x.id === s.siteId)?.name ?? t('screens.noSite')} · {s.resolution.width}×{s.resolution.height}
                       </div>
+                      {seats && s.status === 'authorized' ? (
+                        <div className="wxp-muted">{t('screenApps.onScreen', { apps: screenAppNames(s, catalog.data) || t('screenApps.baseOnly') })}</div>
+                      ) : null}
                     </td>
                     <td>
                       <StatusChip tone={state.tone}>{t(`screens.states.${state.key}`)}</StatusChip>
@@ -189,7 +210,7 @@ export function Screens() {
                           {t('screens.authorize')}
                         </Button>
                       ) : null}
-                      {s.status === 'authorized' && diagnosticsOn ? (
+                      {s.status === 'authorized' && diagnosticsOn && !s.blockedFeatures?.includes('screen.diagnostics') ? (
                         <Button size="sm" variant="tertiary" onClick={() => setDiagnosing(s)}>
                           {t('analytics.diagnostics')}
                         </Button>
@@ -212,6 +233,9 @@ export function Screens() {
       </p>
 
       {adding !== null ? <ScreenDialog code={adding} onClose={() => setAdding(null)} /> : null}
+      {placingApps && seats ? (
+        <AppScreensDialog orgId={orgId} seats={seats} catalog={catalog.data} screens={screens.data} onClose={() => setPlacingApps(false)} />
+      ) : null}
       {emergencyOpen ? <EmergencyDialog screens={screens.data} onClose={() => setEmergencyOpen(false)} /> : null}
       {diagnosing ? (
         <ScreenDiagnostics

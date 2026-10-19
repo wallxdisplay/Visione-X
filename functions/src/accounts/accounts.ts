@@ -25,6 +25,7 @@ import { auditedTransaction, platformAudit } from '../lib/audit';
 import { getOrg, requirePlatform } from '../lib/authz';
 import type { Actor, Deps } from '../lib/context';
 import { fanOutAccountToProfiles, readAccount, syncAccountOrgs, syncPartnerMembers } from './partners';
+import { syncAndRepublish } from '../screens/screenApps';
 
 const DAY_MS = 86_400_000;
 
@@ -132,13 +133,15 @@ export async function setOrgAccount(deps: Deps, actor: Actor, input: z.infer<typ
     audit(input.orgId, entry);
   });
   await syncPartnerMembers(deps, input.orgId);
+  await syncAndRepublish(deps, input.orgId);
 }
 
 /**
  * Copies the reseller's paid period to every customer it pays for (not those in a trial), so
  * their status follows the reseller's payments. Each customer is its own audited transaction.
  */
-export async function propagateAccountBilling({ db, now }: Deps, accountId: string, by: string): Promise<number> {
+export async function propagateAccountBilling(deps: Deps, accountId: string, by: string): Promise<number> {
+  const { db, now } = deps;
   const orgs = await db.collection(paths.orgs()).where('parentAccountId', '==', accountId).get();
   let updated = 0;
   for (const o of orgs.docs) {
@@ -167,6 +170,8 @@ export async function propagateAccountBilling({ db, now }: Deps, accountId: stri
       });
       updated++;
     });
+    // When billing starts or the trial ends, screens keep only the apps they hold.
+    await syncAndRepublish(deps, o.id);
   }
   return updated;
 }

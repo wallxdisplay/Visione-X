@@ -5,8 +5,11 @@
  * stored for organizations whose plan does not include proof-of-play reports. Summaries expire
  * through a Firestore TTL after the plan's retention period.
  */
-import { HttpsError } from 'firebase-functions/v2/https';
-import { FieldValue, type DocumentReference, type Query } from 'firebase-admin/firestore';
+import {
+  HttpsError } from 'firebase-functions/v2/https';
+import { FieldValue,
+  type DocumentReference,
+  type Query } from 'firebase-admin/firestore';
 import type { z } from 'zod';
 import {
   PLAY_MAX_AGE_DAYS,
@@ -101,7 +104,9 @@ export async function devicePlays(deps: Deps, req: ApiRequest): Promise<ApiResul
     ]);
     if (batch.exists) return (batch.get('stored') as boolean | undefined) ?? false; // a retry: already counted
     const entitlements = ent.data() as EntitlementsDoc | undefined;
-    const features = screen.exists ? (entitlements?.features ?? []) : [];
+    // App store: proof-of-play and diagnostics only for screens that hold those apps.
+    const blockedHere = (screen.data() as ScreenDoc | undefined)?.blockedFeatures ?? [];
+    const features = screen.exists ? (entitlements?.features ?? []).filter((f) => !blockedHere.includes(f)) : [];
     // Plays only with proof-of-play reports, uptime only with screen diagnostics.
     const plays = features.includes('report.proofOfPlay') ? buckets : [];
     const up = features.includes('screen.diagnostics') ? uptime : [];

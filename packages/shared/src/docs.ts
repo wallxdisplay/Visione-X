@@ -145,6 +145,8 @@ export interface SiteDoc {
 export interface EntitlementsDoc extends Entitlements {
   planId: string;
   computedAt: number;
+  /** App pricing after the trial: screens bought per screen app (apps are then placed screen by screen). */
+  screenApps?: Record<string, number>;
 }
 export type EntitlementOverridesDoc = FeatureOverrides;
 

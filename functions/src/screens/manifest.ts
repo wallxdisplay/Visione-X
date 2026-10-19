@@ -8,7 +8,7 @@ import {
   type PlaylistItem,
   type ScheduleRule,
   type Zone,
-} from '@wallx-play/layout-spec';
+  } from '@wallx-play/layout-spec';
 import {
   emergencyPlaylistId,
   paths,
@@ -24,6 +24,9 @@ import {
   type SyncMember,
   type EntitlementsDoc,
   type ScreenTouch,
+  WIDGET_SCREEN_FEATURES,
+  type AppDoc,
+  type FeatureKey,
 } from '@wallx-play/shared';
 import type { Deps } from '../lib/context';
 import { downloadUrl } from '../lib/storageUrl';
@@ -66,6 +69,12 @@ export interface ManifestSources {
   sync?: { group: SyncGroupDoc; member: SyncMember } | null;
   /** Touch kiosk settings (only when the plan has interactive.touch). */
   touch?: ScreenTouch | null;
+  /** App store: features this screen may not use (screen apps it does not hold). */
+  blocked?: readonly FeatureKey[];
+  /** Name of the app selling each feature, for the notice shown instead of a widget. */
+  appNames?: Partial<Record<FeatureKey, string>>;
+  /** Collects the blocked features the content actually uses (to tell whoever publishes). */
+  missing?: Set<FeatureKey>;
 }
 
 /**
@@ -91,22 +100,36 @@ export function assembleManifest(src: ManifestSources): Manifest {
     }));
 
   // In a sync group the group's playlist replaces the screen's schedules (emergencies still win).
-  const group = src.sync && src.playlists.has(src.sync.group.playlistId) ? src.sync : null;
+  const group = src.sync && src.playlists.has(src.sync.group.playlistId) && !(src.blocked ?? []).includes('screen.multiSync') ? src.sync : null;
   const defaultPlaylistId = group
     ? group.group.playlistId
     : src.screen.defaultPlaylistId && src.playlists.has(src.screen.defaultPlaylistId)
       ? src.screen.defaultPlaylistId
       : null;
 
+  // App store: a widget for an app this screen does not hold shows a short notice instead.
+  const blocked = new Set(src.blocked ?? []);
+  const gate = <T extends { kind: string }>(content: T): T => {
+    if (content.kind !== 'widget') return content;
+    const feature = WIDGET_SCREEN_FEATURES[(content as unknown as { widget: { type: string } }).widget.type];
+    if (!feature || !blocked.has(feature)) return content;
+    src.missing?.add(feature);
+    const app = src.appNames?.[feature] ?? 'This app';
+    return { kind: 'widget', widget: { type: 'text', text: `${app} is not enabled on this screen`, style: { color: '#94A3B8', align: 'center', fontScale: 0.12 } } } as unknown as T;
+  };
   const cleanItems = (items: PlaylistItem[]) =>
-    items.filter((i) =>
-      i.content.kind === 'media' ? playable(i.content.mediaId) : i.content.kind === 'layout' ? src.layouts.has(i.content.layoutId) : true,
-    );
+    items
+      .filter((i) =>
+        i.content.kind === 'media' ? playable(i.content.mediaId) : i.content.kind === 'layout' ? src.layouts.has(i.content.layoutId) : true,
+      )
+      .map((i) => ({ ...i, content: gate(i.content) }));
+  const touchOk = !blocked.has('interactive.touch');
   const cleanZone = (z: Zone): Zone => {
     const c = z.content;
     if (c.kind === 'media' && !playable(c.mediaId)) return { ...z, content: { kind: 'empty' } };
     if (c.kind === 'playlist' && !src.playlists.has(c.playlistId)) return { ...z, content: { kind: 'empty' } };
-    return z;
+    const { action, ...rest } = z;
+    return { ...(touchOk && action ? { ...rest, action } : rest), content: gate(c) };
   };
 
   const layouts: Layout[] = [...src.layouts.values()].map((l) => ({
@@ -171,7 +194,7 @@ export function assembleManifest(src: ManifestSources): Manifest {
     dataSources: dataSourcesOf(layouts, playlists),
     rotation: src.screen.rotation ?? 0,
     touch:
-      !group && src.touch && src.layouts.has(src.touch.homeLayoutId)
+      !group && src.touch && src.layouts.has(src.touch.homeLayoutId) && !(src.blocked ?? []).includes('interactive.touch')
         ? { homeLayoutId: src.touch.homeLayoutId, idleSec: src.touch.idleSec, attract: src.touch.attract }
         : null,
     sync: group
@@ -202,7 +225,9 @@ export async function compileManifest(
   orgId: string,
   screen: ScreenDoc,
   version: number,
+  missing?: Set<FeatureKey>,
 ): Promise<Manifest> {
+  const blocked = screen.blockedFeatures ?? [];
   const schedules = (await db.collection(paths.schedules(orgId)).where('enabled', '==', true).get()).docs
     .map((d) => d.data() as ScheduleDoc)
     .filter((s) => targetsScreen(s, screen));
@@ -213,7 +238,7 @@ export async function compileManifest(
   const emergency = activeEmergencyFor(emergencies, screen, now());
 
   // Playlists from schedules + default + emergency, then layouts they contain, then zone playlists.
-  const groupDoc = screen.syncGroupId ? ((await db.doc(paths.syncGroup(orgId, screen.syncGroupId)).get()).data() as SyncGroupDoc | undefined) : undefined;
+  const groupDoc = screen.syncGroupId && !blocked.includes('screen.multiSync') ? ((await db.doc(paths.syncGroup(orgId, screen.syncGroupId)).get()).data() as SyncGroupDoc | undefined) : undefined;
   const member = groupDoc?.enabled ? groupDoc.members.find((m) => m.screenId === screen.id) : undefined;
   const sync = groupDoc && member ? { group: groupDoc, member } : null;
 
@@ -224,7 +249,7 @@ export async function compileManifest(
   const playlists = await getMany<PlaylistDoc>(db, (id) => paths.playlist(orgId, id), playlistIds);
   // Touch screens also get their home page and every page a tap can reach (a few levels deep).
   const ent = screen.touch ? ((await db.doc(paths.orgEntitlements(orgId)).get()).data() as EntitlementsDoc | undefined) : undefined;
-  const touch = screen.touch && !sync && ent?.features.includes('interactive.touch') ? screen.touch : null;
+  const touch = screen.touch && !sync && ent?.features.includes('interactive.touch') && !blocked.includes('interactive.touch') ? screen.touch : null;
   const layouts = await getMany<LayoutDoc>(db, (id) => paths.layout(orgId, id), [
     ...[...playlists.values()].flatMap((p) => p.layoutIds),
     ...(touch ? [touch.homeLayoutId] : []),
@@ -246,5 +271,13 @@ export async function compileManifest(
       .map(async (m) => assetUrls.set(m.id, await downloadUrl(bucket, m.display!.path))),
   );
 
-  return assembleManifest({ orgId, screen, version, now: now(), schedules, playlists, layouts, media, assetUrls, emergency, sync, touch });
+  // App names for the notice shown in place of widgets this screen has no app for.
+  const appNames: Partial<Record<FeatureKey, string>> = {};
+  if (blocked.length) {
+    for (const d of (await db.collection(paths.apps()).get()).docs) {
+      const app = d.data() as AppDoc;
+      for (const k of app.featureKeys) appNames[k] ??= app.name;
+    }
+  }
+  return assembleManifest({ orgId, screen, version, now: now(), schedules, playlists, layouts, media, assetUrls, emergency, sync, touch, blocked, appNames, missing });
 }

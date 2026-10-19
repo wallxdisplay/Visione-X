@@ -22,6 +22,7 @@ import { getOrg, requirePlatform } from '../lib/authz';
 import type { Actor, Deps } from '../lib/context';
 import { entitlementsForSub } from '../lib/entitlements';
 import { auditedTransaction, platformAudit } from '../lib/audit';
+import { syncAndRepublish } from '../screens/screenApps';
 
 /** Recomputes entitlements for every org (or only those on `planId`). Returns how many. */
 export async function recomputeEntitlements({ db, now }: Deps, planId?: string): Promise<number> {
@@ -109,7 +110,8 @@ export async function setFeatureRelease(deps: Deps, actor: Actor, input: z.infer
   return { orgsUpdated: await recomputeEntitlements(deps) };
 }
 
-export async function setEntitlementOverrides({ db, now }: Deps, actor: Actor, input: z.infer<typeof SetEntitlementOverridesInput>): Promise<void> {
+export async function setEntitlementOverrides(deps: Deps, actor: Actor, input: z.infer<typeof SetEntitlementOverridesInput>): Promise<void> {
+  const { db, now } = deps;
   requirePlatform(actor, 'org.limits.edit');
   const at = now();
   const overlap = input.grant.filter((k) => input.revoke.includes(k));
@@ -138,4 +140,6 @@ export async function setEntitlementOverrides({ db, now }: Deps, actor: Actor, i
     const sub = normalizeSubscription((await tx.get(db.doc(paths.orgSubscription(input.orgId)))).data() as SubscriptionDoc);
     tx.set(db.doc(paths.orgEntitlements(input.orgId)), await entitlementsForSub(tx, db, input.orgId, sub, at));
   });
+  // A granted feature is usable on every screen.
+  await syncAndRepublish(deps, input.orgId);
 }

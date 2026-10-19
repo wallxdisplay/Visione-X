@@ -6,6 +6,7 @@
 import { MqttBridgeStatus } from './mqtt';
 import { PlayerUpdateStatus, type PlayerUpdate } from './players';
 import { z } from 'zod';
+import type { FeatureKey } from './features';
 import { RESOLUTION_PRESETS } from '@wallx-play/layout-spec';
 
 export const DEVICE_STATUSES = ['unpaired', 'pending_authorization', 'authorized', 'revoked'] as const;
@@ -100,6 +101,10 @@ export interface ScreenDoc {
   touch?: ScreenTouch | null;
   /** MQTT bridge: when its configuration last changed (absent / null = not a bridge). */
   mqttConfigAt?: number | null;
+  /** App store: per-screen apps this screen holds (app pricing). */
+  apps?: string[];
+  /** Features this screen may not use (screen apps it does not hold); kept in sync by Functions. */
+  blockedFeatures?: FeatureKey[];
   createdBy: string;
   createdAt: number;
   updatedAt: number;

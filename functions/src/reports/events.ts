@@ -5,9 +5,16 @@
  * Only organizations whose plan includes screen diagnostics keep any of it. Written only when
  * something happens, so ordinary heartbeats cost nothing extra.
  */
-import { FieldValue } from 'firebase-admin/firestore';
+import {
+  FieldValue } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
-import { SCREEN_EVENT_DAYS, paths, type EntitlementsDoc, type OrgDoc, type ScreenEventType } from '@wallx-play/shared';
+import { SCREEN_EVENT_DAYS,
+  paths,
+  type EntitlementsDoc,
+  type OrgDoc,
+  type ScreenEventType,
+  type ScreenDoc,
+} from '@wallx-play/shared';
 import type { Deps } from '../lib/context';
 import { dayBase, localDateHour } from './plays';
 
@@ -41,6 +48,9 @@ export async function recordScreenEvents(
   const [ent, org] = await db.getAll(db.doc(paths.orgEntitlements(orgId)), db.doc(paths.org(orgId)));
   const entitlements = ent?.data() as EntitlementsDoc | undefined;
   if (!entitlements?.features.includes('screen.diagnostics')) return 0;
+  // App store: diagnostics only for screens that hold the app.
+  const screenDoc = (await db.doc(paths.screen(orgId, screenId)).get()).data() as ScreenDoc | undefined;
+  if (screenDoc?.blockedFeatures?.includes('screen.diagnostics')) return 0;
   const timeZone = (org?.data() as OrgDoc | undefined)?.timezone || 'Asia/Kolkata';
   const keepDays = entitlements.limits.retentionDays ?? 730;
   const kept = events.slice(-MAX_EVENTS);

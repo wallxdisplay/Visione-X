@@ -66,7 +66,11 @@ export async function computeEntitlements(
     catalog,
     ...(overrides ? { overrides } : {}),
   });
-  return { ...resolved, planId, computedAt: now };
+  // Seats per screen app, so members placing apps on screens see how many they have.
+  const seats = fromApps && !apps!.trialing
+    ? Object.fromEntries(apps!.lines.filter((l) => l.quantity > 0 && appCatalog.some((a) => a.id === l.appId && a.unit === 'screen' && !a.base)).map((l) => [l.appId, l.quantity]))
+    : null;
+  return { ...resolved, planId, computedAt: now, ...(seats ? { screenApps: seats } : {}) };
 }
 
 export function requireFeature(entitlements: EntitlementsDoc, feature: FeatureKey, label: string): void {

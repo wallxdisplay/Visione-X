@@ -515,5 +515,19 @@
     "anySite": "Any site",
     "deleteTitle": "Delete group?",
     "deleteBody": "{{name}} will be deleted. Groups with screens or schedules cannot be deleted."
+  },
+  "screenApps": {
+    "button": "Apps on screens",
+    "title": "Apps on screens",
+    "intro": "Each app you bought runs on as many screens as you bought it for. Choose those screens; the others show a short notice where the app’s content would be.",
+    "app": "App",
+    "seats": "Screens ({{used}} of {{total}})",
+    "autoFill": "Screens you leave free are filled automatically, by name, so nothing you pay for sits unused.",
+    "noneBought": "No screen apps are bought yet. Ask your admin or WallX to add them.",
+    "saved_one": "Saved. {{count}} screen gets new content.",
+    "saved_other": "Saved. {{count}} screens get new content.",
+    "onScreen": "Apps: {{apps}}",
+    "baseOnly": "basic only",
+    "missing": "Some content needs an app these screens do not have, so they show a notice instead: {{screens}}. Use “Apps on screens” to move apps."
   }
 }
