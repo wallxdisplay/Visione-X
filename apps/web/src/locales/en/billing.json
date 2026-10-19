@@ -51,7 +51,8 @@
       "cheque": "Cheque",
       "cash": "Cash",
       "card": "Card",
-      "other": "Other"
+      "other": "Other",
+      "razorpay": "Online (Razorpay)"
     },
     "reference": "Reference",
     "invoiceNo": "Invoice no.",
@@ -396,5 +397,37 @@
     "staffPending_other": "App store: {{amount}} from {{count}} changes to collect with the next payment.",
     "staffScheduled": "App store: on {{date}}: {{list}}. Changing the plan or lines replaces this.",
     "paymentHint": "Plus {{amount}} of App store charges."
+  },
+  "payOnline": {
+    "button": "Pay now",
+    "title": "Pay online",
+    "what": "Pay for",
+    "kinds": {
+      "renewal": "Subscription (and App store charges)",
+      "charges": "Only App store charges"
+    },
+    "periods": "Period",
+    "periodsN": {
+      "monthly_one": "{{count}} month",
+      "monthly_other": "{{count}} months",
+      "annual_one": "{{count}} year",
+      "annual_other": "{{count}} years"
+    },
+    "subscription": "Subscription",
+    "charges": "App store charges",
+    "taxable": "Before GST",
+    "cgst": "CGST {{pct}}%",
+    "sgst": "SGST {{pct}}%",
+    "igst": "IGST {{pct}}%",
+    "total": "Total",
+    "paidThrough": "Paid through after this",
+    "note": "Pay securely with UPI, card or netbanking through Razorpay. WallX sends the tax invoice separately.",
+    "pay": "Pay {{amount}}",
+    "payShort": "Pay",
+    "paid": "Payment of {{amount}} received. Thank you!",
+    "paidUntil": "Payment of {{amount}} received. You are paid through {{date}}. Thank you!",
+    "failed": "The payment did not go through. You can try again.",
+    "recordedLater": "If money was taken, it is recorded automatically within a few minutes.",
+    "checkoutBlocked": "The payment window could not load. Check your connection or ad blocker and try again."
   }
 }

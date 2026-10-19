@@ -41,3 +41,5 @@ export const enforceAppCheck = () => process.env.APP_CHECK_ENFORCE === 'true';
  */
 export const MAIL_SECRETS: string[] = ['SMTP_PASSWORD'];
 export const WEATHER_SECRETS: string[] = ['GOOGLE_MAPS_API_KEY'];
+/** Online payments (Razorpay): key id, key secret and the webhook secret chosen in the dashboard. */
+export const PAYMENT_SECRETS: string[] = ['RAZORPAY_KEY_ID', 'RAZORPAY_KEY_SECRET', 'RAZORPAY_WEBHOOK_SECRET'];

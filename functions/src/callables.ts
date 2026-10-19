@@ -44,6 +44,9 @@ import {
   MoveToAppPricingInput,
   SetAppScreensInput,
   ChangeAppsInput,
+  CreatePaymentOrderInput,
+  ConfirmPaymentInput,
+  UpdatePaymentSettingsInput,
   DeleteRoleInput,
   SetMemberSitesInput,
   SetFeatureReleaseInput,
@@ -119,6 +122,7 @@ import * as branding from './branding/branding';
 import * as appCatalog from './apps/catalog';
 import * as screenApps from './screens/screenApps';
 import * as appStore from './billing/appStore';
+import * as online from './billing/online';
 import { reviewOrgSignup as reviewSvc, setOrgStatus as setOrgStatusSvc } from './orgs/review';
 import * as settings from './orgs/settings';
 import * as signup from './orgs/signup';
@@ -136,7 +140,7 @@ import * as apiKeys from './publicApi/keys';
 import * as webhooks from './publicApi/webhooks';
 import { apiOverview as apiOverviewSvc } from './publicApi/overview';
 import * as syncGroups from './screens/syncGroups';
-import { BASE_OPTIONS, MAIL_SECRETS, WEATHER_SECRETS, enforceAppCheck } from './options';
+import { BASE_OPTIONS, MAIL_SECRETS, PAYMENT_SECRETS, WEATHER_SECRETS, enforceAppCheck } from './options';
 
 export function actorFrom(request: CallableRequest): Actor {
   const auth = request.auth;
@@ -242,6 +246,9 @@ export const seedAppCatalog = callable(z.object({}), (deps, actor) => appCatalog
 export const moveToAppPricing = callable(MoveToAppPricingInput, billing.moveToAppPricing);
 export const setAppScreens = callable(SetAppScreensInput, screenApps.setAppScreens, { memory: '512MiB', timeoutSeconds: 120 });
 export const changeApps = callable(ChangeAppsInput, appStore.changeApps, { memory: '512MiB', timeoutSeconds: 120 });
+export const createPaymentOrder = callable(CreatePaymentOrderInput, online.createPaymentOrder, { secrets: PAYMENT_SECRETS });
+export const confirmPayment = callable(ConfirmPaymentInput, online.confirmPayment, { memory: '512MiB', timeoutSeconds: 120, secrets: PAYMENT_SECRETS });
+export const updatePaymentSettings = callable(UpdatePaymentSettingsInput, online.updatePaymentSettings, { secrets: PAYMENT_SECRETS });
 export const setPlatformRole = callable(SetPlatformRoleInput, setPlatformRoleSvc);
 
 // Content (phase 2)

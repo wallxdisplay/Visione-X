@@ -6,6 +6,8 @@ import { useAuth } from '../../auth/AuthProvider';
 import { call, errorMessage } from '../../lib/api';
 import { usePlatformSettings } from '../../lib/platformSettings';
 import './admin.css';
+import { DEFAULT_GST_RATE_BPS, INDIAN_STATES, type OnlinePaymentSettings } from '@wallx-play/shared';
+import { usePlans } from '../../content/billing';
 
 /** "2026-10-20T18:00" in the browser's time zone ↔ epoch ms. */
 const toLocalInput = (ms: number) => {
@@ -134,6 +136,8 @@ export function AdminSettings() {
         <p className="wxp-field__hint">{t('adminSettings.signupsHint')}</p>
       </section>
 
+      <PaymentSettings canEdit={canEdit} />
+
       <section className="wxp-card admin-settings__section">
         <h2 className="section-title">{t('adminSettings.playerTitle')}</h2>
         <p className="wxp-muted wxp-tabular">
@@ -149,5 +153,80 @@ export function AdminSettings() {
         </div>
       ) : null}
     </>
+  );
+}
+
+/** Online payments (Razorpay): the switch, GST and where trial customers go when they pay. */
+function PaymentSettings({ canEdit }: { canEdit: boolean }) {
+  const { t } = useTranslation();
+  const settings = usePlatformSettings();
+  const plans = usePlans();
+  const [form, setForm] = useState<OnlinePaymentSettings | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<{ tone: 'success' | 'danger'; text: string } | null>(null);
+
+  useEffect(() => {
+    if (settings.loading || form) return;
+    setForm(settings.data?.payments ?? { enabled: false, supplierStateCode: '27', gstRateBps: DEFAULT_GST_RATE_BPS, trialPlanTo: null });
+  }, [settings.loading, settings.data, form]);
+  if (!form) return null;
+
+  async function save() {
+    setBusy(true);
+    setMessage(null);
+    try {
+      await call('updatePaymentSettings', form);
+      setMessage({ tone: 'success', text: t('adminSettings.saved') });
+    } catch (err) {
+      setMessage({ tone: 'danger', text: errorMessage(err) });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const paid = plans.data.filter((p) => p.tier !== 'trial' && p.active);
+  return (
+    <section className="wxp-card admin-settings__section">
+      <h2 className="section-title">{t('adminSettings.payments.title')}</h2>
+      <p className="wxp-muted">{t('adminSettings.payments.hint')}</p>
+      {message ? <Alert tone={message.tone}>{message.text}</Alert> : null}
+      <label className="checkbox-row">
+        <input type="checkbox" checked={form.enabled} disabled={!canEdit} onChange={(e) => setForm({ ...form, enabled: e.target.checked })} />
+        {t('adminSettings.payments.enabled')}
+      </label>
+      <div className="wxp-form__row">
+        <SelectField
+          label={t('adminSettings.payments.state')}
+          options={INDIAN_STATES.map((s) => ({ value: s.code, label: `${s.code} · ${s.name}` }))}
+          value={form.supplierStateCode}
+          disabled={!canEdit}
+          onChange={(e) => setForm({ ...form, supplierStateCode: e.target.value })}
+        />
+        <TextField
+          label={t('adminSettings.payments.gst')}
+          type="number"
+          min={0}
+          max={50}
+          step={0.01}
+          value={String(form.gstRateBps / 100)}
+          disabled={!canEdit}
+          onChange={(e) => setForm({ ...form, gstRateBps: Math.round(Number(e.target.value) * 100) })}
+        />
+      </div>
+      <SelectField
+        label={t('adminSettings.payments.trialPlan')}
+        hint={t('adminSettings.payments.trialPlanHint')}
+        options={[{ value: '', label: t('adminSettings.payments.trialPlanNone') }, ...paid.map((p) => ({ value: p.id, label: p.name }))]}
+        value={form.trialPlanTo ?? ''}
+        disabled={!canEdit}
+        onChange={(e) => setForm({ ...form, trialPlanTo: e.target.value || null })}
+      />
+      <p className="wxp-field__hint">{t('adminSettings.payments.webhook', { url: 'https://asia-south1-wallx-play.cloudfunctions.net/razorpayWebhook' })}</p>
+      {canEdit ? (
+        <Button variant="primary" disabled={busy} onClick={() => void save()}>
+          {t('adminSettings.payments.save')}
+        </Button>
+      ) : null}
+    </section>
   );
 }

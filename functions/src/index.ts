@@ -9,3 +9,4 @@ export { retentionDaily } from './ops/retention';
 export { auditExportDaily } from './ops/auditExport';
 export { emailNotification } from './notifications/emails';
 export { webhookNotification } from './publicApi/webhooks';
+export { razorpayWebhook } from './billing/online';

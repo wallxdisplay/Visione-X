@@ -213,7 +213,7 @@ function PaymentDialog({ accountId, suggestedMinor, onClose, onDone }: { account
         <TextField label={t('adminResellers.months')} type="number" min={1} max={36} value={months} onChange={(e) => setMonths(e.target.value)} />
       </div>
       <div className="wxp-form__row">
-        <SelectField label={t('billing.method')} options={PAYMENT_METHODS.map((x) => ({ value: x, label: t(`billing.methods.${x}`) }))} value={method} onChange={(e) => setMethod(e.target.value as PaymentMethod)} />
+        <SelectField label={t('billing.method')} options={PAYMENT_METHODS.filter((m) => m !== 'razorpay').map((x) => ({ value: x, label: t(`billing.methods.${x}`) }))} value={method} onChange={(e) => setMethod(e.target.value as PaymentMethod)} />
         <TextField label={t('billing.paidOn')} type="date" required value={paidOn} onChange={(e) => setPaidOn(e.target.value)} />
       </div>
       <div className="wxp-form__row">

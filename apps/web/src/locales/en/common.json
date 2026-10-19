@@ -206,7 +206,19 @@
     "signupsHint": "When off, people can still create an account and join existing organizations by invitation, but cannot request a new organization.",
     "playerTitle": "Player releases",
     "playerSigner": "Releases must be signed with the key whose SHA-256 is {{sha}}.",
-    "playerSignerNone": "No player release uploaded yet. The first release sets the signing key all later releases must use."
+    "playerSignerNone": "No player release uploaded yet. The first release sets the signing key all later releases must use.",
+    "payments": {
+      "title": "Online payments (Razorpay)",
+      "hint": "Customers billed by WallX can pay with a Pay now button. Set the Razorpay secrets and deploy first; use test keys until you are ready.",
+      "enabled": "Customers can pay online",
+      "state": "WallX GST state",
+      "gst": "GST rate (%)",
+      "trialPlan": "Plan after paying at the end of a trial",
+      "trialPlanHint": "App-priced organizations on the trial plan move to this plan when they pay online. Without one, WallX sets the plan first.",
+      "trialPlanNone": "None (WallX sets the plan)",
+      "webhook": "Razorpay webhook (events payment.captured and order.paid): {{url}}",
+      "save": "Save payment settings"
+    }
   },
   "adminPlayers": {
     "description": "Upload new versions of the Android player and choose which screens get them.",
