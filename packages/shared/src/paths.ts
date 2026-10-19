@@ -32,6 +32,10 @@ export const paths = {
   billingRequests: (orgId: string) => `orgs/${orgId}/billingRequests`,
   billingRequest: (orgId: string, id: string) => `orgs/${orgId}/billingRequests/${id}`,
   orgUsage: (orgId: string) => `orgs/${orgId}/usage/current`,
+  /** Daily usage rollup for cost tracking (staff only). */
+  costUsage: (orgId: string) => `orgs/${orgId}/costUsage`,
+  costUsageDay: (orgId: string, day: string) => `orgs/${orgId}/costUsage/${day}`,
+  costRates: () => 'platform/costRates',
   members: (orgId: string) => `orgs/${orgId}/members`,
   member: (orgId: string, uid: string) => `orgs/${orgId}/members/${uid}`,
   roles: (orgId: string) => `orgs/${orgId}/roles`,

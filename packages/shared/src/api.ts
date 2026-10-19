@@ -216,6 +216,8 @@ export const CALLABLES = {
   moveToAppPricing: 'moveToAppPricing',
   setAppScreens: 'setAppScreens',
   changeApps: 'changeApps',
+  saveCostRates: 'saveCostRates',
+  costReport: 'costReport',
   deleteMqttBroker: 'deleteMqttBroker',
   setMemberSites: 'setMemberSites',
   saveRole: 'saveRole',

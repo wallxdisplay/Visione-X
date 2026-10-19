@@ -6,6 +6,7 @@
  */
 import { z } from 'zod';
 import { ChannelMqtt } from './mqtt';
+import type { UsageCounters } from './costs';
 
 const id = z.string().min(1).max(128).regex(/^[A-Za-z0-9_-]+$/);
 
@@ -99,6 +100,8 @@ export function ruleBreached(rule: Pick<AlertRule, 'operator' | 'value' | 'hyste
 /** orgs/{orgId}/sensorDevices/{id} — readable with sensor.view. */
 export interface SensorDeviceDoc {
   id: string;
+  /** Cost tracking: ingest requests and readings per day (last few days). */
+  usage?: UsageCounters;
   name: string;
   siteId: string | null;
   status: 'active' | 'disabled';

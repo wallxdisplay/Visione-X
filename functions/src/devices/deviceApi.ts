@@ -33,6 +33,7 @@ import {
   type EntitlementsDoc,
 } from '@wallx-play/shared';
 import type { Deps } from '../lib/context';
+import { usageFields } from '../costs/usage';
 
 export interface ApiRequest {
   method: string;
@@ -258,7 +259,7 @@ export async function deviceHeartbeat(deps: Deps, req: ApiRequest): Promise<ApiR
     const screenRef = db.doc(paths.screen(device.orgId, device.screenId));
     screen = (await screenRef.get()).data() as ScreenDoc | undefined;
     if (screen) {
-      batch.update(screenRef, { lastSeen: at, health: { ...parsed.data, reportedAt: at }, offlineAlertedAt: null });
+      batch.update(screenRef, { lastSeen: at, health: { ...parsed.data, reportedAt: at }, offlineAlertedAt: null, ...usageFields(screen.usage, at, { beats: 1 }) });
       // The monitor had raised an offline alert: tell the org it is back.
       if (screen.offlineAlertedAt) {
         notify(batch, db, device.orgId, 'screen_online', { screen: screen.name }, '/screens', at);

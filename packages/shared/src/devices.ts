@@ -8,6 +8,7 @@ import { PlayerUpdateStatus, type PlayerUpdate } from './players';
 import { z } from 'zod';
 import type { FeatureKey } from './features';
 import { RESOLUTION_PRESETS } from '@wallx-play/layout-spec';
+import type { UsageCounters } from './costs';
 
 export const DEVICE_STATUSES = ['unpaired', 'pending_authorization', 'authorized', 'revoked'] as const;
 export type DeviceStatus = (typeof DEVICE_STATUSES)[number];
@@ -76,6 +77,8 @@ export interface DeviceVitals {
 /** orgs/{orgId}/screens/{screenId} — readable by org members. */
 export interface ScreenDoc {
   id: string;
+  /** Cost tracking: heartbeats and media delivered per day (last few days). */
+  usage?: UsageCounters;
   name: string;
   siteId: string | null;
   groupIds: string[];

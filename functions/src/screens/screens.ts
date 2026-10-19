@@ -26,6 +26,7 @@ import { userAudit } from '../content/media';
 import { notify } from '../lib/notify';
 import { syncAndRepublish, syncScreenApps } from './screenApps';
 import { compileManifest } from './manifest';
+import { usageFields } from '../costs/usage';
 import { bridgedBrokerNames } from '../sensors/mqtt';
 
 async function checkTargets(
@@ -266,11 +267,15 @@ export async function publishToScreens(
     const version = fresh.manifestVersion + 1;
     const missing = new Set<FeatureKey>();
     const manifest = await compileManifest(deps, orgId, fresh, version, missing);
+    // Cost tracking: players download only media they do not have yet.
+    const previous = (await db.doc(paths.screenManifest(orgId, screen.id)).get()).data() as { assets?: Array<{ mediaId: string }> } | undefined;
+    const had = new Set((previous?.assets ?? []).map((a) => a.mediaId));
+    const deliveredBytes = manifest.assets.filter((a) => !had.has(a.mediaId)).reduce((s, a) => s + a.bytes, 0);
     if (report && missing.size) report.push({ screenId: fresh.id, name: fresh.name, features: [...missing].sort() });
     const at = now();
     const batch = db.batch();
     batch.set(db.doc(paths.screenManifest(orgId, screen.id)), manifest);
-    batch.update(db.doc(paths.screen(orgId, screen.id)), { manifestVersion: version, publishedAt: at, updatedAt: at });
+    batch.update(db.doc(paths.screen(orgId, screen.id)), { manifestVersion: version, publishedAt: at, updatedAt: at, ...usageFields(fresh.usage, at, { deliveredBytes }) });
     await batch.commit();
   }
   return screens.length;

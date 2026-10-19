@@ -27,6 +27,7 @@ import { fetchAirQuality } from './airQuality';
 import { FetchError, safeGet } from './net';
 import { FeedError, parseFeed } from './rss';
 import { ProviderNotConfigured, fetchWeather } from './weather';
+import { usageFields } from '../costs/usage';
 
 interface CacheDoc {
   fetchedAt: number | null;
@@ -115,6 +116,10 @@ export async function getDataSourceValue(deps: Deps, orgId: string, ds: DataSour
     expiresAt: Timestamp.fromMillis(at + STALE_SERVE_MS),
   };
   await ref.set(doc);
-  await db.doc(paths.dataSource(orgId, ds.id)).update({ lastFetch: { at, ok: true, error: null } }).catch(() => undefined);
+  const calls = ds.type === 'weather' ? 2 : ds.type === 'air_quality' ? 1 : 0;
+  await db
+    .doc(paths.dataSource(orgId, ds.id))
+    .update({ lastFetch: { at, ok: true, error: null }, ...usageFields(ds.usage, at, { calls }) })
+    .catch(() => undefined);
   return valueOf(ds, doc, true, null);
 }

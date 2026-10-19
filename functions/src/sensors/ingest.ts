@@ -30,6 +30,7 @@ import type { Deps } from '../lib/context';
 import type { ApiRequest, ApiResult } from '../devices/deviceApi';
 import { openAlert, resolveAlert } from './alerts';
 import { sha256 } from './sensors';
+import { usageFields } from '../costs/usage';
 
 const fail = (status: number, error: string, message: string, extra: Record<string, unknown> = {}): ApiResult => ({
   status,
@@ -229,6 +230,7 @@ export async function ingestReadings(
       rate: { tokens: tokens - 1, at },
       ...(body.fw ? { firmware: body.fw } : {}),
       updatedAt: at,
+      ...usageFields(device.usage, at, { requests: 1, readings: accepted.length }),
     });
 
     const response: IngestResponse = { accepted: accepted.length, rejected, serverTime: at };

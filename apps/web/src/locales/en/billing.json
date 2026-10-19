@@ -396,5 +396,52 @@
     "staffPending_other": "App store: {{amount}} from {{count}} changes to collect with the next payment.",
     "staffScheduled": "App store: on {{date}}: {{list}}. Changing the plan or lines replaces this.",
     "paymentHint": "Plus {{amount}} of App store charges."
+  },
+  "adminCosts": {
+    "description": "What each organization and app earns against what it costs WallX to run, from measured usage and your unit costs.",
+    "month": "Month",
+    "editRates": "Unit costs",
+    "summary": "This month",
+    "revenue": "Revenue / month",
+    "cost": "Cost so far",
+    "costSoFar": "Cost so far ({{days}} of {{total}} days)",
+    "projected": "Projected cost",
+    "margin": "Margin",
+    "summaryNote": "Revenue is the monthly price before GST (reseller customers at the dealer discount; trials earn nothing). Margin uses the projected cost.",
+    "byApp": "By app",
+    "app": "App",
+    "byOrg": "By organization",
+    "org": "Organization",
+    "biggest": "Biggest cost",
+    "usage": "Usage",
+    "usageLine": "{{screens}} screens · {{gb}} GB · {{weather}} weather calls · {{sensors}} readings",
+    "viaReseller": "via reseller",
+    "none": "No usage rolled up for this month yet. The daily job adds yesterday every morning.",
+    "note": "Usage is counted per UTC day and rolled up each morning; today appears tomorrow. Cloud prices ignore free tiers, so real costs are lower while you are small. Staff costs, hardware and sales are not included.",
+    "ratesTitle": "Unit costs (₹)",
+    "ratesHint": "What each unit costs WallX, before GST. Starting values come from the phase 0 price sheet; update them when Google prices or the dollar rate change.",
+    "rates": {
+      "per1000Heartbeats": "Per 1,000 heartbeats (≈ 83 screen-hours online)",
+      "perGbDelivered": "Per GB of media delivered to screens",
+      "perGbMonthStored": "Per GB stored per month",
+      "per1000WeatherCalls": "Per 1,000 Google Weather calls",
+      "per1000AirQualityCalls": "Per 1,000 Google Air Quality calls",
+      "per1000SensorRequests": "Per 1,000 sensor sends",
+      "per1000ApiCalls": "Per 1,000 API calls",
+      "per1000Emails": "Per 1,000 emails",
+      "perOrgMonth": "Fixed cost per organization per month"
+    },
+    "drivers": {
+      "heartbeats": "Screens online",
+      "delivered": "Media delivered",
+      "storage": "Storage",
+      "weather": "Weather",
+      "airQuality": "Air quality",
+      "sensors": "Sensors",
+      "api": "API",
+      "emails": "Emails",
+      "fixed": "Fixed"
+    },
+    "driversList": "Cost drivers: {{list}}."
   }
 }

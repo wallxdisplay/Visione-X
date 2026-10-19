@@ -129,6 +129,12 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Cost tracking: unit costs (staff).
+    match /platform/costRates {
+      allow read: if isBillingStaff();
+      allow write: if false;
+    }
+
     match /platform/featureCatalog {
       allow read: if signedIn();
       allow write: if false;

@@ -58,6 +58,7 @@ import { PartnerTeam } from './pages/partner/PartnerTeam';
 import { PartnerBranding } from './pages/partner/PartnerBranding';
 import { AdminWhiteLabel } from './pages/admin/AdminWhiteLabel';
 import { AdminApps } from './pages/admin/AdminApps';
+import { AdminCosts } from './pages/admin/AdminCosts';
 import { AppStore } from './pages/billing/AppStore';
 import { DomainBrandProvider } from './brand/brand';
 
@@ -100,6 +101,7 @@ const PAGES: Record<string, ReactNode> = {
   '/partner/team': <PartnerTeam />,
   '/partner/branding': <PartnerBranding />,
   '/admin/white-label': <AdminWhiteLabel />,
+  '/admin/costs': <AdminCosts />,
   '/admin/apps': <AdminApps />,
 };
 

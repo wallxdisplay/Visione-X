@@ -6,6 +6,7 @@
  *   air_quality — Google Air Quality API (India's NAQI where Google has it, else Universal AQI)
  */
 import { z } from 'zod';
+import type { UsageCounters } from './costs';
 
 const id = z.string().min(1).max(128).regex(/^[A-Za-z0-9_-]+$/);
 
@@ -55,6 +56,8 @@ export type DataSourceDoc = {
   updatedAt: number;
   /** Result of the last fetch made for a preview or a screen. */
   lastFetch: { at: number; ok: boolean; error: string | null } | null;
+  /** Cost tracking: provider calls per day (last few days). */
+  usage?: UsageCounters;
 } & ({ type: 'weather'; config: WeatherConfig } | { type: 'rss'; config: RssConfig } | { type: 'air_quality'; config: AirQualityConfig });
 
 // ---------------------------------------------------------------- normalized data

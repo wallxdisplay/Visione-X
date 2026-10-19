@@ -44,6 +44,8 @@ import {
   MoveToAppPricingInput,
   SetAppScreensInput,
   ChangeAppsInput,
+  SaveCostRatesInput,
+  CostReportInput,
   DeleteRoleInput,
   SetMemberSitesInput,
   SetFeatureReleaseInput,
@@ -119,6 +121,7 @@ import * as branding from './branding/branding';
 import * as appCatalog from './apps/catalog';
 import * as screenApps from './screens/screenApps';
 import * as appStore from './billing/appStore';
+import * as costs from './costs/report';
 import { reviewOrgSignup as reviewSvc, setOrgStatus as setOrgStatusSvc } from './orgs/review';
 import * as settings from './orgs/settings';
 import * as signup from './orgs/signup';
@@ -242,6 +245,8 @@ export const seedAppCatalog = callable(z.object({}), (deps, actor) => appCatalog
 export const moveToAppPricing = callable(MoveToAppPricingInput, billing.moveToAppPricing);
 export const setAppScreens = callable(SetAppScreensInput, screenApps.setAppScreens, { memory: '512MiB', timeoutSeconds: 120 });
 export const changeApps = callable(ChangeAppsInput, appStore.changeApps, { memory: '512MiB', timeoutSeconds: 120 });
+export const saveCostRates = callable(SaveCostRatesInput, costs.saveCostRates);
+export const costReport = callable(CostReportInput, costs.costReport, { memory: '512MiB', timeoutSeconds: 300 });
 export const setPlatformRole = callable(SetPlatformRoleInput, setPlatformRoleSvc);
 
 // Content (phase 2)
