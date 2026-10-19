@@ -50,6 +50,7 @@ export function Billing() {
   const platform = usePlatformSettings();
   const [paying, setPaying] = useState(false);
   const [paidText, setPaidText] = useState<string | null>(null);
+  const [payError, setPayError] = useState<string | null>(null);
 
   if (!view) {
     return (
@@ -109,6 +110,7 @@ export function Billing() {
       />
       {sent ? <Alert tone="success">{t('billing.requestSent')}</Alert> : null}
       {paidText ? <Alert tone="success">{paidText}</Alert> : null}
+      {payError ? <Alert tone="danger">{payError}</Alert> : null}
       {reseller ? <Alert tone="info">{t('billing.viaReseller', { name: reseller })}</Alert> : null}
 
       <div className="billing-summary wxp-card">
@@ -234,9 +236,18 @@ export function Billing() {
           orgId={orgId}
           sub={s}
           onClose={() => setPaying(false)}
-          onPaid={(text) => {
+          onCheckoutOpened={() => {
             setPaying(false);
+            setPaidText(null);
+            setPayError(null);
+          }}
+          onPaid={(text) => {
+            setPayError(null);
             setPaidText(text);
+          }}
+          onFailed={(text) => {
+            setPaidText(null);
+            setPayError(text);
           }}
         />
       ) : null}

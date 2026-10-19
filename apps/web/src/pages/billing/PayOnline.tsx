@@ -35,8 +35,26 @@ function loadCheckout(): Promise<void> {
   });
 }
 
-/** Pay the next period(s) — with any App store charges — or only the charges, with Razorpay. */
-export function PayOnlineDialog({ orgId, sub, onClose, onPaid }: { orgId: string; sub: SubscriptionDoc; onClose: () => void; onPaid: (text: string) => void }) {
+/**
+ * Pay the next period(s) — with any App store charges — or only the charges, with Razorpay.
+ * The dialog closes when Checkout opens (a modal dialog would stay on top of it); the result is
+ * reported to the page through onPaid / onFailed.
+ */
+export function PayOnlineDialog({
+  orgId,
+  sub,
+  onClose,
+  onCheckoutOpened,
+  onPaid,
+  onFailed,
+}: {
+  orgId: string;
+  sub: SubscriptionDoc;
+  onClose: () => void;
+  onCheckoutOpened: () => void;
+  onPaid: (text: string) => void;
+  onFailed: (text: string) => void;
+}) {
   const { t } = useTranslation();
   const hasCharges = (sub.pendingCharges ?? []).length > 0;
   const [kind, setKind] = useState<OnlinePaymentKind>('renewal');
@@ -76,13 +94,12 @@ export function PayOnlineDialog({ orgId, sub, onClose, onPaid }: { orgId: string
             onPaid(res.periodEnd ? t('payOnline.paidUntil', { amount: formatInr(created.amountMinor), date: formatDate(res.periodEnd) }) : t('payOnline.paid', { amount: formatInr(created.amountMinor) }));
           } catch (err) {
             // Money may have been taken: the webhook records it even if this check failed.
-            setError(`${errorMessage(err)} ${t('payOnline.recordedLater')}`);
-            setBusy(false);
+            onFailed(`${errorMessage(err)} ${t('payOnline.recordedLater')}`);
           }
         },
-        modal: { ondismiss: () => setBusy(false) },
       });
-      rzp.on('payment.failed', (e) => setError(e.error?.description ?? t('payOnline.failed')));
+      rzp.on('payment.failed', (e) => onFailed(e.error?.description ?? t('payOnline.failed')));
+      onCheckoutOpened();
       rzp.open();
     } catch (err) {
       setError(errorMessage(err));
