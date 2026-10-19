@@ -1,4 +1,4 @@
-import { Alert, Button, Card, EmptyState, PageHeader, SelectField, Spinner, StatusChip, TextField } from '@wallx-play/ui';
+import { Alert, Button, Card, PageHeader, SelectField, Spinner, StatusChip, TextField } from '@wallx-play/ui';
 import type { ScreenAnalytics, ScreenDoc } from '@wallx-play/shared';
 import { BarChart3 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -12,6 +12,7 @@ import { periodRange, todayIn } from '../reports/PlaybackReports';
 import { ScreenDiagnostics, percent } from './ScreenDiagnostics';
 import '../reports/reports.css';
 import './analytics.css';
+import { FeatureLocked } from '../../content/apps';
 
 type Period = 'today' | 'yesterday' | 'last7' | 'last30' | 'thisMonth' | 'lastMonth' | 'custom';
 const PERIODS: Period[] = ['today', 'yesterday', 'last7', 'last30', 'thisMonth', 'lastMonth', 'custom'];
@@ -65,7 +66,7 @@ export function Analytics() {
       <>
         <PageHeader title={t('nav.analytics')} description={t('analytics.description')} />
         <div className="wxp-card">
-          <EmptyState icon={<BarChart3 size={24} aria-hidden />} title={t('analytics.notInPlanTitle')} description={t('analytics.notInPlanBody')} />
+          <FeatureLocked feature="screen.diagnostics" icon={<BarChart3 size={24} aria-hidden />} title={t('analytics.notInPlanTitle')} fallback={t('analytics.notInPlanBody')} />
         </div>
       </>
     );

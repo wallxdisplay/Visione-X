@@ -8,6 +8,7 @@ import { currentLocale } from '../../i18n';
 import { call, errorMessage } from '../../lib/api';
 import { useOrg } from '../../org/OrgProvider';
 import './reports.css';
+import { FeatureLocked } from '../../content/apps';
 
 type Period = 'today' | 'yesterday' | 'last7' | 'last30' | 'thisMonth' | 'lastMonth' | 'custom';
 const PERIODS: Period[] = ['today', 'yesterday', 'last7', 'last30', 'thisMonth', 'lastMonth', 'custom'];
@@ -130,7 +131,7 @@ export function PlaybackReports() {
       <>
         <PageHeader title={t('nav.reports')} description={t('reports.description')} />
         <div className="wxp-card">
-          <EmptyState icon={<FileClock size={24} aria-hidden />} title={t('reports.notInPlanTitle')} description={t('reports.notInPlanBody')} />
+          <FeatureLocked feature="report.proofOfPlay" icon={<FileClock size={24} aria-hidden />} title={t('reports.notInPlanTitle')} fallback={t('reports.notInPlanBody')} />
         </div>
       </>
     );

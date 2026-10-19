@@ -11,6 +11,7 @@ import { useOrg } from '../../org/OrgProvider';
 import { MqttBrokersSection } from './MqttBrokers';
 import { ApiKeyDialog, SensorDeviceDialog } from './SensorDialogs';
 import './sensors.css';
+import { FeatureLocked } from '../../content/apps';
 
 type Tone = 'success' | 'danger' | 'warning' | 'neutral';
 
@@ -38,7 +39,7 @@ export function Sensors() {
       <>
         <PageHeader title={t('nav.sensors')} description={t('sensors.description')} />
         <div className="wxp-card">
-          <EmptyState icon={<Radio size={24} aria-hidden />} title={t('sensors.notInPlanTitle')} description={t('sensors.notInPlanBody')} />
+          <FeatureLocked feature="sensor.esp32" icon={<Radio size={24} aria-hidden />} title={t('sensors.notInPlanTitle')} fallback={t('sensors.notInPlanBody')} />
         </div>
       </>
     );

@@ -11,6 +11,7 @@ import { formatDateTime } from '../../lib/format';
 import type { WithId } from '../../lib/hooks';
 import { useOrg } from '../../org/OrgProvider';
 import './sensors.css';
+import { FeatureLocked } from '../../content/apps';
 
 /** One-line description of an alert, rendered from its fields (i18n). */
 export function alertText(a: AlertDoc, t: (k: string, o?: Record<string, unknown>) => string): string {
@@ -114,7 +115,7 @@ export function Alerts() {
       <PageHeader title={t('nav.alerts')} description={t('alerts.description')} />
       {!enabled && entitlements ? (
         <div className="wxp-card">
-          <EmptyState icon={<BellOff size={24} aria-hidden />} title={t('sensors.notInPlanTitle')} description={t('sensors.notInPlanBody')} />
+          <FeatureLocked feature="sensor.esp32" icon={<BellOff size={24} aria-hidden />} title={t('sensors.notInPlanTitle')} fallback={t('sensors.notInPlanBody')} />
         </div>
       ) : (
         <>

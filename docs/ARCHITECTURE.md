@@ -314,7 +314,7 @@ Feature catalogue stores `releaseStatus` (what WallX has built) separately from 
 | Hindi / Marathi UI | later | — all plans — |
 | Multi-screen sync ✅ (player 0.16.0); interactive/touch ✅ (player 0.17.0); MQTT ✅ (player 0.18.0) | later | – | – | – | ✓ |
 | Self-service reseller portal ✅ (wholesale); white-label ✅ (player 0.19.0) | later | – | – | – | ✓ |
-*Plan columns are a proposal — confirm or edit.*
+*Plan columns describe plan pricing. Organizations on app pricing (§13i, the default for new organizations) get the base Screen app plus the apps they buy; release status still decides what can be bought.*
 
 ## 17. Delivery order (your priority)
 | # | Milestone | Contents |
@@ -329,9 +329,9 @@ Feature catalogue stores `releaseStatus` (what WallX has built) separately from 
 | v1.1 ✅ | Reports, analytics, API | Proof-of-play: player counting (0.13.0), upload API, daily summaries, Playback Reports page with CSV ✅. Analytics & diagnostics: uptime (player 0.14.0), vitals, event history, Analytics page, Diagnostics panel ✅. Public API keys & signed webhooks, API page and admin overview ✅ |
 
 ## 18. Still to confirm
-1. Real Firebase **project ID** and **Hosting site ID** (display name "WallX Play" is not the ID), and whether Firestore already exists (region).
-2. Target **Android box model** (and Android version) for early hardware testing; whether boxes can be provisioned as Device Owner.
-3. Android stack: native Kotlin (recommended above) — confirm.
-4. Plan/feature matrix in §16.
-5. Email provider for transactional mail (e.g. Resend, SendGrid, Amazon SES).
-6. Billing plan on Firebase must be **Blaze** (Functions, Cloud Run, Secret Manager need it).
+Settled: Firebase project `wallx-play` (Hosting site wallx-play, Firestore asia-south1, Blaze plan); native Kotlin player; email through Gmail SMTP (`SMTP_PASSWORD`); plans are base packages with apps on top (App store, §13i). Open:
+1. Target **Android box model** and Android version for real-box testing, and whether boxes can be provisioned as Device Owner (kiosk lock).
+2. Real ESP32 test with the sample firmware.
+3. Native-speaker review of the Hindi and Marathi texts.
+4. App Check enforcement (`APP_CHECK_ENFORCE=true` in `functions/.env.wallx-play`) once the monitor logs show no legitimate calls without a token.
+5. Razorpay live keys once the account is activated (test keys are set).

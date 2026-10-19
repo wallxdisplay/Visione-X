@@ -1,5 +1,6 @@
 package com.wallx.play
 
+import android.annotation.SuppressLint
 import android.app.admin.DevicePolicyManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -53,6 +54,9 @@ class MainActivity : ComponentActivity() {
     }
 
     /** Someone is at the box: a player update waiting for a tap shows Android's install prompt. */
+    // Lint flags overriding this public Activity method because androidx.core marks its own copy
+    // restricted (a known false positive); the override is the documented way to see every key.
+    @SuppressLint("RestrictedApi")
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (event.action == KeyEvent.ACTION_UP && engine.updater.status.value?.state == "waiting_user") {
             lifecycleScope.launch { engine.updater.showPrompt() }

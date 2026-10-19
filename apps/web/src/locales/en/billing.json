@@ -476,5 +476,11 @@
     "failed": "The payment did not go through. You can try again.",
     "recordedLater": "If money was taken, it is recorded automatically within a few minutes.",
     "checkoutBlocked": "The payment window could not load. Check your connection or ad blocker and try again."
+  },
+  "appLock": {
+    "soon": "{{app}} is coming soon. WallX will let you know when you can add it.",
+    "available": "Add the {{app}} app in the App store to use this.",
+    "askOwner": "Ask your organization’s owner to add the {{app}} app in the App store.",
+    "open": "Open App store"
   }
 }

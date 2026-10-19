@@ -10,6 +10,7 @@ import { formatDate, formatDateTime } from '../../lib/format';
 import type { WithId } from '../../lib/hooks';
 import { useOrg } from '../../org/OrgProvider';
 import './integrations.css';
+import { FeatureLocked } from '../../content/apps';
 
 type Editing = { kind: DataSourceDoc['type']; source: DataSourceDoc | null } | null;
 
@@ -32,7 +33,7 @@ export function Integrations() {
       <>
         <PageHeader title={t('nav.integrations')} description={t('integrations.description')} />
         <div className="wxp-card">
-          <EmptyState icon={<Plug size={24} aria-hidden />} title={t('integrations.notInPlanTitle')} description={t('integrations.notInPlanBody')} />
+          <FeatureLocked feature="widget.weather" icon={<Plug size={24} aria-hidden />} title={t('integrations.notInPlanTitle')} fallback={t('integrations.notInPlanBody')} />
         </div>
       </>
     );

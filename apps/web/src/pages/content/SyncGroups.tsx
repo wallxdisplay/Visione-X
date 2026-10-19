@@ -10,6 +10,7 @@ import { db } from '../../lib/firebase';
 import { useQueryData, type WithId } from '../../lib/hooks';
 import { useOrg } from '../../org/OrgProvider';
 import './sync.css';
+import { FeatureLocked } from '../../content/apps';
 
 /** Sync groups: screens that play one playlist in lockstep, mirrored or as a video wall. */
 export function SyncGroups() {
@@ -30,7 +31,7 @@ export function SyncGroups() {
       <>
         <PageHeader title={t('nav.sync')} description={t('sync.description')} />
         <div className="wxp-card">
-          <EmptyState icon={<Grid2x2 size={24} aria-hidden />} title={t('sync.notInPlanTitle')} description={t('sync.notInPlanBody')} />
+          <FeatureLocked feature="screen.multiSync" icon={<Grid2x2 size={24} aria-hidden />} title={t('sync.notInPlanTitle')} fallback={t('sync.notInPlanBody')} />
         </div>
       </>
     );

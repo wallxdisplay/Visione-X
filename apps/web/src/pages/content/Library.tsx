@@ -17,6 +17,8 @@ interface UploadTask {
   progress: number;
   error?: string;
   done?: boolean;
+  /** Set once the upload is created: its card then follows the media's processing status. */
+  mediaId?: string;
 }
 
 const STATUS_TONE = { uploading: 'info', processing: 'info', ready: 'success', failed: 'danger' } as const;
@@ -62,13 +64,14 @@ export function Library() {
       return patchTask(key, { error: t('library.tooLarge', { limit: formatBytes(MEDIA_LIMITS[mediaType].maxBytes) }) });
     }
     try {
-      const { uploadPath } = await call<{ mediaId: string; uploadPath: string }>('createMediaUpload', {
+      const { mediaId, uploadPath } = await call<{ mediaId: string; uploadPath: string }>('createMediaUpload', {
         orgId,
         name: file.name,
         mimeType,
         bytes: file.size,
         folderId: folder !== 'all' && folder !== 'none' ? folder : null,
       });
+      patchTask(key, { mediaId });
       await new Promise<void>((resolve, reject) => {
         const task = uploadBytesResumable(ref(storage, uploadPath), file, { contentType: mimeType });
         task.on(
@@ -146,18 +149,24 @@ export function Library() {
               {t('library.clearFinished')}
             </Button>
           </div>
-          {tasks.map((task) => (
+          {tasks.map((task) => {
+            // After the upload, show what processing made of it (ready or failed).
+            const status = task.done ? media.data.find((m) => m.id === task.mediaId)?.status : undefined;
+            return (
             <div key={task.key} className="upload-queue__row">
               <span className="upload-queue__name">{task.name}</span>
               {task.error ? (
                 <span className="wxp-field__error">{task.error}</span>
+              ) : status === 'ready' || status === 'failed' ? (
+                <StatusChip tone={STATUS_TONE[status]}>{t(`library.status.${status}`)}</StatusChip>
               ) : task.done ? (
                 <StatusChip tone="info">{t('library.uploadedProcessing')}</StatusChip>
               ) : (
                 <progress max={1} value={task.progress} aria-label={task.name} />
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
       ) : null}
 

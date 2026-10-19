@@ -1,6 +1,10 @@
 import { collection, query } from 'firebase/firestore';
-import { formatInr, lineProblems, paths, type AppDoc, type AppUnit, type BillLine } from '@wallx-play/shared';
-import { useMemo } from 'react';
+import { appReleaseStatus, formatInr, lineProblems, paths, type AppDoc, type AppUnit, type BillLine, type FeatureKey } from '@wallx-play/shared';
+import { EmptyState } from '@wallx-play/ui';
+import { Link } from 'react-router';
+import { useOrg } from '../org/OrgProvider';
+import { useFeatureCatalog } from './billing';
+import { useMemo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { db } from '../lib/firebase';
 import { useQueryData } from '../lib/hooks';
@@ -148,5 +152,27 @@ export function quantityProblems(apps: SellableApp[], value: Record<string, numb
     toLines(value),
     apps.map((a) => ({ id: a.id, name: a.name, unit: a.unit, base: false, requires: a.requires, active: true })),
     screens,
+  );
+}
+
+/**
+ * A page whose feature the organization does not have: names the app that sells it and links to
+ * the App store (or says it is coming soon). Falls back to the page's own text when no app sells it.
+ */
+export function FeatureLocked({ feature, icon, title, fallback }: { feature: FeatureKey; icon: ReactNode; title: string; fallback: string }) {
+  const { t } = useTranslation();
+  const { can } = useOrg();
+  const catalog = useAppCatalog();
+  const releases = useFeatureCatalog();
+  const app = catalog.data.find((a) => a.active && !a.base && a.featureKeys.includes(feature));
+  const soon = app ? appReleaseStatus(app, releases.data?.features ?? {}) === 'planned' : false;
+  const description = !app ? fallback : soon ? t('appLock.soon', { app: app.name }) : can('billing.view') ? t('appLock.available', { app: app.name }) : t('appLock.askOwner', { app: app.name });
+  return (
+    <EmptyState
+      icon={icon}
+      title={title}
+      description={description}
+      action={app && !soon && can('billing.view') ? <Link className="wxp-btn wxp-btn--primary" to="/apps">{t('appLock.open')}</Link> : undefined}
+    />
   );
 }

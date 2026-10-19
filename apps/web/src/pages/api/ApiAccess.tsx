@@ -1,4 +1,4 @@
-import { Alert, Button, Card, Dialog, EmptyState, PageHeader, StatusChip, TextField } from '@wallx-play/ui';
+import { Alert, Button, Card, Dialog, PageHeader, StatusChip, TextField } from '@wallx-play/ui';
 import {
   API_SCOPES,
   WEBHOOK_EVENTS,
@@ -20,6 +20,7 @@ import { formatDateTime } from '../../lib/format';
 import { useQueryData, type WithId } from '../../lib/hooks';
 import { useOrg } from '../../org/OrgProvider';
 import './api.css';
+import { FeatureLocked } from '../../content/apps';
 
 export const API_BASE = 'https://wallx-play.web.app/api/v1';
 
@@ -36,7 +37,7 @@ export function ApiAccess() {
       <>
         <PageHeader title={t('nav.api')} description={t('api.description')} />
         <div className="wxp-card">
-          <EmptyState icon={<KeyRound size={24} aria-hidden />} title={t('api.notInPlanTitle')} description={t('api.notInPlanBody')} />
+          <FeatureLocked feature="api.keys" icon={<KeyRound size={24} aria-hidden />} title={t('api.notInPlanTitle')} fallback={t('api.notInPlanBody')} />
         </div>
       </>
     );
