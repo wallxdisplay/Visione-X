@@ -85,6 +85,7 @@ export const customerNav: NavGroup[] = [
     items: [
       { labelKey: 'nav.team', path: '/team', icon: Users, phase: 1 },
       { labelKey: 'nav.billing', path: '/billing', icon: CreditCard, phase: 6 },
+      { labelKey: 'nav.appStore', path: '/apps', icon: Store, phase: 'v1.1' },
       { labelKey: 'nav.settings', path: '/settings', icon: Settings, phase: 1 },
       { labelKey: 'nav.api', path: '/developers', icon: KeyRound, phase: 'v1.1' },
       { labelKey: 'nav.help', path: '/help', icon: HelpCircle, phase: 6 },

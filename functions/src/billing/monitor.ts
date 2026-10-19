@@ -3,7 +3,8 @@ import { billingState, normalizeSubscription, paths, type SubscriptionDoc } from
 import { auditedTransaction } from '../lib/audit';
 import type { Deps } from '../lib/context';
 import { notify } from '../lib/notify';
-import { notifyStatusChange, trialEntitlements, writeSubscription } from './billing';
+import { dueScheduledChange, notifyStatusChange, trialEntitlements, writeSubscription } from './billing';
+import { entitlementsForSub } from '../lib/entitlements';
 import { syncAndRepublish } from '../screens/screenApps';
 
 /**
@@ -24,11 +25,27 @@ export async function runBillingMonitor(deps: Deps): Promise<{ transitions: numb
       await auditedTransaction(db, [orgId], async (tx, audit) => {
         const raw = (await tx.get(db.doc(paths.orgSubscription(orgId)))).data() as SubscriptionDoc | undefined;
         if (!raw) return;
-        const sub = normalizeSubscription(raw);
+        const original = normalizeSubscription(raw);
+        // App store: reductions scheduled for the end of the paid period apply now.
+        const applied = await dueScheduledChange(tx, db, original, at);
+        const sub = applied ?? original;
         const state = billingState(sub, at);
         // App pricing: every app is free in the trial; when it ends only the apps bought remain.
-        const entitlements = await trialEntitlements(tx, db, orgId, sub, sub, at);
+        const entitlements = applied
+          ? await entitlementsForSub(tx, db, orgId, { ...sub, status: state.status }, at)
+          : await trialEntitlements(tx, db, orgId, sub, sub, at);
         const next = writeSubscription(tx, db, orgId, { ...sub, reminders: state.reminder ? [...sub.reminders, state.reminder.key] : sub.reminders }, at);
+        if (applied) {
+          audit(orgId, {
+            at,
+            actorType: 'system',
+            actorId: 'billing-monitor',
+            orgId,
+            action: 'billing.apps.scheduledApplied',
+            target: { type: 'subscription', id: orgId },
+            data: { change: original.scheduledChange, quantity: sub.quantity, apps: sub.apps },
+          });
+        }
         if (entitlements) tx.set(db.doc(paths.orgEntitlements(orgId)), entitlements);
         // Customers of a reseller are not reminded of renewals: the reseller pays (and is told in the portal).
         if (state.reminder && !(state.reminder.kind === 'due_soon' && sub.billedTo)) {

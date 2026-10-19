@@ -358,7 +358,8 @@
       "billing_payment_recorded": "Payment received; paid through {{until, date}}",
       "billing_request_resolved": "WallX handled your billing request ({{status}})",
       "support_access_requested": "WallX support asks for access for {{hours}} h: {{reason}}",
-      "support_access_granted": "WallX gave its support team emergency access for {{hours}} h: {{reason}}"
+      "support_access_granted": "WallX gave its support team emergency access for {{hours}} h: {{reason}}",
+      "billing_apps_changed": "Your screens and apps were changed in the App store"
     }
   },
   "emergency": {

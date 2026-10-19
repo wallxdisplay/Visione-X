@@ -25,6 +25,7 @@ import {
   normalizeSubscription,
   paths,
   paymentPeriod,
+  stateAfter,
   type AdjustBillingDatesInput,
   type BillingRequestDoc,
   type OrgBillingSummary,
@@ -84,19 +85,22 @@ export async function trialEntitlements(tx: Transaction, db: Firestore, orgId: s
 /** Applies derived status + next transition and writes subscription and org summary. */
 export function writeSubscription(tx: Transaction, db: Firestore, orgId: string, sub: SubscriptionDoc, now: number): SubscriptionDoc {
   const state = billingState(sub, now);
-  const next: SubscriptionDoc = { ...sub, status: state.status, nextTransitionAt: state.nextTransitionAt };
+  // A scheduled App store change also needs the monitor at its time.
+  const due = sub.scheduledChange?.effectiveAt ?? null;
+  const nextTransitionAt = due !== null && (state.nextTransitionAt === null || due < state.nextTransitionAt) ? due : state.nextTransitionAt;
+  const next: SubscriptionDoc = { ...sub, status: state.status, nextTransitionAt };
   tx.set(db.doc(paths.orgSubscription(orgId)), next);
   tx.update(db.doc(paths.org(orgId)), { billing: summaryOf(next), updatedAt: now });
   return next;
 }
 
-async function readSubscription(tx: Transaction, db: Firestore, orgId: string): Promise<SubscriptionDoc> {
+export async function readSubscription(tx: Transaction, db: Firestore, orgId: string): Promise<SubscriptionDoc> {
   const snap = await tx.get(db.doc(paths.orgSubscription(orgId)));
   if (!snap.exists) throw new HttpsError('failed-precondition', 'This organization has no subscription yet (it is not approved).');
   return normalizeSubscription(snap.data() as SubscriptionDoc);
 }
 
-async function readPlan(tx: Transaction, db: Firestore, planId: string): Promise<Plan> {
+export async function readPlan(tx: Transaction, db: Firestore, planId: string): Promise<Plan> {
   const snap = await tx.get(db.doc(paths.plan(planId)));
   if (!snap.exists) throw new HttpsError('invalid-argument', `Plan “${planId}” does not exist.`);
   return snap.data() as Plan;
@@ -209,6 +213,8 @@ export async function updateSubscription(deps: Deps, actor: Actor, input: z.infe
       apps: lines,
       adjustmentMinor: pricing === 'apps' ? (input.adjustmentMinor ?? sub.adjustmentMinor ?? 0) : 0,
       amountPerPeriodMinor: null,
+      // Staff set the lines themselves: a reduction the customer scheduled no longer applies.
+      scheduledChange: null,
       updatedAt: at,
       updatedBy: actor.uid,
     };
@@ -223,6 +229,25 @@ export async function updateSubscription(deps: Deps, actor: Actor, input: z.infe
     }, at);
     return next;
   }));
+}
+
+/**
+ * App store: applies reductions scheduled for the end of the paid period once it is due (reads
+ * plan and catalog; call before the transaction's first write). Null when nothing is due.
+ */
+export async function dueScheduledChange(tx: Transaction, db: Firestore, sub: SubscriptionDoc, at: number): Promise<SubscriptionDoc | null> {
+  const change = sub.scheduledChange;
+  if (!change || change.effectiveAt > at) return null;
+  const after = stateAfter({ screens: sub.quantity, lines: sub.apps ?? [] }, change);
+  const next: SubscriptionDoc = {
+    ...sub,
+    quantity: after.screens,
+    apps: (sub.apps ?? []).filter((l) => after.lines.some((a) => a.appId === l.appId)).map((l) => ({ ...l, quantity: after.lines.find((a) => a.appId === l.appId)!.quantity })),
+    scheduledChange: null,
+  };
+  const [plan, catalog] = await Promise.all([readPlan(tx, db, sub.planId), readAppCatalog(tx, db)]);
+  if (next.amountPerPeriodMinor !== null || next.currentPeriodEnd !== null) next.amountPerPeriodMinor = subscriptionAmount(plan, next, catalog);
+  return next;
 }
 
 /** After a change to seats or the trial: screens' apps follow (and their content, if it changed). */
@@ -303,9 +328,15 @@ export async function recordPayment(deps: Deps, actor: Actor, input: z.infer<typ
       recordedByEmail: actor.email,
       createdAt: at,
       voided: null,
+      ...(sub.pendingCharges?.length ? { charges: sub.pendingCharges } : {}),
     };
+    const base: SubscriptionDoc = (await dueScheduledChange(tx, db, sub, at)) ?? sub;
+    // App pricing: the price per period follows the lines (it is empty after a trial).
+    const priced: SubscriptionDoc = base.pricing === 'apps' ? { ...base, amountPerPeriodMinor: subscriptionAmount(await readPlan(tx, db, base.planId), base, await readAppCatalog(tx, db)) } : base;
     const paid: SubscriptionDoc = {
-      ...sub,
+      ...priced,
+      // App store charges are collected with this payment.
+      pendingCharges: [],
       currentPeriodStart: period.start,
       currentPeriodEnd: period.end,
       // Paying ends the trial; the paid period takes over.
@@ -315,7 +346,7 @@ export async function recordPayment(deps: Deps, actor: Actor, input: z.infer<typ
       updatedAt: at,
       updatedBy: actor.uid,
     };
-    const entitlements = await trialEntitlements(tx, db, input.orgId, sub, paid, at);
+    const entitlements = base !== sub ? await entitlementsForSub(tx, db, input.orgId, { ...paid, status: billingState(paid, at).status }, at) : await trialEntitlements(tx, db, input.orgId, sub, paid, at);
     tx.create(ref, payment);
     const next = writeSubscription(tx, db, input.orgId, paid, at);
     if (entitlements) tx.set(db.doc(paths.orgEntitlements(input.orgId)), entitlements);
@@ -359,6 +390,10 @@ export async function adjustBillingDates(deps: Deps, actor: Actor, input: z.infe
       ...(input.trialEndsAt !== undefined ? { trialEndsAt: input.trialEndsAt } : {}),
       ...(input.currentPeriodEnd !== undefined
         ? { currentPeriodEnd: input.currentPeriodEnd, currentPeriodStart: input.currentPeriodEnd === null ? null : (sub.currentPeriodStart ?? at) }
+        : {}),
+      // Reductions the customer scheduled apply at the (new) end of the paid period.
+      ...(sub.scheduledChange && input.currentPeriodEnd !== undefined
+        ? { scheduledChange: { ...sub.scheduledChange, effectiveAt: input.currentPeriodEnd ?? at } }
         : {}),
       updatedAt: at,
       updatedBy: actor.uid,

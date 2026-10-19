@@ -99,6 +99,16 @@ export const EMAIL_TEMPLATES: Partial<Record<NotificationType, Template>> = {
     body: (p, date) =>
       `We received your payment. Your subscription is paid through ${date(p.until)}. Thank you!`,
   },
+  billing_apps_changed: {
+    permission: 'billing.manage',
+    subject: () => 'Your apps were changed',
+    body: (p, date) =>
+      [
+        'The screens and apps of your subscription were changed in the App store.',
+        Number(p.charge) > 0 ? `₹${(Number(p.charge) / 100).toFixed(2)} (plus GST) for the rest of the current period is added to your next payment.` : '',
+        p.from ? `Removals take effect on ${date(p.from)}.` : '',
+      ].filter(Boolean).join(' '),
+  },
   billing_request_resolved: {
     permission: 'billing.manage',
     subject: () => 'Your billing request was handled',

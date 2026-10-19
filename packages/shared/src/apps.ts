@@ -334,3 +334,107 @@ export const SetAppScreensInput = z.object({
   appId: AppId,
   screenIds: z.array(z.string().min(1).max(128).regex(/^[A-Za-z0-9_-]+$/)).max(2000),
 });
+
+// ---------------------------------------------------------------- self-service App store (phase 4)
+
+/** One item a customer changes: the base screens ("screens") or an app. */
+export interface AppChangeItem {
+  item: string;
+  from: number;
+  to: number;
+}
+
+/** A prorated charge for screens or apps added mid-period, collected with the next payment. */
+export interface PendingCharge {
+  at: number;
+  amountMinor: number;
+  items: AppChangeItem[];
+  /** Share of the paid period that was left, in basis points. */
+  periodLeftBps: number;
+  by: string;
+}
+
+/** Reductions that take effect when the paid period ends (no refunds). */
+export interface ScheduledAppChange {
+  /** Screens from then on (absent = unchanged). */
+  screens?: number;
+  /** New quantity per app (0 = removed). */
+  apps: Array<{ appId: string; quantity: number }>;
+  effectiveAt: number;
+  requestedBy: string;
+  requestedAt: number;
+}
+
+export interface AppState {
+  screens: number;
+  lines: Array<{ appId: string; quantity: number }>;
+}
+
+const qtyOf = (s: AppState, appId: string) => s.lines.find((l) => l.appId === appId)?.quantity ?? 0;
+
+/** What the customer will have once a scheduled change applies (or now, without one). */
+export function stateAfter(current: AppState, scheduled: Pick<ScheduledAppChange, 'screens' | 'apps'> | null | undefined): AppState {
+  if (!scheduled) return current;
+  const lines = current.lines
+    .map((l) => ({ ...l, quantity: scheduled.apps.find((a) => a.appId === l.appId)?.quantity ?? l.quantity }))
+    .filter((l) => l.quantity > 0);
+  return { screens: scheduled.screens ?? current.screens, lines };
+}
+
+/**
+ * Splits what the customer wants into what changes now and what changes at the end of the paid
+ * period. In the trial, or with no paid period running, everything changes now. Otherwise
+ * increases are now (charged pro rata with the next payment) and decreases at period end.
+ */
+export function planAppChange(
+  current: AppState,
+  wanted: AppState,
+  immediate: boolean,
+): { now: AppState; later: Pick<ScheduledAppChange, 'screens' | 'apps'> | null; increases: AppChangeItem[]; decreases: AppChangeItem[] } {
+  const ids = [...new Set([...current.lines, ...wanted.lines].map((l) => l.appId))];
+  const items: AppChangeItem[] = [
+    { item: 'screens', from: current.screens, to: wanted.screens },
+    ...ids.map((id) => ({ item: id, from: qtyOf(current, id), to: qtyOf(wanted, id) })),
+  ].filter((i) => i.from !== i.to);
+  const increases = items.filter((i) => i.to > i.from);
+  const decreases = items.filter((i) => i.to < i.from);
+  if (immediate) return { now: { screens: wanted.screens, lines: wanted.lines.filter((l) => l.quantity > 0) }, later: null, increases, decreases };
+  const now: AppState = {
+    screens: Math.max(current.screens, wanted.screens),
+    lines: ids.map((id) => ({ appId: id, quantity: Math.max(qtyOf(current, id), qtyOf(wanted, id)) })).filter((l) => l.quantity > 0),
+  };
+  const screensDown = decreases.find((d) => d.item === 'screens');
+  const appsDown = decreases.filter((d) => d.item !== 'screens').map((d) => ({ appId: d.item, quantity: d.to }));
+  const later = decreases.length ? { ...(screensDown ? { screens: screensDown.to } : {}), apps: appsDown } : null;
+  return { now, later, increases, decreases };
+}
+
+/** Share of the paid period left at `at`, in basis points (0 when no period is running). */
+export function periodLeftBps(start: number | null, end: number | null, at: number): number {
+  if (start === null || end === null || end <= start || at >= end) return 0;
+  return Math.round((Math.min(end - at, end - start) / (end - start)) * 10_000);
+}
+
+/** Owner: change screens and apps (App store). With `apply: false` only returns the preview. */
+export const ChangeAppsInput = z.object({
+  orgId: z.string().min(1).max(128).regex(/^[A-Za-z0-9_-]+$/),
+  screens: z.number().int().min(1).max(100_000),
+  apps: z.array(z.object({ appId: AppId, quantity: z.number().int().min(0).max(100_000) })).max(30),
+  apply: z.boolean(),
+});
+
+export interface ChangeAppsResult {
+  applied: boolean;
+  increases: AppChangeItem[];
+  decreases: AppChangeItem[];
+  /** Price per billing period now, after this change, and once reductions apply. */
+  beforeMinor: number | null;
+  nowMinor: number | null;
+  laterMinor: number | null;
+  /** Prorated amount added to the next payment. */
+  chargeMinor: number;
+  periodLeftBps: number;
+  /** When reductions apply (null: none, or all now). */
+  effectiveAt: number | null;
+  trialing: boolean;
+}

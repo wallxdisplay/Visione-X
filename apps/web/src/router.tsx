@@ -58,6 +58,7 @@ import { PartnerTeam } from './pages/partner/PartnerTeam';
 import { PartnerBranding } from './pages/partner/PartnerBranding';
 import { AdminWhiteLabel } from './pages/admin/AdminWhiteLabel';
 import { AdminApps } from './pages/admin/AdminApps';
+import { AppStore } from './pages/billing/AppStore';
 import { DomainBrandProvider } from './brand/brand';
 
 /** Built pages; every other nav entry renders its "coming in phase N" placeholder. */
@@ -71,6 +72,7 @@ const PAGES: Record<string, ReactNode> = {
   '/sensors': <Sensors />,
   '/alerts': <Alerts />,
   '/billing': <Billing />,
+  '/apps': <AppStore />,
   '/integrations': <Integrations />,
   '/reports': <PlaybackReports />,
   '/analytics': <Analytics />,

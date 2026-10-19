@@ -92,3 +92,58 @@ tr.is-voided td .wxp-chip {
 .app-quantities__qty input {
   width: 84px;
 }
+
+/* App store */
+.app-store {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: var(--space-5);
+  align-items: start;
+}
+@media (max-width: 960px) {
+  .app-store { grid-template-columns: minmax(0, 1fr); }
+}
+.app-store__screens {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-4);
+}
+.app-store__screens p { margin: var(--space-1) 0 0; }
+.app-store__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+.app-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.app-card.is-on { box-shadow: inset 0 0 0 2px var(--color-primary); }
+.app-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+}
+.app-card__head h3 { margin: 0; font-size: 16px; }
+.app-card__desc, .app-card__needs { margin: 0; }
+.app-card__desc { flex: 1; }
+.app-card__foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-top: var(--space-2);
+}
+.app-card__qty { display: inline-flex; align-items: center; gap: var(--space-2); }
+.stepper { display: inline-flex; align-items: center; gap: 4px; }
+.stepper input { width: 64px; text-align: center; }
+.app-store__summary { position: sticky; top: var(--space-4); }
+.app-store__total { font-size: 26px; font-weight: 700; margin: var(--space-2) 0; }
+.app-store__actions { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-top: var(--space-3); }

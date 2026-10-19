@@ -358,7 +358,8 @@
       "billing_payment_recorded": "पेमेंट मिळाले; {{until, date}} पर्यंत भरले",
       "billing_request_resolved": "WallX ने तुमची बिलिंग विनंती हाताळली ({{status}})",
       "support_access_requested": "WallX सपोर्ट {{hours}} तासांसाठी प्रवेश मागत आहे: {{reason}}",
-      "support_access_granted": "WallX ने आपल्या सपोर्ट टीमला {{hours}} तासांसाठी आणीबाणी प्रवेश दिला: {{reason}}"
+      "support_access_granted": "WallX ने आपल्या सपोर्ट टीमला {{hours}} तासांसाठी आणीबाणी प्रवेश दिला: {{reason}}",
+      "billing_apps_changed": "ॲप स्टोअरमध्ये तुमच्या स्क्रीन आणि ॲप बदलल्या"
     }
   },
   "emergency": {

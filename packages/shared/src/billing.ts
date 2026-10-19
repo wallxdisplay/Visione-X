@@ -15,7 +15,7 @@
 import { z } from 'zod';
 import { FEATURE_KEYS, LIMIT_KEYS, RELEASE_STATUSES } from './features';
 import type { OrgPermission } from './permissions';
-import { PRICING_MODES, type AppLine, type PricingMode } from './apps';
+import { PRICING_MODES, type AppLine, type PendingCharge, type PricingMode, type ScheduledAppChange } from './apps';
 
 const id = z.string().min(1).max(128).regex(/^[A-Za-z0-9_-]+$/);
 const reason = z.string().trim().min(5, 'Give a reason of at least 5 characters').max(500);
@@ -76,6 +76,10 @@ export interface SubscriptionDoc {
   apps?: AppLine[];
   /** Signed monthly adjustment in paise (e.g. to keep a migrated customer's price). */
   adjustmentMinor?: number;
+  /** App store: prorated charges for screens or apps added mid-period, collected with the next payment. */
+  pendingCharges?: PendingCharge[];
+  /** App store: reductions that apply when the paid period ends. */
+  scheduledChange?: ScheduledAppChange | null;
   /** When the status or a reminder next changes (the monitor picks it up then). */
   nextTransitionAt: number | null;
   /** Reminder keys already sent, e.g. "trial:<ms>", "due:<ms>". */
@@ -114,6 +118,8 @@ export interface PaymentDoc {
   recordedByEmail: string | null;
   createdAt: number;
   voided: { by: string; at: number; reason: string } | null;
+  /** App store charges this payment collected. */
+  charges?: PendingCharge[];
 }
 
 export const BILLING_REQUEST_KINDS = ['add_screens', 'change_plan', 'renew', 'cancel', 'other'] as const;
@@ -332,6 +338,8 @@ export function normalizeSubscription(raw: Partial<SubscriptionDoc> & { planId: 
     pricing: raw.pricing ?? 'plan',
     apps: raw.apps ?? [],
     adjustmentMinor: raw.adjustmentMinor ?? 0,
+    pendingCharges: raw.pendingCharges ?? [],
+    scheduledChange: raw.scheduledChange ?? null,
     nextTransitionAt: raw.nextTransitionAt ?? null,
     reminders: raw.reminders ?? [],
     lastPaymentAt: raw.lastPaymentAt ?? null,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { appDealerPriceMinor, appReleaseStatus, catalogProblems, planScreenApps, type AppDoc } from './apps';
+import { appDealerPriceMinor, appReleaseStatus, catalogProblems, periodLeftBps, planAppChange, planScreenApps, stateAfter, type AppDoc } from './apps';
 import { FEATURE_KEYS } from './features';
 
 const app = (id: string, featureKeys: AppDoc['featureKeys'], over: Partial<AppDoc> = {}) => ({ id, name: id, featureKeys, requires: [], base: false, active: true, ...over });
@@ -74,5 +74,30 @@ describe('apps per screen', () => {
   it('a feature granted to the organization is usable on every screen', () => {
     const r = run({ screens: [screen('a')], grants: ['interactive.touch'] });
     expect(r.get('a')!.blocked).toEqual(['widget.weather']);
+  });
+});
+
+describe('App store changes', () => {
+  const cur = { screens: 4, lines: [{ appId: 'weather', quantity: 4 }, { appId: 'api', quantity: 1 }] };
+
+  it('in the trial (or with no paid period) everything changes now', () => {
+    const r = planAppChange(cur, { screens: 2, lines: [{ appId: 'weather', quantity: 1 }, { appId: 'touch', quantity: 1 }] }, true);
+    expect(r.now).toEqual({ screens: 2, lines: [{ appId: 'weather', quantity: 1 }, { appId: 'touch', quantity: 1 }] });
+    expect(r.later).toBeNull();
+    expect(r.decreases.map((d) => d.item)).toEqual(['screens', 'weather', 'api']);
+  });
+
+  it('during a paid period increases are now and decreases wait for the period end', () => {
+    const r = planAppChange(cur, { screens: 5, lines: [{ appId: 'weather', quantity: 2 }, { appId: 'touch', quantity: 1 }] }, false);
+    expect(r.now).toEqual({ screens: 5, lines: [{ appId: 'weather', quantity: 4 }, { appId: 'api', quantity: 1 }, { appId: 'touch', quantity: 1 }] });
+    expect(r.later).toEqual({ apps: [{ appId: 'weather', quantity: 2 }, { appId: 'api', quantity: 0 }] });
+    expect(r.increases).toEqual([{ item: 'screens', from: 4, to: 5 }, { item: 'touch', from: 0, to: 1 }]);
+    expect(stateAfter(r.now, r.later)).toEqual({ screens: 5, lines: [{ appId: 'weather', quantity: 2 }, { appId: 'touch', quantity: 1 }] });
+  });
+
+  it('measures the share of the period left', () => {
+    expect(periodLeftBps(0, 100, 25)).toBe(7_500);
+    expect(periodLeftBps(0, 100, 100)).toBe(0);
+    expect(periodLeftBps(null, 100, 5)).toBe(0);
   });
 });

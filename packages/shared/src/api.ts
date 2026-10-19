@@ -215,6 +215,7 @@ export const CALLABLES = {
   seedAppCatalog: 'seedAppCatalog',
   moveToAppPricing: 'moveToAppPricing',
   setAppScreens: 'setAppScreens',
+  changeApps: 'changeApps',
   deleteMqttBroker: 'deleteMqttBroker',
   setMemberSites: 'setMemberSites',
   saveRole: 'saveRole',

@@ -358,7 +358,8 @@
       "billing_payment_recorded": "भुगतान मिला; {{until, date}} तक भुगतान हो गया",
       "billing_request_resolved": "WallX ने आपका बिलिंग अनुरोध निपटाया ({{status}})",
       "support_access_requested": "WallX सपोर्ट {{hours}} घंटे के लिए पहुँच माँग रहा है: {{reason}}",
-      "support_access_granted": "WallX ने अपनी सपोर्ट टीम को {{hours}} घंटे के लिए आपातकालीन पहुँच दी: {{reason}}"
+      "support_access_granted": "WallX ने अपनी सपोर्ट टीम को {{hours}} घंटे के लिए आपातकालीन पहुँच दी: {{reason}}",
+      "billing_apps_changed": "ऐप स्टोर में आपकी स्क्रीन और ऐप बदले गए"
     }
   },
   "emergency": {

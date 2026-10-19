@@ -12,6 +12,7 @@ import {
 import { CreditCard, Send } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router';
 import { useBillingRequests, usePayments, usePlans, useSubscription } from '../../content/billing';
 import { BillLinesTable, useAppCatalog } from '../../content/apps';
 import { useScreens } from '../../content/data';
@@ -148,6 +149,11 @@ export function Billing() {
           {s.status === 'trialing' ? <Alert tone="info">{t('appBilling.trialAllApps', { date: formatDate(s.trialEndsAt) })}</Alert> : null}
           <BillLinesTable lines={lines} />
           <p className="wxp-muted">{t('appBilling.linesNote')}</p>
+          {s.pendingCharges?.length ? (
+            <Alert tone="info">{t('appStore.pending', { amount: formatInr(s.pendingCharges.reduce((sum, c) => sum + c.amountMinor, 0)) })}</Alert>
+          ) : null}
+          {s.scheduledChange ? <Alert tone="warning">{t('appStore.scheduledShort', { date: formatDate(s.scheduledChange.effectiveAt) })}</Alert> : null}
+          {!reseller ? <Link to="/apps">{t('appStore.open')}</Link> : null}
         </section>
       ) : null}
 

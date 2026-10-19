@@ -378,7 +378,8 @@
       "billing": "Billing",
       "team": "Team",
       "branding": "Branding"
-    }
+    },
+    "appStore": "App store"
   },
   "shell": {
     "language": "Language",

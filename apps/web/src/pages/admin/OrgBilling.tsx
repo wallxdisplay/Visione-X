@@ -214,6 +214,22 @@ export function OrgBilling() {
               <BillLinesTable lines={lines} />
             </>
           ) : null}
+          {s.pendingCharges?.length ? (
+            <Alert tone="info">
+              {t('appStore.staffPending', { amount: formatInr(s.pendingCharges.reduce((sum, c) => sum + c.amountMinor, 0)), count: s.pendingCharges.length })}
+            </Alert>
+          ) : null}
+          {s.scheduledChange ? (
+            <Alert tone="warning">
+              {t('appStore.staffScheduled', {
+                date: formatDate(s.scheduledChange.effectiveAt),
+                list: [
+                  ...(s.scheduledChange.screens !== undefined ? [`screens → ${s.scheduledChange.screens}`] : []),
+                  ...s.scheduledChange.apps.map((a) => `${a.appId} → ${a.quantity}`),
+                ].join(', '),
+              })}
+            </Alert>
+          ) : null}
         </section>
 
         <section className="wxp-card">
@@ -494,7 +510,14 @@ function PaymentDialog({ orgId, sub, onClose }: { orgId: string; sub: Subscripti
           label={t('adminBilling.amountReceived')}
           required
           inputMode="decimal"
-          hint={sub.amountPerPeriodMinor !== null ? t('adminBilling.amountHint', { price: formatInr(sub.amountPerPeriodMinor), per: t(`billing.perInterval.${sub.interval}`) }) : undefined}
+          hint={
+            sub.amountPerPeriodMinor !== null
+              ? [
+                  t('adminBilling.amountHint', { price: formatInr(sub.amountPerPeriodMinor), per: t(`billing.perInterval.${sub.interval}`) }),
+                  sub.pendingCharges?.length ? t('appStore.paymentHint', { amount: formatInr(sub.pendingCharges.reduce((sum, c) => sum + c.amountMinor, 0)) }) : '',
+                ].filter(Boolean).join(' ')
+              : undefined
+          }
           value={amount}
           error={amount && !amountMinor ? t('adminBilling.amountInvalid') : undefined}
           onChange={(e) => setAmount(e.target.value)}
