@@ -162,3 +162,21 @@ export const ReviewPublishInput = z
     message: 'Add a short reason for rejecting',
     path: ['note'],
   });
+
+// ---------------------------------------------------------------- activity log (customers)
+
+/** One activity log entry as customers see it (no internal data). */
+export interface ActivityEntry {
+  at: number;
+  /** Who: a member (email), WallX staff, WallX Play itself, or an API key. */
+  actorType: 'user' | 'platform_user' | 'system' | 'api_key';
+  actorEmail: string | null;
+  action: string;
+  target: { type: string; id: string };
+  /** The reason given, when it is meant for the organization (members' reasons, support access). */
+  reason: string | null;
+}
+
+/** Members with audit.view: newest entries first, `before` pages back. */
+export const OrgActivityInput = z.object({ orgId: id, before: z.number().int().positive().optional() });
+export const ACTIVITY_PAGE = 100;

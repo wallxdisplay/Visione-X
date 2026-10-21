@@ -17,11 +17,12 @@ export async function seedPlatformData(db: Firestore, { overwrite }: { overwrite
     await catalogRef.set({ features: SEED_FEATURE_CATALOG });
     written.push(catalogRef.path);
   }
-  for (const { costMinor, ...app } of SEED_APPS) {
+  for (const { costMinor, dealerPriceMinor, ...app } of SEED_APPS) {
     const ref = db.doc(paths.app(app.id));
     if (overwrite || !(await ref.get()).exists) {
       await ref.set({ ...app, updatedAt: 0, updatedBy: 'seed' });
-      await db.doc(paths.appCost(app.id)).set({ id: app.id, costMinor, note: 'Phase 0 price sheet', updatedAt: 0 });
+      // Dealer prices stay with the costs (staff only), out of the public catalog.
+      await db.doc(paths.appCost(app.id)).set({ id: app.id, costMinor, dealerPriceMinor, note: 'Phase 0 price sheet', updatedAt: 0 });
       written.push(ref.path);
     }
   }

@@ -67,4 +67,17 @@ describe('app catalog', () => {
     expect((await db.doc(paths.app('weather')).get()).data()).toMatchObject({ priceMinor: 7_900 }); // kept
     expect(await catalog.seedAppCatalog(deps, superadmin)).toEqual({ added: 0 });
   });
+
+  it('keeps fixed dealer prices out of the public catalog', async () => {
+    await catalog.saveApp(deps, superadmin, input({ dealerPriceMinor: 5_000 }));
+    expect((await db.doc(paths.app('weather')).get()).data()).not.toHaveProperty('dealerPriceMinor');
+    expect((await db.doc(paths.appCost('weather')).get()).data()).toMatchObject({ dealerPriceMinor: 5_000, costMinor: 2_784 });
+
+    // Saved before the move: loading the starting catalog moves it to the staff-only costs.
+    const newsCost = ((await db.doc(paths.appCost('news')).get()).data() as AppCostDoc).costMinor;
+    await db.doc(paths.app('news')).update({ dealerPriceMinor: 2_000 });
+    await catalog.seedAppCatalog(deps, superadmin);
+    expect((await db.doc(paths.app('news')).get()).data()).not.toHaveProperty('dealerPriceMinor');
+    expect((await db.doc(paths.appCost('news')).get()).data()).toMatchObject({ dealerPriceMinor: 2_000, costMinor: newsCost });
+  });
 });

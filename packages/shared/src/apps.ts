@@ -34,8 +34,11 @@ export interface AppDoc {
   limitBoosts: { storageGB?: number };
   /** Price per unit per month before GST, in paise. */
   priceMinor: number;
-  /** Fixed dealer price per unit per month in paise; null = list price less the reseller's discount. */
-  dealerPriceMinor: number | null;
+  /**
+   * Legacy: the fixed dealer price used to be stored here, where every signed-in user can read it.
+   * It now lives in appCosts (staff only); "Load starting catalog" or saving the app moves it.
+   */
+  dealerPriceMinor?: number | null;
   /** Shown in the store and on bills; inactive apps cannot be bought (existing customers keep them). */
   active: boolean;
   sortOrder: number;
@@ -43,11 +46,13 @@ export interface AppDoc {
   updatedBy: string;
 }
 
-/** appCosts/{appId} — staff only. */
+/** appCosts/{appId} — staff only (resellers get their prices through the partner portal). */
 export interface AppCostDoc {
   id: string;
   /** Estimated cost to WallX per unit per month, in paise (from the price sheet). */
   costMinor: number;
+  /** Fixed dealer price per unit per month in paise; null / absent = list price less the reseller's discount. */
+  dealerPriceMinor?: number | null;
   note: string;
   updatedAt: number;
 }

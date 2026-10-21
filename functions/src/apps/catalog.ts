@@ -3,7 +3,7 @@
  * plan.manage). Costs are kept apart in the staff-only appCosts collection. Subscriptions start
  * using the catalog in phase 2; until then nothing here changes what customers get or pay.
  */
-import type { Firestore, Transaction } from 'firebase-admin/firestore';
+import { FieldValue, type Firestore, type Transaction } from 'firebase-admin/firestore';
 import { HttpsError } from 'firebase-functions/v2/https';
 import type { z } from 'zod';
 import { PLATFORM_AUDIT_CHAIN, catalogProblems, paths, type AppCostDoc, type AppDoc, type SaveAppInput } from '@wallx-play/shared';
@@ -51,7 +51,6 @@ export async function saveApp(deps: Deps, actor: Actor, input: z.infer<typeof Sa
       base: input.base,
       limitBoosts: input.storageGBPerUnit ? { storageGB: input.storageGBPerUnit } : {},
       priceMinor: input.priceMinor,
-      dealerPriceMinor: input.dealerPriceMinor,
       active: input.active,
       sortOrder: input.sortOrder,
       updatedAt: at,
@@ -60,7 +59,7 @@ export async function saveApp(deps: Deps, actor: Actor, input: z.infer<typeof Sa
     checkCatalog([...apps.filter((a) => a.id !== input.id), app]);
     featuresChanged = !before || before.featureKeys.join() !== app.featureKeys.join() || before.active !== app.active || before.base !== app.base || JSON.stringify(before.limitBoosts) !== JSON.stringify(app.limitBoosts);
     tx.set(db.doc(paths.app(input.id)), app);
-    tx.set(db.doc(paths.appCost(input.id)), { id: input.id, costMinor: input.costMinor, note: input.costNote ?? '', updatedAt: at } satisfies AppCostDoc);
+    tx.set(db.doc(paths.appCost(input.id)), { id: input.id, costMinor: input.costMinor, dealerPriceMinor: input.dealerPriceMinor, note: input.costNote ?? '', updatedAt: at } satisfies AppCostDoc);
     audit(PLATFORM_AUDIT_CHAIN, {
       at,
       ...platformAudit(actor),
@@ -69,8 +68,8 @@ export async function saveApp(deps: Deps, actor: Actor, input: z.infer<typeof Sa
       target: { type: 'app', id: input.id },
       reason: input.reason,
       data: {
-        to: { priceMinor: app.priceMinor, dealerPriceMinor: app.dealerPriceMinor, unit: app.unit, featureKeys: app.featureKeys, active: app.active, costMinor: input.costMinor },
-        ...(before ? { from: { priceMinor: before.priceMinor, dealerPriceMinor: before.dealerPriceMinor, unit: before.unit, featureKeys: before.featureKeys, active: before.active, costMinor: costBefore?.costMinor ?? null } } : {}),
+        to: { priceMinor: app.priceMinor, dealerPriceMinor: input.dealerPriceMinor, unit: app.unit, featureKeys: app.featureKeys, active: app.active, costMinor: input.costMinor },
+        ...(before ? { from: { priceMinor: before.priceMinor, dealerPriceMinor: costBefore?.dealerPriceMinor ?? before.dealerPriceMinor ?? null, unit: before.unit, featureKeys: before.featureKeys, active: before.active, costMinor: costBefore?.costMinor ?? null } } : {}),
       },
     });
   });
@@ -86,12 +85,19 @@ export async function seedAppCatalog({ db, now }: Deps, actor: Actor): Promise<{
     const apps = await readApps(tx, db);
     const have = new Set(apps.map((a) => a.id));
     const at = now();
-    const added = SEED_APPS.filter((a) => !have.has(a.id)).map(({ costMinor, ...a }) => ({ app: { ...a, updatedAt: at, updatedBy: actor.uid } as AppDoc, costMinor }));
-    if (!added.length) return { added: 0 };
+    const added = SEED_APPS.filter((a) => !have.has(a.id)).map(({ costMinor, dealerPriceMinor, ...a }) => ({ app: { ...a, updatedAt: at, updatedBy: actor.uid } as AppDoc, costMinor, dealerPriceMinor }));
+    // Apps saved before dealer prices moved to appCosts: move them (not readable by customers there).
+    const legacy = apps.filter((a) => a.dealerPriceMinor !== undefined);
+    const legacyCosts = await Promise.all(legacy.map(async (a) => ({ app: a, cost: (await tx.get(db.doc(paths.appCost(a.id)))).data() as AppCostDoc | undefined })));
+    if (!added.length && !legacy.length) return { added: 0 };
     checkCatalog([...apps, ...added.map((a) => a.app)]);
-    for (const { app, costMinor } of added) {
+    for (const { app, costMinor, dealerPriceMinor } of added) {
       tx.set(db.doc(paths.app(app.id)), app);
-      tx.set(db.doc(paths.appCost(app.id)), { id: app.id, costMinor, note: 'Phase 0 price sheet', updatedAt: at } satisfies AppCostDoc);
+      tx.set(db.doc(paths.appCost(app.id)), { id: app.id, costMinor, dealerPriceMinor, note: 'Phase 0 price sheet', updatedAt: at } satisfies AppCostDoc);
+    }
+    for (const { app, cost } of legacyCosts) {
+      tx.set(db.doc(paths.appCost(app.id)), { id: app.id, costMinor: cost?.costMinor ?? 0, note: cost?.note ?? '', ...cost, dealerPriceMinor: cost?.dealerPriceMinor ?? app.dealerPriceMinor ?? null, updatedAt: at });
+      tx.update(db.doc(paths.app(app.id)), { dealerPriceMinor: FieldValue.delete() });
     }
     audit(PLATFORM_AUDIT_CHAIN, { at, ...platformAudit(actor), orgId: null, action: 'app.catalogSeeded', target: { type: 'app', id: 'catalog' }, data: { apps: added.map((a) => a.app.id) } });
     return { added: added.length };

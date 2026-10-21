@@ -74,7 +74,9 @@
     "pickTitle": "मीडिया निवडा",
     "addSelected": "निवडलेल्या {{count}} जोडा",
     "pickEmpty": "या प्रकारच्या तयार फाइल अजून नाहीत.",
-    "openLibrary": "आशय लायब्ररी उघडा"
+    "openLibrary": "आशय लायब्ररी उघडा",
+    "renameFolder": "फोल्डरचे नाव बदला",
+    "deleteFolder": "फोल्डर हटवा"
   },
   "templates": {
     "full": "पूर्ण स्क्रीन",

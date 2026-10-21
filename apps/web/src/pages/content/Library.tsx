@@ -1,6 +1,6 @@
 import { ref, uploadBytesResumable } from 'firebase/storage';
 import { Alert, Button, Dialog, EmptyState, PageHeader, SelectField, StatusChip, TextField } from '@wallx-play/ui';
-import { MEDIA_LIMITS, mediaTypeForMime, type MediaDoc } from '@wallx-play/shared';
+import { MEDIA_LIMITS, mediaTypeForMime, type FolderDoc, type MediaDoc } from '@wallx-play/shared';
 import { FolderPlus, ImagePlus, Images, X } from 'lucide-react';
 import { useMemo, useRef, useState, type DragEvent } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -38,7 +38,8 @@ export function Library() {
   const [folder, setFolder] = useState<string>('all');
   const [search, setSearch] = useState('');
   const [detail, setDetail] = useState<MediaDoc | null>(null);
-  const [folderDialog, setFolderDialog] = useState(false);
+  const [folderDialog, setFolderDialog] = useState<{ folder?: FolderDoc } | null>(null);
+  const [folderError, setFolderError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
 
   const items = useMemo(() => {
@@ -99,6 +100,18 @@ export function Library() {
   }
 
   const folderName = (id: string | null) => folders.data.find((f) => f.id === id)?.name;
+  const selectedFolder = folders.data.find((f) => f.id === folder);
+
+  /** Only empty folders can be deleted (the server refuses otherwise), so nothing is lost. */
+  async function removeFolder(f: FolderDoc) {
+    setFolderError(null);
+    try {
+      await call('deleteFolder', { orgId, folderId: f.id });
+      setFolder('all');
+    } catch (err) {
+      setFolderError(errorMessage(err));
+    }
+  }
 
   return (
     <div
@@ -119,7 +132,7 @@ export function Library() {
         actions={
           canUpload ? (
             <div className="wxp-toolbar" style={{ margin: 0 }}>
-              <Button onClick={() => setFolderDialog(true)}>
+              <Button onClick={() => setFolderDialog({})}>
                 <FolderPlus size={16} aria-hidden /> {t('library.newFolder')}
               </Button>
               <Button variant="primary" onClick={() => fileInput.current?.click()}>
@@ -194,7 +207,18 @@ export function Library() {
             </option>
           ))}
         </select>
+        {selectedFolder && canUpload ? (
+          <Button size="sm" variant="tertiary" onClick={() => setFolderDialog({ folder: selectedFolder })}>
+            {t('library.renameFolder')}
+          </Button>
+        ) : null}
+        {selectedFolder && can('media.delete') ? (
+          <Button size="sm" variant="tertiary" onClick={() => void removeFolder(selectedFolder)}>
+            {t('library.deleteFolder')}
+          </Button>
+        ) : null}
       </div>
+      {folderError ? <Alert tone="danger">{folderError}</Alert> : null}
 
       {items.length === 0 && !media.loading ? (
         <div className="wxp-card">
@@ -250,22 +274,22 @@ export function Library() {
           onClose={() => setDetail(null)}
         />
       ) : null}
-      <FolderDialog open={folderDialog} onClose={() => setFolderDialog(false)} />
+      {folderDialog ? <FolderDialog folder={folderDialog.folder} onClose={() => setFolderDialog(null)} /> : null}
     </div>
   );
 }
 
-function FolderDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+function FolderDialog({ folder, onClose }: { folder?: FolderDoc; onClose: () => void }) {
   const { t } = useTranslation();
   const { orgId } = useOrg();
-  const [name, setName] = useState('');
+  const [name, setName] = useState(folder?.name ?? '');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   async function save() {
     setBusy(true);
     setError(null);
     try {
-      await call('upsertFolder', { orgId, name });
+      await call('upsertFolder', { orgId, name, ...(folder ? { folderId: folder.id } : {}) });
       setName('');
       onClose();
     } catch (err) {
@@ -276,8 +300,8 @@ function FolderDialog({ open, onClose }: { open: boolean; onClose: () => void })
   }
   return (
     <Dialog
-      open={open}
-      title={t('library.newFolder')}
+      open
+      title={folder ? t('library.renameFolder') : t('library.newFolder')}
       onClose={onClose}
       footer={
         <>

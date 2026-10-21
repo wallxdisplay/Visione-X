@@ -74,7 +74,9 @@
     "pickTitle": "Choose media",
     "addSelected": "Add {{count}} selected",
     "pickEmpty": "No ready files of this type yet.",
-    "openLibrary": "Open Content Library"
+    "openLibrary": "Open Content Library",
+    "renameFolder": "Rename folder",
+    "deleteFolder": "Delete folder"
   },
   "templates": {
     "full": "Full screen",

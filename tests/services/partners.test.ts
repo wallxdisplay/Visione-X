@@ -151,6 +151,13 @@ describe('wholesale billing', () => {
     expect(overview.apps.find((a) => a.id === 'weather')).toMatchObject({ listPriceMinor: 4_900, dealerPriceMinor: 3_920 });
     expect(overview.account).toMatchObject({ billingStatus: 'active' });
 
+    // A fixed dealer price (kept with the staff-only costs) wins over the discount.
+    await db.doc(paths.appCost('weather')).set({ dealerPriceMinor: 3_000 }, { merge: true });
+    overview = await partners.partnerOverview(deps, ravi, { accountId });
+    expect(overview.apps.find((a) => a.id === 'weather')).toMatchObject({ dealerPriceMinor: 3_000 });
+    expect(overview.customers[0]!.lines.find((l) => l.name === 'Weather & air quality')).toMatchObject({ unitPriceMinor: 3_000 });
+    await db.doc(paths.appCost('weather')).set({ dealerPriceMinor: null }, { merge: true });
+
     // The reseller changes plan and screens; the customer's limits follow.
     await partners.setPartnerSubscription(deps, ravi, { accountId, orgId, planId: 'starter', quantity: 5, apps: [] });
     expect(((await db.doc(paths.orgEntitlements(orgId)).get()).data() as EntitlementsDoc).limits.screens).toBe(5);

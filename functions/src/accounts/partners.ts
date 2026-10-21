@@ -21,6 +21,7 @@ import {
   normalizeSubscription,
   paths,
   publicBrand,
+  type AppCostDoc,
   type AppDoc,
   type BillLine,
   type AccountDoc,
@@ -469,13 +470,17 @@ export async function partnerOverview({ db, now }: Deps, actor: Actor, input: z.
     if (!memberSnap.exists) throw new HttpsError('permission-denied', 'You are not on this reseller’s team.');
     if (!portalOpen(account)) throw new HttpsError('failed-precondition', 'The partner portal is not available for this reseller. Contact WallX.');
   }
-  const [planSnaps, orgSnaps, appSnaps] = await Promise.all([
+  const [planSnaps, orgSnaps, appSnaps, costSnaps] = await Promise.all([
     db.collection(paths.plans()).get(),
     db.collection(paths.orgs()).where('parentAccountId', '==', input.accountId).get(),
     db.collection(paths.apps()).get(),
+    db.collection(paths.appCosts()).get(),
   ]);
   const plans = new Map(planSnaps.docs.map((d) => [d.id, d.data() as Plan]));
   const catalog = appSnaps.docs.map((d) => d.data() as AppDoc);
+  // Fixed dealer prices are kept with the costs (staff only), not in the public catalog.
+  const fixedDealer = new Map(costSnaps.docs.map((d) => [d.id, (d.data() as AppCostDoc).dealerPriceMinor ?? null]));
+  const fixedDealerOf = (a: AppDoc | undefined) => (a ? (fixedDealer.get(a.id) ?? a.dealerPriceMinor ?? null) : null);
   const discount = account.dealerDiscountBps ?? 0;
   const dealer = (minor: number) => Math.round((minor * (10_000 - discount)) / 10_000);
 
@@ -494,7 +499,8 @@ export async function partnerOverview({ db, now }: Deps, actor: Actor, input: z.
       plan && sub.pricing === 'apps' && resellerBilled
         ? subscriptionLines(plan, sub, catalog).map((l) => {
             const app = catalog.find((a) => a.id === l.appId);
-            const unit = l.kind === 'app' && app?.dealerPriceMinor != null ? app.dealerPriceMinor : l.kind === 'adjustment' ? l.unitPriceMinor : dealer(l.unitPriceMinor);
+            const fixed = fixedDealerOf(app);
+            const unit = l.kind === 'app' && fixed !== null ? fixed : l.kind === 'adjustment' ? l.unitPriceMinor : dealer(l.unitPriceMinor);
             return { ...l, unitPriceMinor: unit, totalMinor: unit * l.quantity };
           })
         : [];
@@ -538,7 +544,7 @@ export async function partnerOverview({ db, now }: Deps, actor: Actor, input: z.
     apps: catalog
       .filter((a) => a.active && !a.base)
       .sort((a, b) => a.sortOrder - b.sortOrder)
-      .map((a) => ({ id: a.id, name: a.name, unit: a.unit, listPriceMinor: a.priceMinor, dealerPriceMinor: a.dealerPriceMinor ?? dealer(a.priceMinor), requires: a.requires })),
+      .map((a) => ({ id: a.id, name: a.name, unit: a.unit, listPriceMinor: a.priceMinor, dealerPriceMinor: fixedDealerOf(a) ?? dealer(a.priceMinor), requires: a.requires })),
     plans: [...plans.values()]
       .filter((p) => p.active && p.tier !== 'trial')
       .sort((a, b) => (a.pricePerScreenMonthlyMinor ?? Infinity) - (b.pricePerScreenMonthlyMinor ?? Infinity))

@@ -43,6 +43,7 @@ import {
   SaveAppInput,
   MoveToAppPricingInput,
   SetAppScreensInput,
+  OrgActivityInput,
   ChangeAppsInput,
   SaveCostRatesInput,
   CostReportInput,
@@ -128,6 +129,7 @@ import * as costs from './costs/report';
 import * as online from './billing/online';
 import { reviewOrgSignup as reviewSvc, setOrgStatus as setOrgStatusSvc } from './orgs/review';
 import * as settings from './orgs/settings';
+import * as activity from './orgs/activity';
 import * as signup from './orgs/signup';
 import * as screens from './screens/screens';
 import * as commands from './ops/commands';
@@ -197,6 +199,7 @@ export const resubmitOrgSignup = callable(ResubmitOrgSignupInput, signup.resubmi
 export const reviewOrgSignup = callable(ReviewOrgSignupInput, reviewSvc, { secrets: MAIL_SECRETS });
 export const setOrgStatus = callable(SetOrgStatusInput, setOrgStatusSvc);
 export const updateOrgSettings = callable(UpdateOrgSettingsInput, settings.updateOrgSettings);
+export const orgActivity = callable(OrgActivityInput, activity.orgActivity);
 export const upsertSite = callable(UpsertSiteInput, settings.upsertSite);
 export const deleteSite = callable(DeleteSiteInput, settings.deleteSite);
 export const inviteMember = callable(InviteMemberInput, members.inviteMember, { secrets: MAIL_SECRETS });

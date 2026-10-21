@@ -58,6 +58,7 @@ import { PartnerTeam } from './pages/partner/PartnerTeam';
 import { PartnerBranding } from './pages/partner/PartnerBranding';
 import { AdminWhiteLabel } from './pages/admin/AdminWhiteLabel';
 import { AdminApps } from './pages/admin/AdminApps';
+import { ActivityLog } from './pages/customer/ActivityLog';
 import { AdminCosts } from './pages/admin/AdminCosts';
 import { AppStore } from './pages/billing/AppStore';
 import { DomainBrandProvider } from './brand/brand';
@@ -83,6 +84,7 @@ const PAGES: Record<string, ReactNode> = {
   '/help': <Help />,
   '/sites': <Sites />,
   '/settings': <OrgSettings />,
+  '/activity': <ActivityLog />,
   '/admin': <AdminOverview />,
   '/admin/approvals': <Approvals />,
   '/admin/orgs': <Orgs />,

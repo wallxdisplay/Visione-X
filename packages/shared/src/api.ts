@@ -216,6 +216,7 @@ export const CALLABLES = {
   moveToAppPricing: 'moveToAppPricing',
   setAppScreens: 'setAppScreens',
   changeApps: 'changeApps',
+  orgActivity: 'orgActivity',
   saveCostRates: 'saveCostRates',
   costReport: 'costReport',
   createPaymentOrder: 'createPaymentOrder',

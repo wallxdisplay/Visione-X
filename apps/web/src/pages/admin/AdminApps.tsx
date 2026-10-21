@@ -44,6 +44,8 @@ export function AdminApps() {
   const sorted = useMemo(() => [...apps.data].sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name)), [apps.data]);
   const problems = catalogProblems(apps.data);
   const costOf = (id: string) => costs.data.find((c) => c.id === id);
+  // Fixed dealer prices live with the costs (staff only); older apps may still carry the field.
+  const dealerOf = (a: AppDoc) => costOf(a.id)?.dealerPriceMinor ?? a.dealerPriceMinor ?? null;
 
   async function seed() {
     setError(null);
@@ -112,7 +114,7 @@ export function AdminApps() {
                   </td>
                   <td>{t(`adminApps.units.${a.unit}`)}</td>
                   <td className="wxp-tabular">{formatInr(a.priceMinor)}</td>
-                  <td className="wxp-tabular">{a.dealerPriceMinor === null ? <span className="wxp-muted">{t('adminApps.dealerDefault')}</span> : formatInr(a.dealerPriceMinor)}</td>
+                  <td className="wxp-tabular">{dealerOf(a) === null ? <span className="wxp-muted">{t('adminApps.dealerDefault')}</span> : formatInr(dealerOf(a)!)}</td>
                   <td className="wxp-tabular">{cost === null ? '—' : formatInr(cost)}</td>
                   <td className="wxp-tabular">
                     {margin === null ? '—' : <StatusChip tone={margin >= TARGET_MARGIN ? 'success' : margin >= 0.4 ? 'warning' : 'danger'}>{`${Math.round(margin * 100)}%`}</StatusChip>}
@@ -181,7 +183,7 @@ function AppDialog({ app, cost, all, onClose, onSaved }: { app: AppDoc | null; c
     base: app?.base ?? false,
     storageGB: app?.limitBoosts.storageGB ? String(app.limitBoosts.storageGB) : '',
     price: rupees(app?.priceMinor ?? 0),
-    dealerPrice: app?.dealerPriceMinor === null || app?.dealerPriceMinor === undefined ? '' : rupees(app.dealerPriceMinor),
+    dealerPrice: rupees(cost?.dealerPriceMinor ?? app?.dealerPriceMinor ?? null),
     cost: rupees(cost?.costMinor ?? 0),
     costNote: cost?.note ?? '',
     active: app?.active ?? true,
